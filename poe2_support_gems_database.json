@@ -1,0 +1,821 @@
+{
+  "metadata": {
+    "game": "Path of Exile 2",
+    "version": "0.3.0 (The Third Edict)",
+    "last_updated": "2025-10-23",
+    "total_support_gems": 414,
+    "total_lineage_support_gems": 39,
+    "notes": "Support gems in PoE2 use a tier-based system (Tier 1-5+). Higher tiers provide better values and sometimes additional effects. As of patch 0.3.0, players can now use multiple copies of the same support gem across different skills."
+  },
+
+  "support_gems": {
+    "controlled_destruction": {
+      "name": "Controlled Destruction",
+      "type": "spell_support",
+      "tier": 1,
+      "tags": ["Critical", "Spell"],
+      "spirit_cost": 0,
+      "cost_multiplier": null,
+      "effects": {
+        "more_spell_damage": 30,
+        "cannot_crit": true
+      },
+      "compatible_with": ["spell"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "added_fire_damage": {
+      "name": "Added Fire Damage",
+      "type": "attack_support",
+      "tier": 1,
+      "tags": ["Attack", "Fire"],
+      "spirit_cost": 0,
+      "effects": {
+        "gain_damage_as_fire": 25,
+        "less_cold_damage": 50,
+        "less_lightning_damage": 50
+      },
+      "compatible_with": ["attack"],
+      "requirements": {
+        "str": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "added_cold_damage": {
+      "name": "Added Cold Damage",
+      "type": "attack_support",
+      "tier": 1,
+      "tags": ["Attack", "Cold"],
+      "spirit_cost": 0,
+      "effects": {
+        "gain_damage_as_cold": 25,
+        "less_fire_damage": 50,
+        "less_lightning_damage": 50
+      },
+      "compatible_with": ["attack"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "added_lightning_damage": {
+      "name": "Added Lightning Damage",
+      "type": "attack_support",
+      "tier": 1,
+      "tags": ["Attack", "Lightning"],
+      "spirit_cost": 0,
+      "effects": {
+        "gain_damage_as_lightning": 25,
+        "less_fire_damage": 50,
+        "less_cold_damage": 50
+      },
+      "compatible_with": ["attack"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "chain_i": {
+      "name": "Chain I",
+      "type": "projectile_support",
+      "tier": 1,
+      "tags": ["Chaining", "Projectile"],
+      "spirit_cost": 0,
+      "effects": {
+        "additional_chains": 1,
+        "more_chains": 100,
+        "less_damage": 50
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "pierce_i": {
+      "name": "Pierce I",
+      "type": "projectile_support",
+      "tier": 1,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "effects": {
+        "projectiles_pierce": true,
+        "less_damage_after_pierce": 30
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "fork": {
+      "name": "Fork",
+      "type": "projectile_support",
+      "tier": 3,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "cost_multiplier": 110,
+      "effects": {
+        "projectiles_fork": true,
+        "less_damage_after_fork": 50
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 3 Uncut Support Skill Gem"
+    },
+
+    "faster_projectiles": {
+      "name": "Faster Projectiles",
+      "type": "projectile_support",
+      "tier": 1,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "increased_projectile_speed": 40
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem",
+      "notes": "Projectile speed does NOT increase range in PoE2"
+    },
+
+    "slower_projectiles": {
+      "name": "Slower Projectiles",
+      "type": "projectile_support",
+      "tier": 1,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "effects": {
+        "less_projectile_speed": 30
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "projectile_acceleration_i": {
+      "name": "Projectile Acceleration I",
+      "type": "projectile_support",
+      "tier": 1,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "more_projectile_speed": 40
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "projectile_acceleration_ii": {
+      "name": "Projectile Acceleration II",
+      "type": "projectile_support",
+      "tier": 4,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "more_projectile_speed": 40,
+        "pierce_chance": 40
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 4 Uncut Support Skill Gem"
+    },
+
+    "ricochet_i": {
+      "name": "Ricochet I",
+      "type": "projectile_support",
+      "tier": 2,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "effects": {
+        "chain_from_terrain_chance": 20
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 2 Uncut Support Skill Gem"
+    },
+
+    "ricochet_iii": {
+      "name": "Ricochet III",
+      "type": "projectile_support",
+      "tier": 5,
+      "tags": ["Projectile"],
+      "spirit_cost": 0,
+      "effects": {
+        "chain_from_terrain": true,
+        "always_pierce": true,
+        "additional_projectiles_grant_chains": true
+      },
+      "compatible_with": ["projectile"],
+      "requirements": {
+        "dex": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 5 Uncut Support Skill Gem",
+      "notes": "Modifiers granting additional projectiles instead cause projectiles to chain an additional time from terrain per projectile"
+    },
+
+    "spell_echo": {
+      "name": "Spell Echo",
+      "type": "spell_support",
+      "tier": 2,
+      "tags": ["Spell", "AoE"],
+      "spirit_cost": 0,
+      "cost_multiplier": 150,
+      "effects": {
+        "spells_echo_once": true,
+        "less_cast_speed": 30,
+        "echoes_more_aoe": 30
+      },
+      "compatible_with": ["spell"],
+      "restrictions": ["Cannot support Channelling skills", "Cannot support Remote skills"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 2 Uncut Support Skill Gem"
+    },
+
+    "unleash": {
+      "name": "Unleash",
+      "type": "spell_support",
+      "tier": 1,
+      "tags": ["Spell"],
+      "spirit_cost": 0,
+      "cost_multiplier": 150,
+      "effects": {
+        "max_seals": 2,
+        "seal_gain_frequency": "Every 200% of cast time",
+        "less_damage_on_reoccur": 50
+      },
+      "compatible_with": ["spell"],
+      "restrictions": ["Cannot support Channelling skills"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "critical_damage": {
+      "name": "Critical Damage",
+      "type": "damage_support",
+      "tier": 3,
+      "tags": ["Critical"],
+      "spirit_cost": 0,
+      "effects": {
+        "increased_critical_damage": 100,
+        "less_damage": 20
+      },
+      "compatible_with": ["any_hit"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 3 Uncut Support Skill Gem"
+    },
+
+    "inevitable_critical": {
+      "name": "Inevitable Critical",
+      "type": "critical_support",
+      "tier": 2,
+      "tags": ["Critical"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "increased_crit_chance_per_second": 25,
+        "max_crit_chance_increase": 100,
+        "crit_chance_lost_on_crit": true
+      },
+      "compatible_with": ["any_hit"],
+      "requirements": {
+        "str": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 2 Uncut Support Skill Gem",
+      "notes": "Gains 25% increased Critical Strike Chance each second, up to 100%. Lost when skill critically hits."
+    },
+
+    "elemental_focus": {
+      "name": "Elemental Focus",
+      "type": "elemental_support",
+      "tier": 3,
+      "tags": ["Elemental"],
+      "spirit_cost": 0,
+      "effects": {
+        "more_elemental_damage": 25,
+        "cannot_inflict_ailments": true
+      },
+      "compatible_with": ["any_hit"],
+      "requirements": {
+        "int": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 3 Uncut Support Skill Gem"
+    },
+
+    "brutality_i": {
+      "name": "Brutality I",
+      "type": "physical_support",
+      "tier": 1,
+      "tags": ["Physical"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "more_physical_damage": 25,
+        "no_chaos_damage": true,
+        "no_elemental_damage": true
+      },
+      "compatible_with": ["any_damage"],
+      "requirements": {
+        "str": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 1 Uncut Support Skill Gem"
+    },
+
+    "ancestral_call_i": {
+      "name": "Ancestral Call I",
+      "type": "melee_support",
+      "tier": 4,
+      "tags": ["Attack", "Melee", "Strike"],
+      "spirit_cost": 0,
+      "cost_multiplier": 120,
+      "effects": {
+        "ancestral_boost_frequency": "Once every 5 seconds"
+      },
+      "compatible_with": ["strike", "melee"],
+      "restrictions": ["Cannot support Channelled Skills", "Does not modify Skills used by Minions"],
+      "requirements": {
+        "str": 5,
+        "level": 1
+      },
+      "acquisition": "Tier 4 Uncut Support Skill Gem"
+    },
+
+    "archmage": {
+      "name": "Archmage",
+      "type": "spirit_gem",
+      "tier": 3,
+      "tags": ["Spell", "Lightning", "Spirit"],
+      "spirit_cost": 0,
+      "effects": {
+        "extra_lightning_per_100_mana": 4,
+        "additional_mana_cost_percent": "6.1-8"
+      },
+      "compatible_with": ["spell_non_channelling"],
+      "requirements": {
+        "int": "4-157",
+        "level": "1-90"
+      },
+      "acquisition": "Level 14+ Uncut Spirit Gem",
+      "notes": "Non-Channelling Spells cost additional mana and gain extra Lightning damage based on maximum Mana. Updated to 4% from 3% in Patch 0.3.0"
+    }
+  },
+
+  "lineage_support_gems": {
+    "zahrokhs_refrain": {
+      "name": "Zarokh's Refrain",
+      "type": "lineage_support",
+      "tags": ["Spell", "Echo"],
+      "effects": {
+        "spells_echo_twice": true,
+        "cooldown_added": true
+      },
+      "compatible_with": ["spell_aoe"],
+      "restrictions": ["Cannot support Channelling skills", "Cannot support Remote skills", "Cannot support skills with Cooldown", "Cannot support Triggered skills"],
+      "acquisition": "Zarokh, the Temporal (Trial of the Sekhemas floor 4) - Rare drop",
+      "notes": "Supports Spells that affect an area around you or a target location. Supported Spells echo twice."
+    },
+
+    "rakiatas_flow": {
+      "name": "Rakiata's Flow",
+      "type": "lineage_support",
+      "tags": ["Elemental", "Resistance"],
+      "effects": {
+        "invert_enemy_resistances": true
+      },
+      "compatible_with": ["damaging_hits"],
+      "acquisition": "Manoki, the Chosen (The Jade Isles) - Anomaly boss",
+      "notes": "Supports Skills that can cause Damaging Hits, causing those Hits to treat Enemy Elemental Resistances as inverted."
+    },
+
+    "garukhans_resolve": {
+      "name": "Garukhan's Resolve",
+      "type": "lineage_support",
+      "tags": ["Attack", "Movement"],
+      "effects": {
+        "requires_movement": "20 meters",
+        "bifurcate_crit_chance": true
+      },
+      "compatible_with": ["attack_unconditional"],
+      "restrictions": ["Cannot support Skills with Cooldown", "Cannot support Triggered skills", "Does not modify skills used by Minions"],
+      "acquisition": "Zahmir, the Blade Sovereign (Sacred Reservoir) - Anomaly boss",
+      "notes": "Guarantees a lucky roll on critical strikes. Supported Skills can only be used after moving a certain distance."
+    },
+
+    "uruks_smelting": {
+      "name": "Uruk's Smelting",
+      "type": "lineage_support",
+      "tags": ["Physical", "Armour Break"],
+      "effects": {
+        "break_significantly_more_armour": true,
+        "increased_physical_damage_on_break": 40
+      },
+      "compatible_with": ["physical_damage"],
+      "acquisition": "Global drop (Tier 6+ Waystones)",
+      "notes": "Enhances physical damage by breaking armor. Targets take up to 40% increased physical damage when armor fully breaks."
+    },
+
+    "ailiths_chimes": {
+      "name": "Ailith's Chimes",
+      "type": "lineage_support",
+      "tags": ["Combo", "Power Charge"],
+      "effects": {
+        "power_charge_chance_on_combo": true
+      },
+      "compatible_with": ["combo_skills"],
+      "acquisition": "Global drop (Tier 6+ Waystones)",
+      "notes": "Supports Skills that can expend Combo. Chance to gain Power Charges based on Combo expended."
+    },
+
+    "ahns_citadel": {
+      "name": "Ahn's Citadel",
+      "type": "lineage_support",
+      "tags": ["Wall", "Fissure"],
+      "effects": {
+        "walls_along_fissure": true,
+        "reduced_damage": true,
+        "reduced_aoe": true
+      },
+      "compatible_with": ["wall_skills"],
+      "acquisition": "Global drop",
+      "notes": "Supports skills that create walls in a line, causing them to instead be created along a Fissure."
+    },
+
+    "arjuns_medal": {
+      "name": "Arjun's Medal",
+      "type": "lineage_support",
+      "tags": ["Crossbow"],
+      "effects": {
+        "reload_all_on_kill_chance": true
+      },
+      "compatible_with": ["crossbow"],
+      "acquisition": "Global drop",
+      "notes": "Supports Crossbow Skills. Chance to load a bolt into all Crossbow Ammunition on kill."
+    },
+
+    "atziris_allure": {
+      "name": "Atziri's Allure",
+      "type": "lineage_support",
+      "tags": ["Curse"],
+      "effects": {
+        "ignore_curse_limit": true,
+        "curse_reflected": true
+      },
+      "compatible_with": ["curse"],
+      "acquisition": "Global drop",
+      "notes": "Supports Curse Skills. Curses ignore the usual Curse Limit, but are reflected back to you."
+    },
+
+    "arakaalis_lust": {
+      "name": "Arakaali's Lust",
+      "type": "lineage_support",
+      "tags": ["Poison"],
+      "effects": {
+        "increased_damage_per_poison": true
+      },
+      "compatible_with": ["hits"],
+      "acquisition": "Global drop",
+      "notes": "Supports any Skill that Hits Enemies. Deals increasingly higher damage the more Poisons are on the target."
+    },
+
+    "arbiters_ignition": {
+      "name": "Arbiter's Ignition",
+      "type": "lineage_support",
+      "tags": ["Fire", "Spell"],
+      "effects": {
+        "chance_flame_archon_on_ignite": true
+      },
+      "compatible_with": ["fire_spell"],
+      "acquisition": "Arbiter of Ash (Endgame boss)",
+      "notes": "Supports Fire Spell Skills. Chance to gain Flame Archon when Igniting."
+    },
+
+    "diallas_desire": {
+      "name": "Dialla's Desire",
+      "type": "lineage_support",
+      "tags": ["Quality", "Level"],
+      "effects": {
+        "increased_level": true,
+        "increased_quality": true,
+        "reduced_cost": true,
+        "reduced_reservation": true
+      },
+      "compatible_with": ["any_with_levels"],
+      "acquisition": "Global drop",
+      "notes": "Supports any Skill which has levels, increasing the level and Quality, while reducing cost and Reservation."
+    },
+
+    "doedres_undoing": {
+      "name": "Doedre's Undoing",
+      "type": "lineage_support",
+      "tags": ["Curse", "Chaos"],
+      "effects": {
+        "create_hazardous_areas": true,
+        "explode_on_entry": true,
+        "chaos_damage_based_on_int": true
+      },
+      "compatible_with": ["curse"],
+      "acquisition": "Global drop",
+      "notes": "Supports Curse Skills. Creates Hazardous areas which explode when Enemies enter, Cursing and dealing Chaos Damage based on Intelligence."
+    },
+
+    "eshs_radiance": {
+      "name": "Esh's Radiance",
+      "type": "lineage_support",
+      "tags": ["Chaos", "Shock"],
+      "effects": {
+        "extra_chaos_damage": true,
+        "chaos_contributes_to_shock": true
+      },
+      "compatible_with": ["damaging_hits"],
+      "acquisition": "Global drop",
+      "notes": "Supports Skills that can cause Damaging Hits. Grants extra Chaos damage and causes Chaos damage to Contribute to Shock."
+    },
+
+    "ixchels_torment": {
+      "name": "Ixchel's Torment",
+      "type": "lineage_support",
+      "tags": ["Trigger"],
+      "effects": {
+        "modifies_trigger_skills": true
+      },
+      "compatible_with": ["trigger_skills"],
+      "acquisition": "Global drop",
+      "notes": "Supports Skills that Trigger other Skills."
+    },
+
+    "brutus_brain": {
+      "name": "Brutus' Brain",
+      "type": "lineage_support",
+      "tags": ["Minion"],
+      "effects": {
+        "minions_cannot_damage": true,
+        "minions_cannot_take_damage": true
+      },
+      "compatible_with": ["minion_skills"],
+      "acquisition": "Global drop",
+      "notes": "Supports skills which create Minions. Those Minions are unable to deal or take Damage."
+    },
+
+    "daressos_passion": {
+      "name": "Daresso's Passion",
+      "type": "lineage_support",
+      "tags": ["Banner"],
+      "effects": {
+        "significantly_less_glory_required": true
+      },
+      "compatible_with": ["banner"],
+      "acquisition": "Global drop",
+      "notes": "Supports Banner Skills, causing them to require significantly less Glory to use."
+    },
+
+    "pietys_mercy": {
+      "name": "Piety's Mercy",
+      "type": "lineage_support",
+      "tags": ["Hit"],
+      "effects": {
+        "hits_cannot_kill": true
+      },
+      "compatible_with": ["damaging_hits"],
+      "acquisition": "Global drop",
+      "notes": "Supports Skills that cause Damaging Hits. Hits from Supported Skills cannot kill Enemies."
+    },
+
+    "vilentas_propulsion": {
+      "name": "Vilenta's Propulsion",
+      "type": "lineage_support",
+      "tags": ["Spell", "Projectile"],
+      "effects": {
+        "cast_speed_applies_to_projectile_speed": true
+      },
+      "compatible_with": ["spell_projectile"],
+      "acquisition": "Global drop",
+      "notes": "Supports Spell Skills that fire Projectiles. Increases and reductions to cast speed also apply to Projectile speed."
+    },
+
+    "amanamus_tithe": {
+      "name": "Amanamu's Tithe",
+      "type": "lineage_support",
+      "tags": ["Minion", "Abyssal"],
+      "effects": {
+        "gain_abyssal_modifier_on_minion_death": true
+      },
+      "compatible_with": ["persistent_minion"],
+      "acquisition": "Abyssal Depths/Dark Domain",
+      "notes": "Supports Persistent Minion Skills. Chance when Minions die to gain an Abyssal Monster Modifier."
+    },
+
+    "ataluis_bloodletting": {
+      "name": "Atalui's Bloodletting",
+      "type": "lineage_support",
+      "tags": ["Life", "Mana"],
+      "effects": {
+        "mana_cost_to_life_cost": true
+      },
+      "compatible_with": ["any_skill"],
+      "acquisition": "Global drop",
+      "notes": "Supports any Skill, turning a portion of its Mana cost into a Life cost."
+    },
+
+    "einhaars_beastrite": {
+      "name": "Einhar's Beastrite",
+      "type": "lineage_support",
+      "tags": ["Beast"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    },
+
+    "kalisas_crescendo": {
+      "name": "Kalisa's Crescendo",
+      "type": "lineage_support",
+      "tags": ["Unknown"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    },
+
+    "romiras_requital": {
+      "name": "Romira's Requital",
+      "type": "lineage_support",
+      "tags": ["Unknown"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    },
+
+    "rathas_assault": {
+      "name": "Ratha's Assault",
+      "type": "lineage_support",
+      "tags": ["Unknown"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    },
+
+    "siones_temper": {
+      "name": "Sione's Temper",
+      "type": "lineage_support",
+      "tags": ["Unknown"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    },
+
+    "tecrods_revenge": {
+      "name": "Tecrod's Revenge",
+      "type": "lineage_support",
+      "tags": ["Unknown"],
+      "effects": {
+        "unknown": true
+      },
+      "compatible_with": ["unknown"],
+      "acquisition": "Global drop"
+    }
+  },
+
+  "additional_support_gems_by_category": {
+    "tier_1_gems_partial_list": [
+      "Abiding Hex", "Ablation", "Acrimony", "Adhesive Grenades I", "Aftershock I",
+      "Alignment I", "Ambrosia", "Ambush", "Ammo Conservation I", "Ancestral Call I",
+      "Arcane Surge", "Armour Break I", "Armour Demolisher I", "Armour Explosion",
+      "Arms Length", "Astral Projection", "Auto Reload", "Barbs I", "Battershout",
+      "Behead I", "Bidding", "Biting Frost", "Bleed I", "Blind I", "Blindside",
+      "Blood in the Eyes", "Bloodlust", "Bludgeon", "Bone Shrapnel", "Boundless Energy I",
+      "Branching Fissures I", "Break Endurance", "Break Posture", "Brink I", "Brutality I",
+      "Burgeon I", "Burning Inscription", "Bursting Plague", "Cadence", "Caltrops",
+      "Cannibalism I", "Capacitor", "Catharsis", "Chain I", "Chaos Infusion",
+      "Chaos Mastery", "Chaotic Freeze", "Charge Profusion I", "Charged Shots I",
+      "Charm Bounty", "Clarity I", "Clash", "Close Combat I", "Cold Attunement",
+      "Cold Exposure", "Cold Mastery", "Cold Penetration", "Combo Finisher I",
+      "Commandment", "Commiserate", "Compressed Duration I", "Concentrated Area",
+      "Concoct I", "Conduction", "Considered Casting", "Controlled Destruction",
+      "Cooldown Recovery I", "Coolheaded", "Corpse Conservation", "Corrosion",
+      "Corrupting Cry I", "Coursing Current", "Crackling Barrier", "Crazed Minions",
+      "Crescendo I", "Crystalline Shards", "Culling Strike I", "Culmination I",
+      "Cursed Ground", "Danse Macabre", "Dauntless", "Dazing Cry", "Dazzle",
+      "Deadly Herald", "Deadly Poison I", "Deathmarch", "Decaying Hex", "Deep Cuts I",
+      "Deep Freeze", "Defy I", "Delayed Gratification", "Delayed Reaction",
+      "Deliberation", "Derange", "Desperation", "Despoiler", "Devastate",
+      "Direstrike I", "Discombobulate", "Dissapate", "Double Barrel I",
+      "Drain Ailments", "Durability", "Efficiency I", "Electrocute",
+      "Elemental Armament I", "Elemental Army", "Elemental Discharge", "Elemental Focus",
+      "Embitter", "Energy Barrier", "Energy Retention", "Enormity", "Enraged Warcry I",
+      "Escalating Poison", "Essence Harvest", "Eternal Flame I", "Excise",
+      "Excoriate", "Execrate", "Execute I", "Expanse", "Exploit Weakness",
+      "Extraction", "Feeding Frenzy I", "Ferocity", "Fiery Death", "Figurehead",
+      "Fire Attunement", "Fire Exposure", "Fire Mastery", "Fire Penetration I",
+      "First Blood", "Fist of War I", "Flamepierce", "Flow", "Fluke",
+      "Focused Curse", "Font of Blood", "Font of Mana", "Font of Rage", "Fork",
+      "Fortress I", "Freezefork", "Fresh Clip I", "Frost Nexus", "Frostfire",
+      "Gambleshot", "Glaciation", "Glacier", "Greatwood I", "Haemocrystals"
+    ],
+
+    "damage_multiplier_examples": {
+      "more_damage": [
+        {"name": "Controlled Destruction", "value": 30, "type": "Spell"},
+        {"name": "Brutality I", "value": 25, "type": "Physical"},
+        {"name": "Elemental Focus", "value": 25, "type": "Elemental"},
+        {"name": "Close Combat", "value": 25, "type": "Melee"},
+        {"name": "Bloodlust", "value": 30, "type": "Melee Physical vs Bleeding"}
+      ],
+      "less_damage": [
+        {"name": "Chain I", "value": -50, "type": "Hit"},
+        {"name": "Fork", "value": -50, "type": "After Fork"},
+        {"name": "Pierce I", "value": -30, "type": "After Pierce"},
+        {"name": "Critical Damage", "value": -20, "type": "Hit"},
+        {"name": "Scattershot", "value": -35, "type": "General"},
+        {"name": "Meat Shield", "value": -35, "type": "Minion"},
+        {"name": "Unleash", "value": -50, "type": "Reoccur"}
+      ]
+    },
+
+    "cost_multipliers": {
+      "120_percent": ["Faster Projectiles", "Projectile Acceleration I/II", "Brutality I", "Inevitable Critical", "Ancestral Call I"],
+      "140_percent": ["Controlled Destruction (PoE1 reference)"],
+      "150_percent": ["Spell Echo", "Unleash"],
+      "110_percent": ["Fork"]
+    }
+  },
+
+  "important_mechanics": {
+    "support_gem_restrictions": {
+      "one_per_category_per_skill": "You cannot have multiple Support Gems of the same Category socketed within one Skill",
+      "one_per_loadout_removed": "As of patch 0.3.0, you can now use the same support gem on multiple skills (previously restricted to one per character)",
+      "max_support_sockets": "Each skill can have up to 5 support sockets (requires Jeweller's Orbs to expand from base 2)"
+    },
+
+    "tier_system": {
+      "description": "Support Gems have a tier-based system (1-5+) that determines stat value ranges",
+      "higher_tiers": "Higher-tiered Support Gems have higher values and some have secondary effects",
+      "acquisition": "Different tiers require different level Uncut Support Gems to craft"
+    },
+
+    "mana_system": {
+      "note": "PoE2 handles mana costs differently than PoE1. Cost multipliers apply but the system is reworked."
+    },
+
+    "spirit_gems": {
+      "description": "Spirit gems (like Archmage, Heralds, Auras) reserve Spirit instead of mana",
+      "trigger_gems": "Trigger support gems like Cast on Critical Strike and Cast on Shock are now Meta Gems that reserve Spirit"
+    }
+  }
+}

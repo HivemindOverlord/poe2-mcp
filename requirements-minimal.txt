@@ -1,0 +1,26 @@
+# Minimal requirements for basic functionality
+# Use this for a quick start, then install full requirements.txt later
+
+# Core MCP and Server
+mcp>=0.9.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy>=2.0.0
+aiosqlite>=0.19.0
+
+# HTTP Clients
+httpx>=0.25.0
+
+# AI Integration (optional, but recommended)
+anthropic>=0.8.0
+
+# Utilities
+python-dotenv>=1.0.0
+loguru>=0.7.2
+
+# Async file operations
+aiofiles>=23.2.1

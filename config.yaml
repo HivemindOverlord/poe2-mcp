@@ -1,0 +1,164 @@
+server:
+  host: 127.0.0.1
+  port: 8080
+  workers: 4
+  reload: true  # Development only
+  log_level: info
+
+database:
+  url: sqlite:///data/poe2_optimizer.db
+  pool_size: 10
+  max_overflow: 20
+  pool_recycle: 3600
+  echo: false
+
+cache:
+  enabled: true
+  backend: memory  # Options: memory, redis
+  ttl:
+    character: 3600  # 1 hour
+    build: 7200  # 2 hours
+    game_data: 86400  # 24 hours
+    api_response: 300  # 5 minutes
+  max_size: 1000  # Max cached items in memory
+
+api:
+  poe_official:
+    base_url: https://www.pathofexile.com/api
+    rate_limit: 10  # requests per minute
+    timeout: 30
+    retry_attempts: 3
+    backoff_factor: 2
+
+  poe2db:
+    base_url: https://poe2db.tw
+    rate_limit: 30
+    timeout: 15
+    cache_duration: 3600
+
+  poe_ninja:
+    base_url: https://poe.ninja/api/data
+    rate_limit: 20
+    timeout: 15
+
+ai:
+  provider: anthropic  # Options: anthropic, openai
+  model: claude-sonnet-4-20250514
+  max_tokens: 4096
+  temperature: 0.7
+  enable_streaming: true
+  context_window: 200000
+
+  prompts:
+    character_analysis: |
+      You are an expert Path of Exile 2 build advisor. Analyze this character data and provide insights.
+      Focus on: strengths, weaknesses, and optimization opportunities.
+
+    gear_recommendations: |
+      Recommend gear upgrades for this PoE2 character. Consider their build archetype, budget, and goals.
+
+    passive_optimization: |
+      Optimize this passive tree allocation. Suggest the most efficient path and key nodes to allocate.
+
+calculator:
+  precision: 4  # Decimal places
+  enable_parallel: true
+  max_threads: 4
+  calculation_timeout: 10
+
+  damage:
+    include_buffs: true
+    include_debuffs: true
+    include_shock: true
+    shock_effect: 0.5  # Default shock effect
+
+  defense:
+    include_flasks: false  # Don't assume flasks active
+    estimate_avoidance: true
+    calculate_ehp: true
+
+optimizer:
+  gear:
+    budget_tiers:
+      low: 0-10
+      medium: 10-100
+      high: 100-1000
+      unlimited: 1000+
+    max_suggestions: 10
+    prioritize_uniques: true
+
+  passive:
+    max_respec_points: 20
+    allow_major_rework: false
+    prefer_efficient_paths: true
+
+  skill:
+    max_gem_setups: 5
+    prioritize_main_skill: true
+    suggest_alternatives: true
+
+web:
+  port: 3000
+  cors_origins:
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+  enable_build_sharing: true
+  max_saved_builds: 50
+  session_timeout: 86400  # 24 hours
+
+pob:
+  enable_import: true
+  enable_export: true
+  validate_xml: true
+  max_build_size: 10485760  # 10 MB
+  supported_versions:
+    - community-fork
+    - official
+
+trade:
+  enable_integration: true
+  enable_price_checking: true
+  max_price_results: 20
+  default_league: Standard
+
+features:
+  enable_ai_insights: true
+  enable_trade_integration: true
+  enable_pob_export: true
+  enable_build_sharing: true
+  enable_meta_comparison: true
+  enable_batch_analysis: true
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/poe2_optimizer.log
+  rotation: 100 MB
+  retention: 7 days
+
+  loggers:
+    api: DEBUG
+    calculator: INFO
+    optimizer: INFO
+    database: WARNING
+
+monitoring:
+  enable_prometheus: false
+  prometheus_port: 9090
+  enable_sentry: false
+  health_check_interval: 60
+
+security:
+  enable_rate_limiting: true
+  rate_limit_per_minute: 60
+  enable_cors: true
+  enable_encryption: true
+  session_secret: change-in-production
+  password_min_length: 8
+
+performance:
+  enable_compression: true
+  enable_caching: true
+  max_request_size: 10485760  # 10 MB
+  timeout: 30
+  worker_timeout: 120

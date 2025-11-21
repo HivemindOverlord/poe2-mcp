@@ -1,0 +1,172 @@
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+POESESSID*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Logs
+logs/
+*.log
+log/
+
+# Cache
+cache/
+*.cache
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Distribution / Packaging
+*.tar.gz
+*.whl
+
+# Playwright browsers (users install with playwright install)
+ms-playwright/
+
+# Development and Session Notes
+DEBUGGING_*.md
+SESSION_*.md
+FIXES_ROUND_*.md
+ROUND_*.md
+*_SUMMARY.md
+IMPLEMENTATION_*.md
+INTEGRATION_*.md
+MCP_FIXES_*.md
+MCP_INTEGRATION_*.md
+MCP_TOOL_*.md
+MASTER_IMPLEMENTATION_PLAN.md
+TEST_RESULTS.md
+FINAL_TEST_PROMPT.md
+OPUS_TEST_PROMPT.md
+User_Prompts.md
+CHECK_CODE_VERSION.md
+RESTART_NEEDED.md
+REAL_ROOT_CAUSE.md
+*_FINDINGS.md
+*_ANALYSIS.md
+CODEBASE_ANALYSIS_*.md
+VERIFIED_WORKING_CHARACTERS.md
+LIVE_CHARACTER_TEST_CASES.md
+REAL_CHARACTER_TEST_SUITE.md
+COMPREHENSIVE_TEST_SUITE.md
+CLAUDE_DESKTOP_TEST_CASES_DUMMY_DATA_DO_NOT_USE.md
+START_HERE.md
+NEXT_STEPS.md
+CURRENT_STATUS.md
+analysis_output.txt
+POE_NINJA_EXTRACTION_EXAMPLE.txt
+SIMPLE_*.txt
+*.json.bak
+*_analysis.json
+*_debug.html
+character_data_*.json
+test_results_*.json
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Web frontend build artifacts (if applicable)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+
+# Alembic (keep migrations, ignore versions cache)
+alembic.ini.bak
+
+# Character analysis outputs
+*_analysis.md
+data/*_analysis.md
+
+# External projects/folders (not part of this repo)
+awesome-poe-2/
+Exile-UI/
+PathOfBuilding-*/
+poe2scout/
+poe2scount/
+poe2-log-viewer/
+
+# Windows batch files (project-specific cleanup scripts)
+*.bat
+*.ps1
+
+# Misc
+nul

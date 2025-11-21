@@ -1,0 +1,1541 @@
+{
+  "metadata": {
+    "database_version": "1.0",
+    "game_version": "Path of Exile 2 Early Access 0.2.0-0.3.0",
+    "last_updated": "2025-10-23",
+    "total_spells": 45,
+    "note": "Data collected from poe2db.tw and other official sources. Level 1 and Level 20 stats provided where available."
+  },
+
+  "fire_spells": {
+    "fireball": {
+      "name": "Fireball",
+      "element": "fire",
+      "tier": 1,
+      "tags": ["spell", "aoe", "projectile", "fire"],
+      "level_1": {
+        "damage_min": 8,
+        "damage_max": 12,
+        "cast_time": 1.2,
+        "crit_chance": 7.0,
+        "mana_cost": 10,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 224,
+        "damage_max": 336,
+        "cast_time": 1.2,
+        "crit_chance": 7.0,
+        "mana_cost": 104,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "projectile_speed": 104,
+        "explosion_radius": 1.7,
+        "fire_infusion_projectiles": 12,
+        "fire_infusion_damage_per_projectile": "8-12 at level 1, 224-336 at level 20"
+      },
+      "quality_bonus": "+(0-10)% chance to fire 2 additional Projectiles"
+    },
+
+    "flame_wall": {
+      "name": "Flame Wall",
+      "element": "fire",
+      "tier": 1,
+      "tags": ["spell", "aoe", "fire", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "wall_dps": 1.8,
+        "cast_time": 1.0,
+        "crit_chance": 5.0,
+        "mana_cost": 10,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "wall_dps": 59.6,
+        "cast_time": 1.0,
+        "crit_chance": 5.0,
+        "mana_cost": 111,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "duration": "4.5-6.4 seconds",
+        "max_walls": 3,
+        "ignite_as_damage": "5-8 at level 1, 181-271 at level 20",
+        "projectile_added_fire": "2-3 at level 1, 27-41 at level 20",
+        "range": 15
+      },
+      "quality_bonus": "+20% more Flammability magnitude at max quality"
+    },
+
+    "fire_trap": {
+      "name": "Fire Trap",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "duration", "damage", "aoe", "fire"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "type": "trap",
+        "explosion": "on trigger",
+        "burning_ground": "leaves burning ground",
+        "note": "Detailed numerical stats not available in source"
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "incinerate": {
+      "name": "Incinerate",
+      "element": "fire",
+      "tier": 1,
+      "tags": ["spell", "fire", "channeling"],
+      "level_1": {
+        "ignite_damage_min": 12,
+        "ignite_damage_max": 18,
+        "cast_time": 0.25,
+        "crit_chance": 6.0,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "ignite_damage_min": 414,
+        "ignite_damage_max": 622,
+        "cast_time": 0.25,
+        "crit_chance": 6.0,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_stages": 12,
+        "stage_gain_rate": "0.25 seconds per stage",
+        "damage_per_stage": "30% more",
+        "cone_length": 5.8,
+        "fuel_generation": "5-10ms per mana spent",
+        "max_fuel": "10 seconds",
+        "ignite_duration_modifier": "-50%",
+        "ignited_ground_duration": 4
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "flameblast": {
+      "name": "Flameblast",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "aoe", "fire", "channeling"],
+      "level_1": {
+        "damage_min": 7,
+        "damage_max": 11,
+        "cast_time": 0.25,
+        "crit_chance": 8.0,
+        "mana_cost_per_second": 5.62,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 244,
+        "damage_max": 367,
+        "cast_time": 0.25,
+        "crit_chance": 8.0,
+        "mana_cost_per_second": 57.5,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_stages": 10,
+        "damage_per_stage": "75% more",
+        "explosion_radius_per_stage": 0.6,
+        "cooldown": 15,
+        "note": "Cast speed affects mana cost"
+      },
+      "quality_bonus": "(0-20)% more Cast Speed"
+    },
+
+    "firestorm": {
+      "name": "Firestorm",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "aoe", "fire", "duration"],
+      "level_1": {
+        "damage_min": 2,
+        "damage_max": 3,
+        "cast_time": 1.4,
+        "crit_chance": 7.0,
+        "mana_cost": 14,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 56,
+        "damage_max": 83,
+        "cast_time": 1.4,
+        "crit_chance": 7.0,
+        "mana_cost": 147,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "duration": 6,
+        "impact_frequency": 0.2,
+        "impact_radius": 1.0,
+        "storm_radius": 2.8,
+        "fire_infusion_storm_radius": 4.6,
+        "fire_infusion_frequency_bonus": "200% more",
+        "max_storms": 1
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "ember_fusillade": {
+      "name": "Ember Fusillade",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "projectile", "fire"],
+      "level_1": {
+        "damage_min": 7,
+        "damage_max": 10,
+        "cast_time": 0.4,
+        "crit_chance": 7.0,
+        "mana_cost": 3,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 195,
+        "damage_max": 293,
+        "cast_time": 0.4,
+        "crit_chance": 7.0,
+        "mana_cost": 37,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_embers": "6-10",
+        "hover_duration": 1.3,
+        "projectile_speed": 300,
+        "damage_bonus_per_ember": "5% more per previously fired ember",
+        "explosion_radius": 0.9,
+        "lightning_infusion_chains": 4
+      },
+      "quality_bonus": "+2% damage per previous ember at max quality"
+    },
+
+    "rolling_magma": {
+      "name": "Rolling Magma",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "projectile", "fire", "aoe"],
+      "level_1": {
+        "damage_min": 9,
+        "damage_max": 12,
+        "cast_time": 0.7,
+        "crit_chance": 7.0,
+        "mana_cost": 5,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 238,
+        "damage_max": 357,
+        "cast_time": 0.7,
+        "crit_chance": 7.0,
+        "mana_cost": 54,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "chains": "2-3",
+        "impact_radius": "1.4-1.8 metres",
+        "flame_wall_interaction": "refreshes chains when passing through Flame Wall"
+      },
+      "quality_bonus": "(0-10)% more Damage with Hits for each time this Skill has Chained"
+    }
+  },
+
+  "cold_spells": {
+    "frostbolt": {
+      "name": "Frostbolt",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "projectile", "aoe", "cold"],
+      "level_1": {
+        "projectile_damage_min": 5,
+        "projectile_damage_max": 8,
+        "explosion_damage_min": 9,
+        "explosion_damage_max": 13,
+        "cast_time": 0.8,
+        "crit_chance": 12.0,
+        "mana_cost": 5,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "projectile_damage_min": 144,
+        "projectile_damage_max": 216,
+        "explosion_damage_min": 230,
+        "explosion_damage_max": 344,
+        "cast_time": 0.8,
+        "crit_chance": 12.0,
+        "mana_cost": 59,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "projectile_speed": 28,
+        "pierces": "all targets",
+        "explosion_radius": 2.4,
+        "chill_effectiveness": "100-195% more"
+      },
+      "quality_bonus": "Up to 20% increased projectile damage after piercing"
+    },
+
+    "ice_nova": {
+      "name": "Ice Nova",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "aoe", "cold"],
+      "level_1": {
+        "damage_min": 13,
+        "damage_max": 20,
+        "cast_time": 1.0,
+        "crit_chance": 12.0,
+        "mana_cost": 7,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 394,
+        "damage_max": 591,
+        "cast_time": 1.0,
+        "crit_chance": 12.0,
+        "mana_cost": 74,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "nova_radius": 3.2,
+        "knockback": "based on proximity",
+        "chill_magnitude": "100% more",
+        "freeze_buildup": "100% more",
+        "cold_infusion_ground_duration": 8,
+        "frostbolt_interaction": "can originate from Frostbolt projectiles"
+      },
+      "quality_bonus": "Up to 20% more damage against chilled enemies"
+    },
+
+    "freezing_pulse": {
+      "name": "Freezing Pulse",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "projectile", "cold"],
+      "level_1": {
+        "damage_min": 16,
+        "damage_max": 24,
+        "cast_time": 0.65,
+        "crit_chance": 6.0,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.65,
+        "crit_chance": 6.0,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "pierces": "all targets",
+        "damage_fade": "decreases with distance",
+        "freeze_fade": "decreases with distance"
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "glacial_cascade": {
+      "name": "Glacial Cascade",
+      "element": "cold",
+      "tier": 1,
+      "tags": ["attack", "melee", "aoe", "cold"],
+      "note": "This is an ATTACK skill, not a spell",
+      "level_1": {
+        "attack_damage_percent": 40,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 9,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "attack_damage_percent": 125,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 63,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "physical_to_cold_conversion": 60,
+        "num_bursts": 8,
+        "burst_radius": 0.6,
+        "wave_length": 4.8,
+        "final_spike_damage": "120-374%",
+        "cannot_freeze": true,
+        "weapon_requirement": "Quarterstaves"
+      },
+      "quality_bonus": "(0-15)% of Physical damage as Cold Damage"
+    },
+
+    "frost_bomb": {
+      "name": "Frost Bomb",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "aoe", "cold", "duration"],
+      "level_1": {
+        "damage_min": 7,
+        "damage_max": 11,
+        "cast_time": 0.8,
+        "crit_chance": 13.0,
+        "mana_cost": 9,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 238,
+        "damage_max": 358,
+        "cast_time": 0.8,
+        "crit_chance": 13.0,
+        "mana_cost": 99,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "detonation_time": 4,
+        "orb_duration": 3,
+        "cooldown": 6.0,
+        "radius": "2.4-3.1 metres",
+        "elemental_exposure": "20% initial, 2% per pulse, max 50%",
+        "exposure_duration": 8,
+        "chill_effectiveness": "300% more",
+        "max_bombs": 1
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "cold_snap": {
+      "name": "Cold Snap",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "aoe", "cold", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "cooldown": "can bypass with Frenzy Charge",
+        "chilled_ground": "creates expanding chilled ground",
+        "cold_dot": "applies cold damage over time",
+        "note": "Specific numerical values not available in source"
+      },
+      "quality_bonus": "Unknown"
+    },
+
+    "comet": {
+      "name": "Comet",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "aoe", "cold"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 1.0,
+        "crit_chance": 13.0,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 553,
+        "damage_max": 829,
+        "cast_time": 1.0,
+        "crit_chance": 13.0,
+        "mana_cost": 173,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "impact_radius": 2.8,
+        "backflip": "when targeting close",
+        "fire_infusion_radius": 3.4,
+        "fire_infusion_damage": "16-24 at level 1, 553-829 at level 20"
+      },
+      "quality_bonus": "(0-10)% chance to repeat"
+    }
+  },
+
+  "lightning_spells": {
+    "arc": {
+      "name": "Arc",
+      "element": "lightning",
+      "tier": 5,
+      "tags": ["spell", "projectile", "lightning", "chaining"],
+      "level_1": {
+        "damage_min": 1,
+        "damage_max": 13,
+        "cast_time": 1.1,
+        "crit_chance": 9.0,
+        "mana_cost": 8,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 20,
+        "damage_max": 386,
+        "cast_time": 1.1,
+        "crit_chance": 9.0,
+        "mana_cost": 81,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "chains": "5-9",
+        "lightning_infusion_chains": "+6",
+        "lightning_infusion_damage": "200% more",
+        "projectile_speed": 425,
+        "shock_magnitude": "50% more"
+      },
+      "quality_bonus": "Chains increase by (0-2)"
+    },
+
+    "spark": {
+      "name": "Spark",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "projectile", "lightning"],
+      "level_1": {
+        "damage_min": 1,
+        "damage_max": 10,
+        "cast_time": 0.7,
+        "crit_chance": 9.0,
+        "mana_cost": 5,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 11,
+        "damage_max": 216,
+        "cast_time": 0.7,
+        "crit_chance": 9.0,
+        "mana_cost": 56,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "base_projectiles": "4-9",
+        "cold_infusion_projectiles": "12-16",
+        "projectile_duration": 2,
+        "hit_cooldown": 0.66,
+        "projectile_speed": 100,
+        "cold_infusion_crit": "11%",
+        "cold_infusion_pattern": "fired in circle"
+      },
+      "quality_bonus": "(0-30)% increased Projectile Speed"
+    },
+
+    "orb_of_storms": {
+      "name": "Orb of Storms",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "aoe", "lightning", "duration"],
+      "level_1": {
+        "damage_min": 1,
+        "damage_max": 8,
+        "cast_time": 0.8,
+        "crit_chance": null,
+        "mana_cost": 12,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 14,
+        "damage_max": 260,
+        "cast_time": 0.8,
+        "crit_chance": null,
+        "mana_cost": 129,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "duration": 12,
+        "firing_frequency": 4,
+        "trigger_on_cast": "fires when you cast near orb",
+        "max_bolts": 6,
+        "chains": "3-5",
+        "orb_radius": 3.6,
+        "max_orbs": 1,
+        "remnant": "leaves Lightning Infusion"
+      },
+      "quality_bonus": "Up to +3 chains"
+    },
+
+    "lightning_conduit": {
+      "name": "Lightning Conduit",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "aoe", "lightning"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": 17,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 189,
+        "damage_max": 568,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": 184,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "cooldown": 8,
+        "cone_length": 10,
+        "shock_damage_bonus": "20% more per 5% Shock Effect",
+        "consumes_shock": true,
+        "additional_bolts": "1-4 if Shock consumed",
+        "backflip_range": 30
+      },
+      "quality_bonus": "(0-20)% chance to reapply Shock when consumed"
+    },
+
+    "ball_lightning": {
+      "name": "Ball Lightning",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "projectile", "lightning", "aoe"],
+      "level_1": {
+        "damage_min": 1,
+        "damage_max": 3,
+        "cast_time": 1.0,
+        "crit_chance": 9.0,
+        "mana_cost": 9,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 4,
+        "damage_max": 70,
+        "cast_time": 1.0,
+        "crit_chance": 9.0,
+        "mana_cost": 96,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "hit_frequency": 0.2,
+        "beam_range": 1.8,
+        "projectile_speed": 40,
+        "shock_chance": "750% more",
+        "fire_infusion_explosion_radius": 2.6,
+        "fire_infusion_ignited_ground_duration": 4,
+        "fire_infusion_ignited_ground_frequency": 0.35
+      },
+      "quality_bonus": "(0-0.4)m increased Beam range"
+    },
+
+    "storm_wave": {
+      "name": "Storm Wave",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["attack", "aoe", "lightning"],
+      "note": "This is an ATTACK skill, not a spell",
+      "level_1": {
+        "attack_damage_percent": 110,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 8,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "attack_damage_percent": 343,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 54,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "physical_to_lightning_conversion": 80,
+        "wave_length": 8,
+        "wave_width": "1-2 metres",
+        "shock_chance": "100% more",
+        "weapon_requirement": "Quarterstaves"
+      },
+      "quality_bonus": "Wave width +(0-1) metre"
+    },
+
+    "lightning_bolt": {
+      "name": "Lightning Bolt",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "aoe", "lightning"],
+      "level_1": {
+        "damage_min": 3,
+        "damage_max": 13,
+        "cast_time": 0.85,
+        "crit_chance": 10.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 30,
+        "damage_max": 565,
+        "cast_time": 0.85,
+        "crit_chance": 10.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "impact_radius": 0.8,
+        "shock_chance": "200% more"
+      },
+      "quality_bonus": "Up to 40% increased Shock chance"
+    },
+
+    "lightning_warp": {
+      "name": "Lightning Warp",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "aoe", "lightning", "duration"],
+      "level_1": {
+        "damage_min": 2,
+        "damage_max": 30,
+        "cast_time": 0.5,
+        "crit_chance": 11.0,
+        "mana_cost": 8,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 54,
+        "damage_max": 1032,
+        "cast_time": 0.5,
+        "crit_chance": 11.0,
+        "mana_cost": 83,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "explosion_radius": 4,
+        "shocked_ground_radius": 4,
+        "shocked_ground_duration": 10,
+        "target_requirement": "cullable enemies or Ball Lightning projectiles",
+        "remnant": "creates Lightning Infusion"
+      },
+      "quality_bonus": "Up to 10% increased Shock magnitude"
+    }
+  },
+
+  "chaos_spells": {
+    "essence_drain": {
+      "name": "Essence Drain",
+      "element": "chaos",
+      "tier": null,
+      "tags": ["spell", "projectile", "chaos", "dot"],
+      "level_1": {
+        "hit_damage_min": 5,
+        "hit_damage_max": 9,
+        "dot_dps": 9.2,
+        "cast_time": 0.8,
+        "crit_chance": 7.0,
+        "mana_cost": 5,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "hit_damage_min": 138,
+        "hit_damage_max": 257,
+        "dot_dps": 443.5,
+        "cast_time": 0.8,
+        "crit_chance": 7.0,
+        "mana_cost": 57,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "debuff_duration": 4,
+        "projectile_speed": 112.5
+      },
+      "quality_bonus": "+(0-1) second to Debuff duration"
+    },
+
+    "contagion": {
+      "name": "Contagion",
+      "element": "chaos",
+      "tier": null,
+      "tags": ["spell", "aoe", "chaos", "dot", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "dot_dps": 2,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": 8,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "dot_dps": 93.9,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": 83,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "spread_radius": 1.7,
+        "debuff_duration": 5,
+        "spread_damage_bonus": "100% more per spread, max 300%",
+        "spread_on_death": "refreshes duration",
+        "cast_time": 1.0
+      },
+      "quality_bonus": "Target (0-2) additional Enemies when Cast"
+    },
+
+    "chaos_bolt": {
+      "name": "Chaos Bolt",
+      "element": "chaos",
+      "tier": null,
+      "tags": ["spell", "projectile", "chaos"],
+      "level_1": {
+        "damage_min": 5,
+        "damage_max": 9,
+        "cast_time": 0.75,
+        "crit_chance": 7.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 200,
+        "damage_max": 371,
+        "cast_time": 0.75,
+        "crit_chance": 7.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "projectile_speed": 380,
+        "withered_stacks": "1-5",
+        "withered_duration": 4
+      },
+      "quality_bonus": "Up to 40% increased Projectile Speed"
+    },
+
+    "profane_ritual": {
+      "name": "Profane Ritual",
+      "element": "chaos",
+      "tier": null,
+      "tags": ["spell", "aoe", "chaos", "dot", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "dot_dps": 13.5,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 6,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "dot_dps": 652.2,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 65,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "duration": 2,
+        "radius": 2.2,
+        "max_rituals": 5,
+        "grants_power_charge": "on completion",
+        "spell_damage_applies_to_dot": true
+      },
+      "quality_bonus": "20% chance to not destroy consumed corpses"
+    }
+  },
+
+  "physical_spells": {
+    "detonate_dead": {
+      "name": "Detonate Dead",
+      "element": "physical/fire",
+      "tier": 7,
+      "tags": ["spell", "aoe", "physical", "fire", "detonator"],
+      "level_1": {
+        "fire_damage_min": 19,
+        "fire_damage_max": 28,
+        "corpse_life_damage_percent": 5,
+        "cast_time": 0.8,
+        "crit_chance": 8.0,
+        "mana_cost": 9,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "fire_damage_min": 145,
+        "fire_damage_max": 218,
+        "corpse_life_damage_percent": 10.7,
+        "cast_time": 0.8,
+        "crit_chance": 8.0,
+        "mana_cost": 99,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "explosion_radius": 2.6
+      },
+      "quality_bonus": "Up to +0.4 metres explosion radius"
+    },
+
+    "unearth": {
+      "name": "Unearth",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "projectile", "physical", "minion"],
+      "level_1": {
+        "damage_min": 4,
+        "damage_max": 6,
+        "cast_time": 0.95,
+        "crit_chance": 15.0,
+        "mana_cost": 7,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 117,
+        "damage_max": 176,
+        "cast_time": 0.95,
+        "crit_chance": 15.0,
+        "mana_cost": 76,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_bone_constructs": "8-20",
+        "construct_duration": 15,
+        "cone_length": 6
+      },
+      "quality_bonus": "Up to +5 seconds duration and +50% minion movement speed"
+    },
+
+    "bonestorm": {
+      "name": "Bonestorm",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "aoe", "projectile", "physical", "channeling"],
+      "level_1": {
+        "projectile_damage_min": 4,
+        "projectile_damage_max": 7,
+        "explosion_damage_min": 3,
+        "explosion_damage_max": 5,
+        "cast_time": 0.12,
+        "crit_chance": 15.0,
+        "mana_cost_per_second": 5.92,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "projectile_damage_min": 116,
+        "projectile_damage_max": 175,
+        "explosion_damage_min": 89,
+        "explosion_damage_max": 134,
+        "cast_time": 0.12,
+        "crit_chance": 15.0,
+        "mana_cost_per_second": 60.57,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_projectiles": 20,
+        "projectile_speed": 270,
+        "impale_magnitude": "200% more",
+        "power_charge_aoe_bonus": "40% more per charge",
+        "power_charge_explosion_radius": "+0.7m per charge",
+        "min_channel_time": 0.3
+      },
+      "quality_bonus": "(0-10)% additional cast speed"
+    },
+
+    "bone_offering": {
+      "name": "Bone Offering",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "offering", "minion", "buff", "aoe", "physical", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 25,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 110,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "duration": 8,
+        "max_spikes": 1,
+        "minion_damage_reduction": "15-25%",
+        "absorbs_hit": "over 25% of minion max life"
+      },
+      "quality_bonus": "Shielded Minions take (0-30)% less Damage for 1 second after Shield is lost"
+    },
+
+    "bone_cage": {
+      "name": "Bone Cage",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "aoe", "physical"],
+      "level_1": {
+        "damage_min": 10,
+        "damage_max": 15,
+        "cast_time": 1.0,
+        "crit_chance": 15.0,
+        "mana_cost": 7,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 347,
+        "damage_max": 521,
+        "cast_time": 1.0,
+        "crit_chance": 15.0,
+        "mana_cost": 80,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "cage_duration": 1.6,
+        "cage_radius": 1.8,
+        "explosion_radius": 1.0,
+        "pin_damage_bonus": "50% more",
+        "max_cages": 1
+      },
+      "quality_bonus": "Up to +50% Pin damage bonus"
+    },
+
+    "bone_blast": {
+      "name": "Bone Blast",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "aoe", "physical", "duration"],
+      "level_1": {
+        "damage_min": 5,
+        "damage_max": 8,
+        "cast_time": 0.75,
+        "crit_chance": 14.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": 226,
+        "damage_max": 339,
+        "cast_time": 0.75,
+        "crit_chance": 14.0,
+        "mana_cost": 0,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "ritual_radius": 1.0,
+        "bleed_chance": 40
+      },
+      "quality_bonus": "+(0-0.4) metres radius"
+    },
+
+    "soul_offering": {
+      "name": "Soul Offering",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "offering", "minion", "buff", "physical"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 32,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 141,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "spell_damage_bonus": "20-77%",
+        "duration": 4,
+        "max_spikes": 1,
+        "does_not_affect_minions": true
+      },
+      "quality_bonus": "Up to +1 second duration"
+    }
+  },
+
+  "minion_spells": {
+    "raise_zombie": {
+      "name": "Raise Zombie",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "minion", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 10,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": null,
+        "crit_chance": null,
+        "mana_cost": 102,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_zombies": 10,
+        "duration": 20,
+        "empowered_damage_reduction": 30,
+        "empowered_damage": "100% more",
+        "empowered_movement": "25% increased",
+        "consumes": "corpse or Power Charge",
+        "minion_life_at_68": 5430,
+        "minion_damage_at_68": 175
+      },
+      "quality_bonus": "(0-25)% increased effect of Empowerment"
+    },
+
+    "summon_skeletons": {
+      "name": "Summon Skeletons",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "minion", "duration"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 1.0,
+        "crit_chance": null,
+        "mana_cost": null,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "skeletons_per_cast": 2,
+        "max_skeletons": 8,
+        "duration": 30,
+        "elemental_damage_modifier": "-50%"
+      },
+      "quality_bonus": "Unknown"
+    }
+  },
+
+  "meta_and_buff_spells": {
+    "sigil_of_power": {
+      "name": "Sigil of Power",
+      "element": "meta",
+      "tier": null,
+      "tags": ["spell", "aoe", "buff"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.6,
+        "crit_chance": null,
+        "mana_cost": 0,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.6,
+        "crit_chance": null,
+        "mana_cost": 0,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "cooldown": 10,
+        "sigil_radius": 3.0,
+        "duration": "10-11.9 seconds",
+        "max_stages": 4,
+        "stage_requirement": "50% of max mana spent",
+        "stage_interval": 1,
+        "spell_damage_per_stage": "10-14%"
+      },
+      "quality_bonus": "Up to +0.8 metres radius"
+    },
+
+    "mana_tempest": {
+      "name": "Mana Tempest",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "buff", "lightning", "empowerment"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.6,
+        "crit_chance": null,
+        "mana_cost_per_second": "1% base",
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.6,
+        "crit_chance": null,
+        "mana_cost_per_second": "1% base + scaling",
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "cooldown": 1.0,
+        "lightning_conversion": "40-78%",
+        "split_targets": "1-3 additional",
+        "mana_scaling": "30% of Mana/Life spent added to cost per second",
+        "radius": 26
+      },
+      "quality_bonus": "(0-2) seconds linger after leaving"
+    },
+
+    "arctic_armour": {
+      "name": "Arctic Armour",
+      "element": "cold",
+      "tier": 4,
+      "tags": ["spell", "buff", "persistent", "cold", "staged"],
+      "level_1": {
+        "damage_per_stage_min": 7,
+        "damage_per_stage_max": 10,
+        "cast_time": 0,
+        "crit_chance": 11.0,
+        "spirit_reservation": 30,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "damage_per_stage_min": 203,
+        "damage_per_stage_max": 304,
+        "cast_time": 0,
+        "crit_chance": 11.0,
+        "spirit_reservation": 30,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "max_stages": "2-5",
+        "seconds_per_stage": "0.73-1.25",
+        "cooldown": 0.25,
+        "freeze_immunity": true,
+        "damage_reduction_when_stationary": "scales with stages"
+      },
+      "quality_bonus": "Unknown"
+    }
+  },
+
+  "curse_spells": {
+    "temporal_chains": {
+      "name": "Temporal Chains",
+      "element": "meta",
+      "tier": null,
+      "tags": ["spell", "aoe", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "slow_effect": "40-59%",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5,
+        "effect_expiration_slow": "25%"
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "enfeeble": {
+      "name": "Enfeeble",
+      "element": "meta",
+      "tier": null,
+      "tags": ["spell", "aoe", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "damage_reduction_non_unique": "20-26% less",
+        "damage_reduction_unique": "10-16% less",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "vulnerability": {
+      "name": "Vulnerability",
+      "element": "physical",
+      "tier": null,
+      "tags": ["spell", "aoe", "physical", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "armour_reduction": "16-19210",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "elemental_weakness": {
+      "name": "Elemental Weakness",
+      "element": "meta",
+      "tier": null,
+      "tags": ["spell", "aoe", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "resistance_reduction": "-40% to -74%",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5,
+        "level_cap": "0-20 (scales with gem level)"
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "despair": {
+      "name": "Despair",
+      "element": "chaos",
+      "tier": null,
+      "tags": ["spell", "aoe", "chaos", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "chaos_resistance_reduction": "-49% to -35%",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "conductivity": {
+      "name": "Conductivity",
+      "element": "lightning",
+      "tier": null,
+      "tags": ["spell", "aoe", "lightning", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "lightning_resistance_reduction": "-23% to -29%",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    },
+
+    "flammability": {
+      "name": "Flammability",
+      "element": "fire",
+      "tier": null,
+      "tags": ["spell", "aoe", "fire", "duration", "curse"],
+      "level_1": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 41,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "damage_min": null,
+        "damage_max": null,
+        "cast_time": 0.7,
+        "crit_chance": null,
+        "mana_cost": 178,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "fire_resistance_reduction": "-23% to -29%",
+        "duration": "6-7.4 seconds",
+        "radius": "1.5-3.1 metres",
+        "application_delay": 1.5,
+        "ignite_chance_formula": "1% per 5% Ailment Threshold as Fire damage"
+      },
+      "quality_bonus": "(0-10)% increased Curse Magnitudes"
+    }
+  },
+
+  "herald_and_aura_spells": {
+    "herald_of_ice": {
+      "name": "Herald of Ice",
+      "element": "cold",
+      "tier": null,
+      "tags": ["spell", "buff", "herald", "cold"],
+      "note": "This is a buff skill that triggers on shatter, not a direct spell",
+      "level_1": {
+        "explosion_damage_percent": 70,
+        "cast_time": 0,
+        "crit_chance": null,
+        "spirit_reservation": 30,
+        "damage_effectiveness": null
+      },
+      "level_20": {
+        "explosion_damage_percent": 286,
+        "cast_time": 0,
+        "crit_chance": null,
+        "spirit_reservation": 30,
+        "damage_effectiveness": null
+      },
+      "mechanics": {
+        "trigger": "on shatter with non-Herald Attack Hit",
+        "explosion_radius": 1.6,
+        "physical_to_cold_conversion": 100,
+        "cannot_evade": true,
+        "cannot_freeze": true,
+        "weapon_requirement": "any martial weapon"
+      },
+      "quality_bonus": "Up to +0.4 metres explosion radius"
+    }
+  },
+
+  "elemental_expression": {
+    "elemental_expression": {
+      "name": "Elemental Expression",
+      "element": "fire/cold/lightning",
+      "tier": null,
+      "tags": ["spell", "trigger", "fire", "cold", "lightning"],
+      "level_1": {
+        "fire_damage_min": 8,
+        "fire_damage_max": 8,
+        "lightning_damage_min": 3,
+        "lightning_damage_max": 16,
+        "cold_damage_min": 7,
+        "cold_damage_max": 10,
+        "cast_time": 0,
+        "crit_chance_fire": 7.0,
+        "crit_chance_lightning": 9.0,
+        "crit_chance_cold": 12.0,
+        "mana_cost": 3,
+        "damage_effectiveness": 100
+      },
+      "level_20": {
+        "fire_damage_min": 244,
+        "fire_damage_max": 244,
+        "lightning_damage_min": 84,
+        "lightning_damage_max": 477,
+        "cold_damage_min": 200,
+        "cold_damage_max": 300,
+        "cast_time": 0,
+        "crit_chance_fire": 7.0,
+        "crit_chance_lightning": 9.0,
+        "crit_chance_cold": 12.0,
+        "mana_cost": 39,
+        "damage_effectiveness": 100
+      },
+      "mechanics": {
+        "trigger": "melee critical hit",
+        "cooldown": 0.25,
+        "fire_explosion_radius": 3.6,
+        "lightning_chains": 7,
+        "cold_projectiles": 3,
+        "cold_pierces": true,
+        "attribute_scaling": "probability based on Str/Dex/Int"
+      },
+      "quality_bonus": "(0-20)% increased Cooldown Recovery Rate"
+    }
+  }
+}
