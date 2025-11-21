@@ -24,6 +24,7 @@ from enum import Enum
 # Import calculator modules
 from ..calculator.defense_calculator import DefenseCalculator
 from ..calculator.ehp_calculator import EHPCalculator, DefensiveStats, ThreatProfile
+from ..calculator.damage_calculator import DamageCalculator, DamageRange, Modifier, ModifierType, CriticalStrikeConfig
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +129,8 @@ class GearEvaluator:
         """Initialize gear evaluator with calculator modules."""
         self.defense_calc = DefenseCalculator()
         self.ehp_calc = EHPCalculator()
-        # Note: ResourceCalculator and DamageCalculator require parameters,
-        # so they're created on-demand when needed
+        self.damage_calc = DamageCalculator()
+        # Note: ResourceCalculator requires parameters, so it's created on-demand when needed
 
         logger.info("GearEvaluator initialized")
 
@@ -447,27 +448,86 @@ class GearEvaluator:
         Returns:
             Dictionary with {absolute, percent} DPS changes
         """
-        # If no skill config, cannot calculate DPS
-        if not skill_config:
+        # If no skill config, we can still calculate relative DPS using gear stats
+        # We use normalized base damage to calculate the DPS multiplier
+        try:
+            current_dps = self._calculate_relative_dps(current_stats)
+            upgrade_dps = self._calculate_relative_dps(upgrade_stats)
+
+            absolute_change = upgrade_dps - current_dps
+            percent_change = (
+                ((upgrade_dps / current_dps) - 1.0) * 100.0
+                if current_dps > 0 else 0.0
+            )
+
+            return {
+                'absolute': absolute_change,
+                'percent': percent_change,
+                'available': True,
+                'current_dps': current_dps,
+                'upgrade_dps': upgrade_dps
+            }
+        except Exception as e:
+            logger.warning(f"Error calculating DPS changes: {e}")
             return {
                 'absolute': 0.0,
                 'percent': 0.0,
-                'available': False
+                'available': False,
+                'error': str(e)
             }
 
-        # TODO: Implement full DPS calculation with damage_calculator
-        # For now, return placeholder
-        # This would involve:
-        # 1. Calculate DPS with current_stats
-        # 2. Calculate DPS with upgrade_stats
-        # 3. Return difference
+    def _calculate_relative_dps(self, stats: Dict[str, Any]) -> float:
+        """
+        Calculate relative DPS using normalized base damage.
 
-        return {
-            'absolute': 0.0,
-            'percent': 0.0,
-            'available': False,
-            'note': 'DPS calculation requires full skill configuration'
-        }
+        Uses a normalized base damage of 100 to calculate the DPS multiplier
+        that this set of stats would provide. This allows for relative comparison
+        without needing exact skill data.
+
+        Args:
+            stats: Gear stats dictionary
+
+        Returns:
+            Relative DPS value (higher is better)
+        """
+        # Use normalized base damage for comparison
+        base_damage = DamageRange(min_damage=100.0, max_damage=100.0)
+
+        # Extract modifiers from stats
+        increased_damage = stats.get('increased_damage', 0.0)
+        more_damage = stats.get('more_damage', 0.0)
+        added_flat = stats.get('added_flat_damage', 0.0)
+
+        # Build modifier lists
+        increased_mods = (
+            [Modifier(value=increased_damage, modifier_type=ModifierType.INCREASED, source="Gear")]
+            if increased_damage != 0 else []
+        )
+        more_mods = (
+            [Modifier(value=more_damage, modifier_type=ModifierType.MORE, source="Gear")]
+            if more_damage != 0 else []
+        )
+
+        # Calculate modified damage
+        modified_damage = self.damage_calc.calculate_final_damage(
+            base_damage,
+            increased_mods,
+            more_mods
+        )
+
+        # Add flat damage
+        avg_damage = modified_damage.average() + added_flat
+
+        # Apply critical strike multiplier
+        crit_config = CriticalStrikeConfig(
+            crit_chance=min(stats.get('crit_chance', 0.0), 100.0),
+            crit_multiplier=stats.get('crit_multi', 100.0)
+        )
+        crit_multiplier = crit_config.effective_damage_multiplier()
+
+        # Final DPS = avg_damage × crit_multiplier × attack_speed
+        # Using 1.0 attack speed as baseline
+        return avg_damage * crit_multiplier * 1.0
 
     def _check_upgrade_warnings(
         self,

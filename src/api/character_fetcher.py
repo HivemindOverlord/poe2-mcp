@@ -60,6 +60,9 @@ class CharacterFetcher:
         # Initialize poe.ninja API client
         self.ninja_api = PoeNinjaAPI(rate_limiter=self.rate_limiter, cache_manager=self.cache_manager)
 
+        # Track last error message for debugging
+        self.last_error_message: str = ""
+
     def _normalize_league_name(self, league: str) -> str:
         """
         Normalize league name for official PoE API
@@ -113,38 +116,52 @@ class CharacterFetcher:
             char_data = await self.ninja_api.get_character(account_name, character_name, league)
             if char_data and char_data.get("level", 0) > 0:
                 logger.info(f"✅ Successfully fetched from poe.ninja API")
+                self.last_error_message = ""  # Clear error on success
                 return char_data
         except Exception as e:
-            logger.warning(f"⚠️ poe.ninja API failed: {e}")
+            self.last_error_message = f"poe.ninja API error: {str(e)}"
+            logger.warning(f"⚠️ {self.last_error_message}")
 
         # Fallback to poe.ninja SSE/model API
         try:
             char_data = await self.get_character_from_poe_ninja(account_name, character_name, league)
             if char_data and char_data.get("level", 0) > 0:
                 logger.info("Successfully fetched from poe.ninja SSE API")
+                self.last_error_message = ""  # Clear error on success
                 return char_data
         except Exception as e:
-            logger.warning(f"poe.ninja SSE API failed: {e}")
+            self.last_error_message = f"poe.ninja SSE API error: {str(e)}"
+            logger.warning(self.last_error_message)
 
         # Fallback to ladder API
         try:
             char_data = await self.get_character_from_ladder(character_name, league)
             if char_data:
                 logger.info("Successfully fetched from ladder API")
+                self.last_error_message = ""  # Clear error on success
                 return char_data
         except Exception as e:
-            logger.warning(f"Ladder API failed: {e}")
+            self.last_error_message = f"Ladder API error: {str(e)}"
+            logger.warning(self.last_error_message)
 
         # Last resort: direct HTML scraping
         try:
             char_data = await self._scrape_character_direct(account_name, character_name)
             if char_data:
                 logger.info("Successfully fetched via direct scraping")
+                self.last_error_message = ""  # Clear error on success
                 return char_data
         except Exception as e:
-            logger.warning(f"Direct scraping failed: {e}")
+            self.last_error_message = f"Direct scraping error: {str(e)}"
+            logger.warning(self.last_error_message)
 
-        logger.error(f"All methods failed to fetch character {character_name}")
+        # All methods exhausted
+        self.last_error_message = (
+            f"Character '{character_name}' not found after trying all sources "
+            f"(account: {account_name}, league: {league}). "
+            f"Verify the character exists and is public."
+        )
+        logger.error(self.last_error_message)
         return None
 
     async def _scrape_character_direct(
@@ -204,6 +221,12 @@ class CharacterFetcher:
                 logger.debug(f"Failed to scrape {url}: {e}")
                 continue
 
+        # All scraping attempts failed
+        self.last_error_message = (
+            f"Could not scrape character data for {character_name} "
+            f"(account: {account_name}) from any URL"
+        )
+        logger.warning(self.last_error_message)
         return None
 
     async def get_character_from_poe_ninja(
@@ -258,18 +281,30 @@ class CharacterFetcher:
                 logger.info(f"Successfully fetched character {character_name} from poe.ninja")
                 return character_data
             else:
-                logger.warning(f"Could not parse character data from poe.ninja for {character_name}")
+                self.last_error_message = (
+                    f"Could not parse character data from poe.ninja for {character_name} "
+                    f"(account: {account_name})"
+                )
+                logger.warning(self.last_error_message)
                 return None
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                logger.warning(f"Character {character_name} not found on poe.ninja")
+                self.last_error_message = (
+                    f"Character {character_name} not found on poe.ninja "
+                    f"(HTTP 404 - account: {account_name})"
+                )
+                logger.warning(self.last_error_message)
             else:
-                logger.error(f"HTTP error fetching character from poe.ninja: {e}")
+                self.last_error_message = (
+                    f"HTTP {e.response.status_code} error fetching character from poe.ninja: {e}"
+                )
+                logger.error(self.last_error_message)
             return None
 
         except Exception as e:
-            logger.error(f"Error fetching character from poe.ninja: {e}")
+            self.last_error_message = f"Unexpected error fetching character from poe.ninja: {e}"
+            logger.error(self.last_error_message)
             return None
 
     async def _parse_poe_ninja_page(
@@ -317,7 +352,8 @@ class CharacterFetcher:
             return await self._fetch_from_poe_ninja_api(account_name, character_name)
 
         except Exception as e:
-            logger.error(f"Error parsing poe.ninja page: {e}")
+            self.last_error_message = f"Error parsing poe.ninja page for {character_name}: {e}"
+            logger.error(self.last_error_message)
             return None
 
     async def _fetch_from_poe_ninja_api(
@@ -359,7 +395,10 @@ class CharacterFetcher:
                             continue
 
                 if not model_id:
-                    logger.warning("Could not extract model ID from events stream")
+                    self.last_error_message = (
+                        f"Could not extract model ID from poe.ninja events stream for {character_name}"
+                    )
+                    logger.warning(self.last_error_message)
                     return None
 
             # Now fetch the character model using the ID
@@ -374,11 +413,15 @@ class CharacterFetcher:
                 logger.info("Successfully fetched character model data")
                 return self._normalize_character_data(model_data, account_name, character_name)
             else:
-                logger.error(f"Model API returned status: {model_response.status_code}")
+                self.last_error_message = (
+                    f"Model API returned HTTP {model_response.status_code} for {character_name}"
+                )
+                logger.error(self.last_error_message)
                 return None
 
         except Exception as e:
-            logger.error(f"Error fetching from poe.ninja API: {e}", exc_info=True)
+            self.last_error_message = f"Error fetching from poe.ninja internal API for {character_name}: {e}"
+            logger.error(self.last_error_message, exc_info=True)
             return None
 
     async def get_character_from_ladder(
@@ -444,11 +487,15 @@ class CharacterFetcher:
 
                         return char_data
 
-            logger.warning(f"Character {character_name} not found in top 1000 of ladder")
+            self.last_error_message = (
+                f"Character {character_name} not found in top 1000 of {api_league} ladder"
+            )
+            logger.warning(self.last_error_message)
             return None
 
         except Exception as e:
-            logger.error(f"Error fetching from ladder API: {e}")
+            self.last_error_message = f"Error fetching from ladder API ({api_league}): {e}"
+            logger.error(self.last_error_message)
             return None
 
     async def get_top_ladder_characters(

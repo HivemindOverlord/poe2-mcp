@@ -52,9 +52,34 @@ class CacheManager:
                         encoding="utf-8",
                         decode_responses=True
                     )
-                    logger.info("Redis cache initialized")
+
+                    # Test the connection with a ping
+                    try:
+                        await self.redis_client.ping()
+                        logger.info("Redis cache initialized and connection verified")
+                    except Exception as ping_error:
+                        logger.warning(
+                            f"Redis client created but connection test failed: {ping_error}. "
+                            f"Disabling Redis cache."
+                        )
+                        # Clean up failed connection
+                        try:
+                            await self.redis_client.close()
+                        except:
+                            pass
+                        self.redis_client = None
+                        self.enable_redis = False
+
+                except ImportError:
+                    logger.warning(
+                        "aioredis module not installed. "
+                        "Install with: pip install aioredis"
+                    )
+                    self.redis_client = None
+                    self.enable_redis = False
                 except Exception as e:
-                    logger.warning(f"Failed to connect to Redis: {e}")
+                    logger.warning(f"Failed to initialize Redis client: {e}")
+                    self.redis_client = None
                     self.enable_redis = False
 
             # Initialize SQLite cache
