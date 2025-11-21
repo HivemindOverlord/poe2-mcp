@@ -81,6 +81,17 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Personal demo/test scripts (keep only proper unit tests)
+analyze_*.py
+test_mcp_*.py
+test_user_*.py
+tests/analyze_*.py
+tests/debug_*.py
+tests/debug_*.js
+tests/debug_*.html
+tests/fetch_*.py
+tests/search_*.py
+
 # Jupyter Notebooks
 .ipynb_checkpoints
 
