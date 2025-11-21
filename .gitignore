@@ -92,6 +92,9 @@ tests/debug_*.html
 tests/fetch_*.py
 tests/search_*.py
 
+# Examples and demonstrations (users can create their own)
+examples/
+
 # Jupyter Notebooks
 .ipynb_checkpoints
 
