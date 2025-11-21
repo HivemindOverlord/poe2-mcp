@@ -79,9 +79,10 @@ jinja2>=3.1.2
 python-multipart>=0.0.6
 
 # Security (REQUIRED)
-cryptography>=41.0.0
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
+# Reserved for future web API authentication
+# Note: Previously included cryptography, python-jose, and passlib
+# Removed due to CVE-2024-23342 (Minerva timing attack on python-ecdsa via python-jose)
+# These dependencies were unused and can be added back when authentication is implemented
 
 # Windows-specific (REQUIRED on Windows)
 pywin32>=306; platform_system == "Windows"
