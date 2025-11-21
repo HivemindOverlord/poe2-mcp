@@ -672,9 +672,11 @@ class TestEdgeCases:
 
         result = self.calc.calculate_ehp(stats, DamageType.FIRE, threat)
 
-        # Should have very high EHP but not infinite
-        assert result.effective_hp > 100000
+        # Fire damage: 50% block + 75% res (capped) = 87.5% mitigation
+        # EHP = 5000 / 0.125 = 40000
+        assert result.effective_hp == pytest.approx(40000, rel=1e-2)
         assert result.effective_hp != float('inf')
+        assert result.resistance_dr <= 0.75  # Resistance capped at 75% for non-90% cap scenarios
 
     def test_negative_resistance(self):
         """Test EHP with negative resistance."""
