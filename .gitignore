@@ -91,9 +91,22 @@ tests/debug_*.js
 tests/debug_*.html
 tests/fetch_*.py
 tests/search_*.py
+tests/test_*_fix.py
+tests/test_new_*.py
+tests/test_*_direct.py
+tests/test_*_simple.py
+tests/test_*_term.py
+tests/test_end_to_end.py
+tests/test_comparison_system.py
+tests/test_comprehensive_*.py
 
 # Examples and demonstrations (users can create their own)
 examples/
+
+# Personal character data files
+character_data*.json
+*_analysis.json
+astrophobic*.json
 
 # Jupyter Notebooks
 .ipynb_checkpoints
