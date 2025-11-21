@@ -434,15 +434,27 @@ class SpiritCalculator:
         return total
 
     def get_quest_spirit(self) -> int:
-        """Get total Spirit from quests."""
+        """Get total Spirit from quest rewards.
+
+        Returns:
+            Total Spirit gained from all quest sources
+        """
         return self.get_spirit_by_source_type(SpiritSourceType.QUEST)
 
     def get_gear_spirit(self) -> int:
-        """Get total Spirit from gear."""
+        """Get total Spirit from equipped gear.
+
+        Returns:
+            Total Spirit gained from all gear sources
+        """
         return self.get_spirit_by_source_type(SpiritSourceType.GEAR)
 
     def get_passive_spirit(self) -> int:
-        """Get total Spirit from passive tree."""
+        """Get total Spirit from passive tree nodes.
+
+        Returns:
+            Total Spirit gained from all passive tree sources
+        """
         return self.get_spirit_by_source_type(SpiritSourceType.PASSIVE_TREE)
 
     # === Reservation Management ===

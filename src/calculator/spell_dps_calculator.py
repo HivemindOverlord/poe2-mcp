@@ -229,9 +229,27 @@ class SpellDPSCalculator:
             }
 
     def _calculate_added_damage(self, spell: SpellStats, char_mods: CharacterModifiers) -> float:
-        """
-        Calculate added damage with damage effectiveness
-        Formula: Added Damage × Damage Effectiveness
+        """Calculate added damage with damage effectiveness applied.
+
+        Sums all sources of added flat damage (fire, cold, lightning, chaos, physical)
+        and multiplies by the spell's damage effectiveness.
+
+        Args:
+            spell: Spell statistics including damage effectiveness
+            char_mods: Character modifiers with added flat damage values
+
+        Returns:
+            Total added damage after applying damage effectiveness
+
+        Formula:
+            (Added Fire + Cold + Lightning + Chaos + Physical) × Damage Effectiveness
+
+        Examples:
+            >>> spell = SpellStats(name="Test", base_damage_min=10, base_damage_max=20, damage_effectiveness=0.8)
+            >>> char_mods = CharacterModifiers(added_fire=50, added_cold=30)
+            >>> calc = SpellDPSCalculator()
+            >>> calc._calculate_added_damage(spell, char_mods)
+            64.0
         """
         total_added = (
             char_mods.added_fire +
@@ -243,9 +261,27 @@ class SpellDPSCalculator:
         return total_added * spell.damage_effectiveness
 
     def _calculate_archmage_bonus(self, max_mana: float, base_damage: float) -> float:
-        """
-        Calculate Archmage extra lightning damage
-        Formula: (Maximum Mana / 100) × 4% × Base Damage
+        """Calculate bonus lightning damage from Archmage support.
+
+        Archmage adds lightning damage based on maximum mana. The bonus scales
+        at 4% of base damage per 100 maximum mana.
+
+        Args:
+            max_mana: Character's maximum mana pool
+            base_damage: Base spell damage before modifiers
+
+        Returns:
+            Additional lightning damage from Archmage, or 0.0 if no mana
+
+        Formula:
+            Archmage Bonus = (Max Mana / 100) × 0.04 × Base Damage
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> calc._calculate_archmage_bonus(2000, 100)
+            80.0
+            >>> calc._calculate_archmage_bonus(0, 100)
+            0.0
         """
         if max_mana <= 0:
             return 0.0
@@ -254,9 +290,26 @@ class SpellDPSCalculator:
         return base_damage * archmage_multiplier
 
     def _calculate_more_multiplier(self, more_multipliers: List[float]) -> float:
-        """
-        Calculate total more multiplier
-        Formula: Product of (1 + More1) × (1 + More2) × ...
+        """Calculate total multiplier from all 'more' damage modifiers.
+
+        'More' modifiers stack multiplicatively, unlike 'increased' modifiers which
+        stack additively. Each modifier is applied sequentially.
+
+        Args:
+            more_multipliers: List of more damage percentages (e.g., [25, 30, 20] for +25%, +30%, +20%)
+
+        Returns:
+            Total multiplicative damage multiplier
+
+        Formula:
+            Total = (1 + More1/100) × (1 + More2/100) × (1 + More3/100) × ...
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> calc._calculate_more_multiplier([25, 30])
+            1.625
+            >>> calc._calculate_more_multiplier([])
+            1.0
         """
         total = 1.0
         for more_percent in more_multipliers:
@@ -264,13 +317,27 @@ class SpellDPSCalculator:
         return total
 
     def _calculate_crit_multiplier(self, added_crit_bonus: float, increased_crit: float) -> float:
-        """
-        Calculate critical strike multiplier (PoE2 system)
-        Formula: 1 + (Base + Added) × (1 + Increased)
+        """Calculate critical strike damage multiplier using PoE2 system.
+
+        In PoE2, critical strikes have a base +100% damage bonus (200% total).
+        The base bonus can be increased through modifiers.
 
         Args:
-            added_crit_bonus: Base +100% + any added flat crit bonus
-            increased_crit: % Increased Critical Damage
+            added_crit_bonus: Base crit damage bonus (default 100 for PoE2) plus any flat additions
+            increased_crit: Percentage of increased critical strike damage
+
+        Returns:
+            Total critical strike damage multiplier
+
+        Formula:
+            Crit Multiplier = 1 + (Added Bonus / 100) × (1 + Increased / 100)
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> calc._calculate_crit_multiplier(100, 0)
+            2.0
+            >>> calc._calculate_crit_multiplier(100, 50)
+            2.5
         """
         # PoE2 base is +100% (200% total damage on crit)
         total_bonus = added_crit_bonus / 100.0  # Convert % to decimal
@@ -284,14 +351,28 @@ class SpellDPSCalculator:
         damage_types: List[str],
         enemy: EnemyStats
     ) -> float:
-        """
-        Apply enemy resistances with penetration
+        """Apply enemy resistances, exposure, and penetration to damage.
 
-        Order:
-        1. Apply Exposure/Curses (can go negative)
-        2. Apply Penetration (cannot go below 0% normally)
+        Calculates effective resistance after applying exposure (which can go negative)
+        and penetration (which cannot reduce resistance below 0%).
 
-        Formula: Effective Resistance = (BaseRes - Exposure) - Penetration
+        Args:
+            damage: Incoming damage before resistance mitigation
+            damage_types: List of damage types (uses first element as primary type)
+            enemy: Enemy defensive statistics
+
+        Returns:
+            Final damage after resistance mitigation
+
+        Formula:
+            Effective Resistance = max((Base Resistance - Exposure) - Penetration, 0)
+            Final Damage = Damage × (1 - Effective Resistance / 100)
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> enemy = EnemyStats(fire_resistance=75, fire_exposure=20, fire_penetration=10)
+            >>> calc._apply_resistances(100, ["fire"], enemy)
+            55.0
         """
         if not damage_types:
             return damage
@@ -325,18 +406,73 @@ class SpellDPSCalculator:
         return damage * damage_multiplier
 
     def _calculate_cast_speed(self, base_cast_time: float, increased_cast_speed: float) -> float:
-        """
-        Calculate casts per second
-        Formula: 1 / (BaseCastTime / (1 + IncreasedCastSpeed))
+        """Calculate casts per second from base cast time and modifiers.
+
+        Applies increased cast speed modifiers to reduce the actual cast time,
+        then converts to casts per second.
+
+        Args:
+            base_cast_time: Base time per cast in seconds (from spell gem)
+            increased_cast_speed: Total percentage of increased cast speed
+
+        Returns:
+            Number of casts per second
+
+        Formula:
+            Actual Cast Time = Base Cast Time / (1 + Increased Cast Speed / 100)
+            Casts Per Second = 1 / Actual Cast Time
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> calc._calculate_cast_speed(0.8, 50)
+            1.875
+            >>> calc._calculate_cast_speed(1.0, 0)
+            1.0
         """
         cast_speed_multiplier = 1.0 + (increased_cast_speed / 100.0)
         actual_cast_time = base_cast_time / cast_speed_multiplier
         return 1.0 / actual_cast_time
 
     def get_spell_by_name(self, spell_name: str) -> Optional[SpellStats]:
-        """Get spell stats from database"""
+        """Retrieve spell statistics from the spell database.
+
+        Performs case-insensitive lookup of spell data from the internal database.
+
+        Args:
+            spell_name: Name of the spell to look up (case-insensitive)
+
+        Returns:
+            SpellStats object if found, None otherwise
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> arc = calc.get_spell_by_name("Arc")
+            >>> arc.name
+            'Arc'
+            >>> calc.get_spell_by_name("NonexistentSpell") is None
+            True
+        """
         return self.SPELL_DATABASE.get(spell_name.lower())
 
-    def add_spell_to_database(self, spell: SpellStats):
-        """Add a new spell to the database"""
+    def add_spell_to_database(self, spell: SpellStats) -> None:
+        """Add or update a spell in the spell database.
+
+        Stores spell statistics in the internal database for later lookup.
+        If a spell with the same name exists, it will be overwritten.
+
+        Args:
+            spell: SpellStats object to add to the database
+
+        Examples:
+            >>> calc = SpellDPSCalculator()
+            >>> new_spell = SpellStats(
+            ...     name="CustomSpell",
+            ...     base_damage_min=50,
+            ...     base_damage_max=100,
+            ...     damage_effectiveness=1.2
+            ... )
+            >>> calc.add_spell_to_database(new_spell)
+            >>> calc.get_spell_by_name("CustomSpell").name
+            'CustomSpell'
+        """
         self.SPELL_DATABASE[spell.name.lower()] = spell
