@@ -56,31 +56,14 @@ class Settings(BaseSettings):
     TRADE_API_URL: str = Field(default="https://www.pathofexile.com/trade2/search/poe2")
     REQUEST_TIMEOUT: int = Field(default=30)
 
-    # AI Configuration (DEPRECATED - Not recommended for modern MCP usage)
-    # Modern MCP architecture: The MCP provides data, the AI client (Claude) does analysis
-    # These settings enable legacy features:
-    #   - natural_language_query tool (redundant when using Claude Desktop)
-    #   - analyze_character AI recommendations (Claude does this better)
-    # Recommendation: Set ENABLE_AI_INSIGHTS=false and leave these blank
-    AI_PROVIDER: str = Field(default="anthropic")
-    ANTHROPIC_API_KEY: Optional[str] = Field(default=None)
-    OPENAI_API_KEY: Optional[str] = Field(default=None)
-    AI_MODEL: str = Field(
-        default="claude-sonnet-4-20250514"
-    )
-    AI_MAX_TOKENS: int = Field(default=4096)
-    AI_TEMPERATURE: float = Field(default=0.7)
-
     # Rate Limiting
     POE_API_RATE_LIMIT: int = Field(default=10)
-    POE2DB_RATE_LIMIT: int = Field(default=30)
-    ENABLE_CACHING: bool = Field(default=True)
+    ENABLE_CACHING: bool = Field(default=False)
     CACHE_TTL: int = Field(default=3600)
 
     # Feature Flags
     ENABLE_TRADE_INTEGRATION: bool = Field(default=True)
     ENABLE_POB_EXPORT: bool = Field(default=True)
-    ENABLE_AI_INSIGHTS: bool = Field(default=False)  # DEPRECATED - see AI Configuration above
     ENABLE_BUILD_SHARING: bool = Field(default=True)
 
     # Web Interface
@@ -120,17 +103,6 @@ class Settings(BaseSettings):
     MAX_WORKERS: int = Field(default=4)
     REQUEST_TIMEOUT: int = Field(default=30)
     CALCULATION_TIMEOUT: int = Field(default=10)
-
-    # Data Sources
-    POE2DB_BASE_URL: str = Field(
-        default="https://poe2db.tw"
-    )
-    POE_NINJA_BASE_URL: str = Field(
-        default="https://poe.ninja"
-    )
-    POE_OFFICIAL_API: str = Field(
-        default="https://www.pathofexile.com/api"
-    )
 
     # Monitoring
     SENTRY_DSN: Optional[str] = Field(default=None)
