@@ -229,7 +229,7 @@ class PoE2BuildOptimizerMCP:
 
             # Initialize new enhancement features
             self.gem_synergy_calculator = GemSynergyCalculator()
-            self.mechanics_kb = PoE2MechanicsKnowledgeBase()
+            self.mechanics_kb = PoE2MechanicsKnowledgeBase(db_manager=self.db_manager)  # Pass db_manager for .datc64 access
             self.gear_comparator = GearComparator()
             self.damage_scaling_analyzer = DamageScalingAnalyzer()
             self.content_readiness_checker = ContentReadinessChecker()
@@ -917,6 +917,191 @@ class PoE2BuildOptimizerMCP:
                             }
                         }
                     }
+                ),
+                # TIER 1 VALIDATION TOOLS
+                types.Tool(
+                    name="validate_support_combination",
+                    description="Validate if support gems can work together. Checks for incompatibilities like Faster+Slower Projectiles. Returns validation result with detailed conflict information.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "support_gems": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of support gem names to validate"
+                            }
+                        },
+                        "required": ["support_gems"]
+                    }
+                ),
+                types.Tool(
+                    name="inspect_support_gem",
+                    description="View complete details for a support gem including tags, effects, incompatibilities, and spirit cost. Useful for verifying data quality and understanding gem mechanics.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "support_name": {
+                                "type": "string",
+                                "description": "Name of the support gem to inspect"
+                            }
+                        },
+                        "required": ["support_name"]
+                    }
+                ),
+                types.Tool(
+                    name="inspect_spell_gem",
+                    description="View complete details for a spell gem including tags, base damage, cast time, mana cost, and spirit cost. Useful for comparing spells and verifying data.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "spell_name": {
+                                "type": "string",
+                                "description": "Name of the spell gem to inspect"
+                            }
+                        },
+                        "required": ["spell_name"]
+                    }
+                ),
+                types.Tool(
+                    name="list_all_supports",
+                    description="List all available support gems with filtering and sorting options. Returns support names, tags, spirit costs, and damage multipliers.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "filter_tags": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Filter by tags (e.g., ['projectile', 'fire'])"
+                            },
+                            "min_spirit": {
+                                "type": "integer",
+                                "description": "Minimum spirit cost filter"
+                            },
+                            "max_spirit": {
+                                "type": "integer",
+                                "description": "Maximum spirit cost filter"
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["name", "spirit_cost", "damage_multiplier"],
+                                "description": "Sort results by field",
+                                "default": "name"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 50
+                            }
+                        }
+                    }
+                ),
+                types.Tool(
+                    name="list_all_spells",
+                    description="List all available spell gems with filtering and sorting options. Returns spell names, elements, tags, base damage, and cast times.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "filter_element": {
+                                "type": "string",
+                                "enum": ["fire", "cold", "lightning", "physical", "chaos"],
+                                "description": "Filter by element type"
+                            },
+                            "filter_tags": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Filter by tags (e.g., ['projectile', 'aoe'])"
+                            },
+                            "min_damage": {
+                                "type": "number",
+                                "description": "Minimum average base damage filter"
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["name", "base_damage", "cast_time", "dps"],
+                                "description": "Sort results by field",
+                                "default": "name"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 50
+                            }
+                        }
+                    }
+                ),
+                # TIER 2 DEBUGGING TOOLS
+                types.Tool(
+                    name="trace_support_selection",
+                    description="Trace how find_best_supports selected support gems. Shows filtering steps, number of combinations tested, and why specific supports were chosen.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "spell_name": {
+                                "type": "string",
+                                "description": "Name of the spell gem"
+                            },
+                            "max_spirit": {
+                                "type": "integer",
+                                "description": "Maximum spirit available",
+                                "default": 100
+                            },
+                            "num_supports": {
+                                "type": "integer",
+                                "description": "Number of support gems to find",
+                                "default": 5
+                            },
+                            "goal": {
+                                "type": "string",
+                                "enum": ["dps", "efficiency", "balanced"],
+                                "description": "Optimization goal",
+                                "default": "dps"
+                            }
+                        },
+                        "required": ["spell_name"]
+                    }
+                ),
+                types.Tool(
+                    name="trace_dps_calculation",
+                    description="Show step-by-step DPS calculation math for a spell + support combination. Breaks down base damage, more multipliers, increased modifiers, and final DPS.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "spell_name": {
+                                "type": "string",
+                                "description": "Name of the spell gem"
+                            },
+                            "support_gems": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of support gem names"
+                            },
+                            "character_mods": {
+                                "type": "object",
+                                "description": "Character modifiers (increased_damage, etc.)",
+                                "default": {}
+                            },
+                            "max_spirit": {
+                                "type": "integer",
+                                "description": "Maximum spirit available",
+                                "default": 100
+                            }
+                        },
+                        "required": ["spell_name", "support_gems"]
+                    }
+                ),
+                types.Tool(
+                    name="validate_build_constraints",
+                    description="Comprehensive build validation checking all game constraints: resistances, spirit overflow, mana reservation, stat requirements, etc.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "character_data": {
+                                "type": "object",
+                                "description": "Complete character stats and configuration"
+                            }
+                        },
+                        "required": ["character_data"]
+                    }
                 )
             ]
 
@@ -982,6 +1167,24 @@ class PoE2BuildOptimizerMCP:
                     return await self._handle_check_content_readiness(arguments)
                 elif name == "setup_trade_auth":
                     return await self._handle_setup_trade_auth(arguments)
+                # TIER 1 VALIDATION TOOLS
+                elif name == "validate_support_combination":
+                    return await self._handle_validate_support_combination(arguments)
+                elif name == "inspect_support_gem":
+                    return await self._handle_inspect_support_gem(arguments)
+                elif name == "inspect_spell_gem":
+                    return await self._handle_inspect_spell_gem(arguments)
+                elif name == "list_all_supports":
+                    return await self._handle_list_all_supports(arguments)
+                elif name == "list_all_spells":
+                    return await self._handle_list_all_spells(arguments)
+                # TIER 2 DEBUGGING TOOLS
+                elif name == "trace_support_selection":
+                    return await self._handle_trace_support_selection(arguments)
+                elif name == "trace_dps_calculation":
+                    return await self._handle_trace_dps_calculation(arguments)
+                elif name == "validate_build_constraints":
+                    return await self._handle_validate_build_constraints(arguments)
                 else:
                     raise ValueError(f"Unknown tool: {name}")
 
@@ -1463,25 +1666,45 @@ If the character is on the ladder, try `compare_to_top_players` instead.
             )]
 
     async def _handle_search_items(self, args: dict) -> List[types.TextContent]:
-        """Handle item search"""
+        """Handle item search using .datc64 game database"""
         query = args["query"]
         filters = args.get("filters", {})
 
         try:
             items = await self.db_manager.search_items(query, filters)
-            response = f"Found {len(items)} items:\n\n"
+
+            if not items:
+                return [types.TextContent(
+                    type="text",
+                    text=f"No items found matching '{query}'"
+                )]
+
+            response = f"Found {len(items)} items matching '{query}':\n\n"
 
             for item in items[:10]:  # Limit to 10 results
-                response += f"- {item['name']} ({item['item_class']})\n"
-                if 'description' in item:
-                    response += f"  {item['description']}\n"
+                name = item.get('name', 'Unknown')
+                item_class = item.get('item_class', 'Unknown')
+                base_type = item.get('base_type', '')
+                width = item.get('width', 1)
+                height = item.get('height', 1)
+                drop_level = item.get('drop_level', 0)
+
+                response += f"- {name}\n"
+                response += f"  Class: {item_class}\n"
+                if base_type:
+                    response += f"  Base: {base_type}\n"
+                response += f"  Size: {width}x{height}"
+                if drop_level > 0:
+                    response += f" | Drop Level: {drop_level}"
+                response += "\n\n"
 
             if len(items) > 10:
-                response += f"\n... and {len(items) - 10} more results"
+                response += f"... and {len(items) - 10} more results\n"
 
             return [types.TextContent(type="text", text=response)]
 
         except Exception as e:
+            logger.error(f"search_items error: {e}")
             return [types.TextContent(
                 type="text",
                 text=f"Item search failed: {str(e)}"
@@ -2483,7 +2706,8 @@ Consider:
     async def _handle_find_best_supports(self, args: dict) -> List[types.TextContent]:
         """Find best support gem combinations for a spell"""
         try:
-            spell_name = args.get("spell_name")
+            # Accept both spell_name and skill_name for compatibility
+            spell_name = args.get("spell_name") or args.get("skill_name")
             max_spirit = args.get("max_spirit", 100)
             num_supports = args.get("num_supports", 5)
             goal = args.get("goal", "dps")
@@ -2492,7 +2716,7 @@ Consider:
             if not spell_name:
                 return [types.TextContent(
                     type="text",
-                    text="Error: spell_name is required"
+                    text="Error: spell_name or skill_name is required"
                 )]
 
             debug_log(f"Finding best supports for {spell_name} (goal: {goal}, spirit: {max_spirit})")
@@ -2540,24 +2764,16 @@ Consider:
             mechanic_name = args.get("mechanic_name", "").lower()
 
             if not mechanic_name:
-                # Show available mechanics
-                available = self.mechanics_kb.list_all_mechanics()
+                # Show available mechanics from the mechanics dictionary
                 response = "# Available PoE2 Mechanics\n\n"
-
-                by_category = {}
-                for mech in available:
-                    cat = mech.category.value
-                    if cat not in by_category:
-                        by_category[cat] = []
-                    by_category[cat].append(mech.name)
-
-                for category, mechs in sorted(by_category.items()):
-                    response += f"## {category.title()}\n"
-                    for name in mechs:
-                        response += f"- {name}\n"
-                    response += "\n"
-
-                response += "\n**Usage:** Call this tool with a mechanic name (e.g., 'freeze', 'stun', 'critical strike')"
+                response += "**Common mechanics to ask about:**\n"
+                response += "- Ailments: freeze, chill, ignite, shock, poison, bleed\n"
+                response += "- Damage: critical strike, damage conversion, penetration\n"
+                response += "- Defense: armor, evasion, energy shield, block, dodge\n"
+                response += "- Crowd Control: stun, knockback, taunt\n"
+                response += "- Resources: mana, life, energy shield, spirit\n"
+                response += "- Other: accuracy, attack speed, cast speed\n\n"
+                response += "**Usage:** Call this tool with a mechanic name (e.g., 'freeze', 'stun', 'critical strike')"
                 return [types.TextContent(type="text", text=response)]
 
             debug_log(f"Explaining mechanic: {mechanic_name}")
@@ -2584,6 +2800,16 @@ Consider:
 
             # Format explanation
             response = self.mechanics_kb.format_mechanic_explanation(mechanic)
+
+            # Enhance with official .datc64 clientstrings if available
+            try:
+                official_strings = await self.mechanics_kb.get_official_terminology(mechanic.name)
+                if official_strings:
+                    official_text = self.mechanics_kb.enhance_explanation_with_official_text(mechanic, official_strings)
+                    response += official_text
+            except Exception as e:
+                logger.debug(f"Could not fetch official terminology: {e}")
+
             logger.info(f"Explained mechanic: {mechanic_name}")
             return [types.TextContent(type="text", text=response)]
 
@@ -2858,6 +3084,678 @@ Consider:
                      f"5. Add to .env: POESESSID=your_cookie_value\n\n"
                      f"Traceback:\n```\n{traceback.format_exc()}\n```"
             )]
+
+    # ============================================================================
+    # TIER 1 VALIDATION TOOL HANDLERS
+    # ============================================================================
+
+    async def _handle_validate_support_combination(self, args: dict) -> List[types.TextContent]:
+        """Validate if support gems can work together"""
+        try:
+            support_gems = args.get("support_gems", [])
+
+            if not support_gems:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_gems list is required"
+                )]
+
+            # Use gem synergy calculator's validation method
+            result = self.gem_synergy_calculator.validate_combination(support_gems)
+
+            if result["valid"]:
+                response = f"Valid combination: {', '.join(support_gems)}\n\n"
+                response += f"Reason: {result['reason']}"
+            else:
+                response = f"Invalid combination\n\n"
+                response += f"Reason: {result['reason']}\n\n"
+                if result['conflicts']:
+                    response += "Conflicting pairs:\n"
+                    for conflict_a, conflict_b in result['conflicts']:
+                        response += f"  - {conflict_a} + {conflict_b}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error validating support combination: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_inspect_support_gem(self, args: dict) -> List[types.TextContent]:
+        """Inspect complete details of a support gem"""
+        try:
+            support_name = args.get("support_name")
+
+            if not support_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_name is required"
+                )]
+
+            # Load support gems database
+            supports_file = Path(__file__).parent.parent / 'data' / 'poe2_support_gems_database.json'
+
+            if not supports_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Support gems database not found"
+                )]
+
+            with open(supports_file, 'r') as f:
+                data = json.load(f)
+
+            # Search for support (case-insensitive)
+            support_data = None
+            for support_id, sup_data in data.items():
+                if support_id == 'metadata':
+                    continue
+                if isinstance(sup_data, dict) and sup_data.get('name', '').lower() == support_name.lower():
+                    support_data = sup_data
+                    break
+
+            if not support_data:
+                return [types.TextContent(
+                    type="text",
+                    text=f"Support gem '{support_name}' not found in database"
+                )]
+
+            # Format response
+            response = f"# {support_data.get('name', support_name)}\n\n"
+
+            if support_data.get('tags'):
+                response += f"**Tags**: {', '.join(support_data['tags'])}\n\n"
+
+            level_20 = support_data.get('level_20', {})
+            if level_20.get('spirit_cost'):
+                response += f"**Spirit Cost (L20)**: {level_20['spirit_cost']}\n\n"
+
+            # Check for damage multiplier
+            if support_data.get('damage_multiplier'):
+                dmg_multi = support_data['damage_multiplier']
+                if isinstance(dmg_multi, dict) and 'level_20' in dmg_multi:
+                    response += f"**Damage Multiplier (L20)**: {dmg_multi['level_20']}%\n\n"
+
+            # Incompatibilities
+            incomp = support_data.get('incompatible_with', [])
+            if incomp:
+                response += f"**Incompatible With**: {', '.join(incomp)}\n\n"
+            else:
+                response += "**Incompatible With**: None (Database may be incomplete)\n\n"
+
+            # Required tags
+            req_tags = support_data.get('compatible_with', [])
+            if req_tags:
+                response += f"**Compatible With**: {', '.join(req_tags)}\n\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting support gem: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_inspect_spell_gem(self, args: dict) -> List[types.TextContent]:
+        """Inspect complete details of a spell gem"""
+        try:
+            spell_name = args.get("spell_name")
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            # Load spell gems database
+            spells_file = Path(__file__).parent.parent / 'data' / 'poe2_spell_gems_database.json'
+
+            if not spells_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Spell gems database not found"
+                )]
+
+            with open(spells_file, 'r') as f:
+                data = json.load(f)
+
+            # Search for spell (case-insensitive)
+            spell_data = None
+            for category, spells in data.items():
+                if category == 'metadata':
+                    continue
+                for spell_id, sp_data in spells.items():
+                    if isinstance(sp_data, dict) and sp_data.get('name', '').lower() == spell_name.lower():
+                        spell_data = sp_data
+                        break
+                if spell_data:
+                    break
+
+            if not spell_data:
+                return [types.TextContent(
+                    type="text",
+                    text=f"Spell gem '{spell_name}' not found in database"
+                )]
+
+            # Format response
+            response = f"# {spell_data.get('name', spell_name)}\n\n"
+
+            if spell_data.get('element'):
+                response += f"**Element**: {spell_data['element']}\n\n"
+
+            if spell_data.get('tags'):
+                response += f"**Tags**: {', '.join(spell_data['tags'])}\n\n"
+
+            level_20 = spell_data.get('level_20', {})
+
+            if level_20.get('damage_min') is not None and level_20.get('damage_max') is not None:
+                avg_dmg = (level_20['damage_min'] + level_20['damage_max']) / 2
+                response += f"**Base Damage (L20)**: {level_20['damage_min']}-{level_20['damage_max']} (avg: {avg_dmg:.1f})\n\n"
+
+            if level_20.get('cast_time'):
+                response += f"**Cast Time (L20)**: {level_20['cast_time']}s\n\n"
+                if level_20.get('damage_min'):
+                    dps = avg_dmg / level_20['cast_time']
+                    response += f"**Base DPS (L20)**: {dps:.1f}\n\n"
+
+            if level_20.get('mana_cost'):
+                response += f"**Mana Cost (L20)**: {level_20['mana_cost']}\n\n"
+
+            if level_20.get('spirit_cost'):
+                response += f"**Spirit Cost (L20)**: {level_20['spirit_cost']}\n\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting spell gem: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_list_all_supports(self, args: dict) -> List[types.TextContent]:
+        """List all support gems with filtering and sorting"""
+        try:
+            filter_tags = args.get("filter_tags", [])
+            min_spirit = args.get("min_spirit")
+            max_spirit = args.get("max_spirit")
+            sort_by = args.get("sort_by", "name")
+            limit = args.get("limit", 50)
+
+            # Load support gems database
+            supports_file = Path(__file__).parent.parent / 'data' / 'poe2_support_gems_database.json'
+
+            if not supports_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Support gems database not found"
+                )]
+
+            with open(supports_file, 'r') as f:
+                data = json.load(f)
+
+            # Extract and filter supports
+            all_supports = []
+            for support_id, support_data in data.items():
+                if support_id == 'metadata':
+                    continue
+                if not isinstance(support_data, dict) or 'name' not in support_data:
+                    continue
+
+                level_20 = support_data.get('level_20', {})
+                spirit_cost = level_20.get('spirit_cost', 0) or 0
+
+                # Apply filters
+                if filter_tags:
+                    support_tags = [t.lower() for t in support_data.get('tags', [])]
+                    if not any(ft.lower() in support_tags for ft in filter_tags):
+                        continue
+
+                if min_spirit is not None and spirit_cost < min_spirit:
+                    continue
+                if max_spirit is not None and spirit_cost > max_spirit:
+                    continue
+
+                # Get damage multiplier
+                dmg_multi = support_data.get('damage_multiplier', {})
+                if isinstance(dmg_multi, dict):
+                    dmg_multi_val = dmg_multi.get('level_20', 100)
+                else:
+                    dmg_multi_val = dmg_multi or 100
+
+                all_supports.append({
+                    'name': support_data['name'],
+                    'tags': support_data.get('tags', []),
+                    'spirit_cost': spirit_cost,
+                    'damage_multiplier': dmg_multi_val
+                })
+
+            # Sort
+            if sort_by == "spirit_cost":
+                all_supports.sort(key=lambda x: x['spirit_cost'])
+            elif sort_by == "damage_multiplier":
+                all_supports.sort(key=lambda x: x['damage_multiplier'], reverse=True)
+            else:  # name
+                all_supports.sort(key=lambda x: x['name'])
+
+            # Limit
+            all_supports = all_supports[:limit]
+
+            # Format response
+            response = f"# Support Gems ({len(all_supports)} results)\n\n"
+            response += f"{'Name':<35} {'Spirit':<10} {'Dmg Multi':<12} {'Tags'}\n"
+            response += "-" * 100 + "\n"
+
+            for sup in all_supports:
+                tags_str = ', '.join(sup['tags'][:3])
+                response += f"{sup['name']:<35} {sup['spirit_cost']:<10} {sup['damage_multiplier']:<12} {tags_str}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing supports: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_list_all_spells(self, args: dict) -> List[types.TextContent]:
+        """List all spell gems with filtering and sorting"""
+        try:
+            filter_element = args.get("filter_element")
+            filter_tags = args.get("filter_tags", [])
+            min_damage = args.get("min_damage")
+            sort_by = args.get("sort_by", "name")
+            limit = args.get("limit", 50)
+
+            # Load spell gems database
+            spells_file = Path(__file__).parent.parent / 'data' / 'poe2_spell_gems_database.json'
+
+            if not spells_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Spell gems database not found"
+                )]
+
+            with open(spells_file, 'r') as f:
+                data = json.load(f)
+
+            # Extract and filter spells
+            all_spells = []
+            for category, spells in data.items():
+                if category == 'metadata':
+                    continue
+                for spell_id, spell_data in spells.items():
+                    if not isinstance(spell_data, dict) or 'name' not in spell_data:
+                        continue
+
+                    level_20 = spell_data.get('level_20', {})
+                    dmg_min = level_20.get('damage_min')
+                    dmg_max = level_20.get('damage_max')
+                    cast_time = level_20.get('cast_time')
+
+                    if dmg_min is not None and dmg_max is not None:
+                        avg_dmg = (dmg_min + dmg_max) / 2
+                    else:
+                        avg_dmg = 0
+
+                    # Apply filters
+                    if filter_element:
+                        if spell_data.get('element', '').lower() != filter_element.lower():
+                            continue
+
+                    if filter_tags:
+                        spell_tags = [t.lower() for t in spell_data.get('tags', [])]
+                        if not any(ft.lower() in spell_tags for ft in filter_tags):
+                            continue
+
+                    if min_damage is not None and avg_dmg < min_damage:
+                        continue
+
+                    # Calculate DPS
+                    if cast_time and cast_time > 0 and avg_dmg > 0:
+                        dps = avg_dmg / cast_time
+                    else:
+                        dps = 0
+
+                    all_spells.append({
+                        'name': spell_data['name'],
+                        'element': spell_data.get('element', 'N/A'),
+                        'tags': spell_data.get('tags', []),
+                        'base_damage': avg_dmg,
+                        'cast_time': cast_time or 0,
+                        'dps': dps
+                    })
+
+            # Sort
+            if sort_by == "base_damage":
+                all_spells.sort(key=lambda x: x['base_damage'], reverse=True)
+            elif sort_by == "cast_time":
+                all_spells.sort(key=lambda x: x['cast_time'])
+            elif sort_by == "dps":
+                all_spells.sort(key=lambda x: x['dps'], reverse=True)
+            else:  # name
+                all_spells.sort(key=lambda x: x['name'])
+
+            # Limit
+            all_spells = all_spells[:limit]
+
+            # Format response
+            response = f"# Spell Gems ({len(all_spells)} results)\n\n"
+            response += f"{'Name':<30} {'Element':<12} {'Base Dmg':<12} {'Cast Time':<12} {'DPS':<10}\n"
+            response += "-" * 100 + "\n"
+
+            for spell in all_spells:
+                dmg_str = f"{spell['base_damage']:.1f}" if spell['base_damage'] > 0 else "N/A"
+                cast_str = f"{spell['cast_time']:.2f}s" if spell['cast_time'] > 0 else "N/A"
+                dps_str = f"{spell['dps']:.1f}" if spell['dps'] > 0 else "N/A"
+                response += f"{spell['name']:<30} {spell['element']:<12} {dmg_str:<12} {cast_str:<12} {dps_str:<10}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing spells: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    # ============================================================================
+    # TIER 2 DEBUGGING TOOL HANDLERS
+    # ============================================================================
+
+    async def _handle_trace_support_selection(self, args: dict) -> List[types.TextContent]:
+        """Trace how support gems were selected"""
+        try:
+            spell_name = args.get("spell_name")
+            max_spirit = args.get("max_spirit", 100)
+            num_supports = args.get("num_supports", 5)
+            goal = args.get("goal", "dps")
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            # Call with trace enabled
+            result = self.gem_synergy_calculator.find_best_combinations(
+                spell_name=spell_name,
+                max_spirit=max_spirit,
+                num_supports=num_supports,
+                optimization_goal=goal,
+                return_trace=True
+            )
+
+            if isinstance(result, dict) and "trace" in result:
+                trace = result["trace"]
+                results = result["results"]
+
+                response = f"# Support Selection Trace: {spell_name}\n\n"
+
+                if not trace["spell_found"]:
+                    response += f"X Spell '{spell_name}' not found in database\n"
+                    return [types.TextContent(type="text", text=response)]
+
+                response += f"**Optimization Goal**: {trace['optimization_goal']}\n\n"
+
+                response += "## Step 1: Compatible Support Filtering\n"
+                response += f"- Found {trace['compatible_supports_count']} compatible supports\n"
+                if trace['compatible_supports']:
+                    response += f"- Examples: {', '.join(trace['compatible_supports'][:10])}\n"
+                response += "\n"
+
+                response += "## Step 2: Combination Generation\n"
+                response += f"- Total combinations tested: {trace['total_combinations']:,}\n"
+                response += f"- Valid combinations: {trace['valid_combinations']:,}\n"
+                response += f"- Invalid combinations (incompatible gems): {trace['invalid_combinations']:,}\n"
+                response += f"- Filtered by spirit budget: {trace['spirit_filtered']:,}\n"
+                response += "\n"
+
+                response += "## Step 3: Top Result\n"
+                if results:
+                    top = results[0]
+                    response += f"- Best DPS: {trace.get('top_result_dps', top.total_dps):.1f}\n"
+                    response += f"- Support combination: {', '.join(top.support_names)}\n"
+                    response += f"- Spirit cost: {top.total_spirit}\n"
+                else:
+                    response += "- No valid combinations found\n"
+
+                return [types.TextContent(type="text", text=response)]
+            else:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Trace data not available"
+                )]
+
+        except Exception as e:
+            logger.error(f"Error tracing support selection: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_trace_dps_calculation(self, args: dict) -> List[types.TextContent]:
+        """Trace step-by-step DPS calculation"""
+        try:
+            spell_name = args.get("spell_name")
+            support_gems = args.get("support_gems", [])
+            character_mods = args.get("character_mods", {})
+            max_spirit = args.get("max_spirit", 100)
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            if not support_gems:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_gems list is required"
+                )]
+
+            # Get trace
+            trace = self.gem_synergy_calculator.trace_dps_calculation(
+                spell_name=spell_name,
+                support_names=support_gems,
+                character_mods=character_mods,
+                max_spirit=max_spirit
+            )
+
+            response = f"# DPS Calculation Trace: {spell_name}\n\n"
+
+            if not trace["valid"]:
+                response += "## Errors\n"
+                for error in trace["errors"]:
+                    response += f"- X {error}\n"
+                return [types.TextContent(type="text", text=response)]
+
+            # Spell info
+            spell = trace["spell"]
+            response += f"## Spell: {spell['name']}\n"
+            response += f"- Base damage: {spell['base_damage_min']}-{spell['base_damage_max']}\n"
+            response += f"- Cast time: {spell['cast_time']}s\n\n"
+
+            # Supports
+            response += "## Supports\n"
+            for sup in trace["supports"]:
+                response += f"- {sup['name']}: "
+                if sup['more_damage'] != 0:
+                    response += f"+{sup['more_damage']}% more damage "
+                if sup['less_damage'] != 0:
+                    response += f"{sup['less_damage']}% less damage "
+                if sup['increased_damage'] != 0:
+                    response += f"+{sup['increased_damage']}% increased damage "
+                response += f"(Spirit: {sup['spirit_cost']})\n"
+            response += "\n"
+
+            # Spirit
+            spirit = trace["spirit"]
+            response += f"## Spirit Budget\n"
+            response += f"- Total: {spirit['total']} / {spirit['available']}\n"
+            if spirit['overflow'] > 0:
+                response += f"- Warning: Overflow: {spirit['overflow']}\n"
+            response += "\n"
+
+            # Calculations
+            calc = trace["calculations"]
+            response += "## DPS Calculation Steps\n\n"
+
+            response += f"**Step 1: Base Damage**\n"
+            response += f"- Average: {calc['base_damage_avg']:.1f}\n\n"
+
+            response += f"**Step 2: More Multipliers (multiplicative)**\n"
+            for step in calc["more_multipliers"]:
+                response += f"- {step['support_name']}: x{step['net_multiplier']:.3f} -> cumulative: x{step['cumulative']:.3f}\n"
+            response += f"- Total more multiplier: x{calc['more_total']:.3f}\n\n"
+
+            response += f"**Step 3: Increased Modifiers (additive)**\n"
+            response += f"- Character increased: +{calc['increased_char']:.1f}%\n"
+            response += f"- Support increased: +{calc['increased_supports']:.1f}%\n"
+            response += f"- Total increased multiplier: x{calc['increased_total']:.3f}\n\n"
+
+            response += f"**Step 4: Final Damage Per Cast**\n"
+            response += f"- {calc['base_damage_avg']:.1f} x {calc['more_total']:.3f} x {calc['increased_total']:.3f} = {calc['final_damage_per_cast']:.1f}\n\n"
+
+            response += f"**Step 5: DPS**\n"
+            response += f"- {calc['final_damage_per_cast']:.1f} / {calc['cast_time']:.2f}s = **{calc['final_dps']:.1f} DPS**\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error tracing DPS calculation: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_validate_build_constraints(self, args: dict) -> List[types.TextContent]:
+        """Comprehensive build validation"""
+        try:
+            character_data = args.get("character_data", {})
+
+            if not character_data:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: character_data is required"
+                )]
+
+            violations = []
+
+            # Check resistances
+            for res_type in ["fire_res", "cold_res", "lightning_res"]:
+                res_value = character_data.get(res_type, 0)
+                if res_value < -60:
+                    violations.append({
+                        "severity": "CRITICAL",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} is below minimum (-60%): {res_value}%"
+                    })
+                elif res_value < 75:
+                    violations.append({
+                        "severity": "HIGH",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} is below cap (75%): {res_value}%"
+                    })
+                elif res_value > 90:
+                    violations.append({
+                        "severity": "MEDIUM",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} exceeds hard cap (90%): {res_value}%"
+                    })
+
+            # Check spirit
+            spirit = character_data.get("spirit", 0)
+            spirit_reserved = character_data.get("spirit_reserved", 0)
+            if spirit_reserved > spirit:
+                violations.append({
+                    "severity": "CRITICAL",
+                    "category": "Spirit",
+                    "message": f"Spirit overflow: {spirit_reserved} reserved > {spirit} available"
+                })
+
+            # Check mana reservation
+            mana = character_data.get("mana", 0)
+            mana_reserved = character_data.get("mana_reserved", 0)
+            if mana > 0:
+                reservation_pct = (mana_reserved / mana) * 100
+                if reservation_pct >= 100:
+                    violations.append({
+                        "severity": "CRITICAL",
+                        "category": "Mana",
+                        "message": f"Mana reservation at or above 100%: {reservation_pct:.1f}%"
+                    })
+                elif reservation_pct > 95:
+                    violations.append({
+                        "severity": "HIGH",
+                        "category": "Mana",
+                        "message": f"Mana reservation very high: {reservation_pct:.1f}%"
+                    })
+
+            # Check life/ES
+            life = character_data.get("life", 0)
+            es = character_data.get("energy_shield", 0)
+            level = character_data.get("level", 1)
+
+            expected_min_life = 300 + (level * 50)  # Rough guideline
+            if life + es < expected_min_life:
+                violations.append({
+                    "severity": "HIGH",
+                    "category": "Survivability",
+                    "message": f"Combined Life+ES ({life + es}) below recommended for level {level} ({expected_min_life})"
+                })
+
+            # Format response
+            response = "# Build Constraint Validation\n\n"
+
+            if not violations:
+                response += "✓ **All constraints satisfied**\n\n"
+                response += "No issues detected with:\n"
+                response += "- Resistances (within -60% to 90% range)\n"
+                response += "- Spirit allocation\n"
+                response += "- Mana reservation\n"
+                response += "- Survivability baseline\n"
+            else:
+                # Group by severity
+                critical = [v for v in violations if v["severity"] == "CRITICAL"]
+                high = [v for v in violations if v["severity"] == "HIGH"]
+                medium = [v for v in violations if v["severity"] == "MEDIUM"]
+
+                response += f"**Found {len(violations)} constraint violations**\n\n"
+
+                if critical:
+                    response += "## X CRITICAL Issues\n"
+                    for v in critical:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+                if high:
+                    response += "## Warning HIGH Priority Issues\n"
+                    for v in high:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+                if medium:
+                    response += "## Info MEDIUM Priority Issues\n"
+                    for v in medium:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error validating build constraints: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    # ============================================================================
+    # FORMATTING METHODS
+    # ============================================================================
 
     def _format_gear_stats(self, gear: dict) -> str:
         """Format gear stats for display"""
