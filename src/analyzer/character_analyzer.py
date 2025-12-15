@@ -42,41 +42,95 @@ class CharacterAnalyzer:
             return {'error': str(e)}
 
     def _analyze_defenses(self, character_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze defensive stats"""
+        """Analyze defensive stats - handles both normalized and poe.ninja raw formats"""
+        # Try multiple stat sources for compatibility
         stats = character_data.get('stats', {})
+        raw_data = character_data.get('raw_data', {})
+        char_model = raw_data.get('charModel', {}) if raw_data else {}
+        defense_stats = char_model.get('defensiveStats', stats)
 
-        life = stats.get('life', 0)
-        es = stats.get('energyShield', 0)
-        ehp = stats.get('effectiveHealthPool', 0)
+        # Extract values with fallbacks for different field names
+        life = (
+            defense_stats.get('life') or
+            stats.get('life') or
+            0
+        )
+        es = (
+            defense_stats.get('energyShield') or
+            stats.get('energyShield') or
+            stats.get('energy_shield') or
+            0
+        )
 
-        # Resistances
-        fire_res = stats.get('fireResistance', 0)
-        cold_res = stats.get('coldResistance', 0)
-        lightning_res = stats.get('lightningResistance', 0)
-        chaos_res = stats.get('chaosResistance', 0)
+        # Raw HP pool (life + ES)
+        raw_hp = life + es
 
-        # Evaluate defense quality
+        # Effective HP considers resistances - use poe.ninja's calculation if available
+        # This represents worst-case damage survivability
+        ehp = (
+            defense_stats.get('effectiveHealthPool') or
+            stats.get('effectiveHealthPool') or
+            raw_hp  # Fallback to raw HP if not calculated
+        )
+
+        # Resistances - handle multiple possible field names
+        fire_res = (
+            defense_stats.get('fireRes') or
+            defense_stats.get('fireResistance') or
+            stats.get('fireResistance') or
+            0
+        )
+        cold_res = (
+            defense_stats.get('coldRes') or
+            defense_stats.get('coldResistance') or
+            stats.get('coldResistance') or
+            0
+        )
+        lightning_res = (
+            defense_stats.get('lightningRes') or
+            defense_stats.get('lightningResistance') or
+            stats.get('lightningResistance') or
+            0
+        )
+        chaos_res = (
+            defense_stats.get('chaosRes') or
+            defense_stats.get('chaosResistance') or
+            stats.get('chaosResistance') or
+            0
+        )
+
+        # Evaluate defense quality based on level-appropriate thresholds
+        level = character_data.get('level', 1)
+        if raw_data:
+            level = char_model.get('level', level)
+
         defense_quality = 'Good'
         issues = []
 
-        if ehp < 3000:
-            defense_quality = 'Critical'
-            issues.append('EHP critically low')
-        elif ehp < 5000:
-            defense_quality = 'Weak'
-            issues.append('EHP below recommended threshold')
+        # Scale EHP expectations by level
+        min_ehp = max(500, level * 50)  # ~50 EHP per level minimum
+        target_ehp = level * 100  # ~100 EHP per level target
 
-        # Check resistances (75% is cap for elemental, 0% for chaos in PoE2)
-        if fire_res < 60:
+        if ehp < min_ehp:
+            defense_quality = 'Critical'
+            issues.append(f'EHP critically low ({ehp} < {min_ehp} for level {level})')
+        elif ehp < target_ehp:
+            defense_quality = 'Weak'
+            issues.append(f'EHP below target ({ehp} < {target_ehp} for level {level})')
+
+        # Check resistances (75% is cap for elemental in PoE2)
+        res_target = min(75, level)  # Scale target by level
+        if fire_res < res_target:
             issues.append(f'Fire resistance low ({fire_res}%)')
-        if cold_res < 60:
+        if cold_res < res_target:
             issues.append(f'Cold resistance low ({cold_res}%)')
-        if lightning_res < 60:
+        if lightning_res < res_target:
             issues.append(f'Lightning resistance low ({lightning_res}%)')
 
         return {
             'life': life,
             'energy_shield': es,
+            'raw_hp': raw_hp,
             'effective_hp': ehp,
             'resistances': {
                 'fire': fire_res,

@@ -71,6 +71,7 @@ class BuildAnalysis:
     is_connected: bool
     nearest_notables: List[Tuple[ResolvedNode, int]]  # (node, distance)
     class_start: Optional[str] = None
+    unresolved_nodes: List[int] = field(default_factory=list)  # Node IDs not in database (e.g., ascendancy)
 
 
 class PassiveTreeResolver:
@@ -308,12 +309,14 @@ class PassiveTreeResolver:
         notables = []
         small_nodes = []
         jewel_sockets = []
+        unresolved = []
 
         node_set = set(node_ids)
 
         for nid in node_ids:
             node = self.resolve(nid)
             if not node:
+                unresolved.append(nid)
                 continue
 
             if node.is_keystone:
@@ -325,7 +328,7 @@ class PassiveTreeResolver:
             else:
                 small_nodes.append(node)
 
-        # Check connectivity
+        # Check connectivity (only among resolved nodes)
         is_connected = self._check_connectivity(node_ids)
 
         # Find nearest unallocated notables
@@ -353,19 +356,29 @@ class PassiveTreeResolver:
             jewel_sockets=jewel_sockets,
             is_connected=is_connected,
             nearest_notables=nearest_notables,
-            class_start=class_start
+            class_start=class_start,
+            unresolved_nodes=unresolved
         )
 
     def _check_connectivity(self, node_ids: List[int]) -> bool:
-        """Check if all nodes in the list are connected."""
+        """
+        Check if resolved nodes in the list are connected.
+
+        Only checks connectivity among nodes that exist in our database.
+        Nodes missing from database (e.g., ascendancy nodes) are ignored.
+        """
         if not node_ids:
             return True
 
-        node_set = set(node_ids)
-        start = node_ids[0]
+        # Filter to only nodes we have in our adjacency graph
+        resolved_nodes = [nid for nid in node_ids if nid in self._adjacency]
 
-        if start not in self._adjacency:
-            return False
+        if not resolved_nodes:
+            # No nodes in our database - can't determine connectivity
+            return True
+
+        node_set = set(resolved_nodes)
+        start = resolved_nodes[0]
 
         visited = {start}
         queue = deque([start])
