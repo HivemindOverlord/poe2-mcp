@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     ENABLE_TRADE_INTEGRATION: bool = Field(default=True)
     ENABLE_POB_EXPORT: bool = Field(default=True)
     ENABLE_BUILD_SHARING: bool = Field(default=True)
+    ENABLE_AI_INSIGHTS: bool = Field(default=False)  # AI-powered insights (requires additional setup)
 
     # Web Interface
     WEB_PORT: int = Field(default=3000)
@@ -110,7 +111,7 @@ class Settings(BaseSettings):
     PROMETHEUS_PORT: int = Field(default=9090)
 
     model_config = ConfigDict(
-        env_file=".env",
+        env_file=str(BASE_DIR / ".env"),  # Use absolute path
         env_file_encoding="utf-8",
         case_sensitive=True
     )

@@ -19,6 +19,12 @@ from pathlib import Path
 from itertools import combinations
 import math
 
+# Import fresh data provider - Single Source of Truth
+try:
+    from ..data.fresh_data_provider import get_fresh_data_provider
+except ImportError:
+    from src.data.fresh_data_provider import get_fresh_data_provider
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,18 +32,24 @@ logger = logging.getLogger(__name__)
 # Based on PoE2 game mechanics - supports that modify the same stat in opposite directions
 # or have mutually exclusive effects cannot be used together
 HARDCODED_INCOMPATIBILITIES = {
+    # PoE2 uses Projectile Acceleration/Deceleration instead of Faster/Slower
+    "Projectile Acceleration Support": ["Projectile Deceleration Support"],
+    "Projectile Deceleration Support": ["Projectile Acceleration Support"],
+    "SupportProjectileAccelerationPlayer": ["SupportProjectileDecelerationPlayer"],
+    "SupportProjectileDecelerationPlayer": ["SupportProjectileAccelerationPlayer"],
+    # AoE incompatibilities
+    "Concentrated Effect Support": ["Increased Area of Effect Support"],
+    "Increased Area of Effect Support": ["Concentrated Effect Support"],
+    # Legacy PoE1 names (for backward compatibility)
     "Faster Projectiles": ["Slower Projectiles"],
     "Slower Projectiles": ["Faster Projectiles"],
-    "Concentrated Effect": ["Increased Area of Effect"],
-    "Increased Area of Effect": ["Concentrated Effect"],
-    "Intensify": ["Awakened Intensify"],
-    "Awakened Intensify": ["Intensify"],
-    "Slower Projectiles Support": ["Faster Projectiles Support"],
     "Faster Projectiles Support": ["Slower Projectiles Support"],
-    # Lowercase support IDs (from database)
+    "Slower Projectiles Support": ["Faster Projectiles Support"],
+    # Lowercase variations
     "faster_projectiles": ["slower_projectiles"],
     "slower_projectiles": ["faster_projectiles"],
-    # Add more common incompatibilities as needed
+    "projectile_acceleration": ["projectile_deceleration"],
+    "projectile_deceleration": ["projectile_acceleration"],
 }
 
 
@@ -155,26 +167,172 @@ class GemSynergyCalculator:
 
     def __init__(self, spell_db_path: Optional[Path] = None, support_db_path: Optional[Path] = None) -> None:
         """
-        Initialize calculator with gem databases
+        Initialize calculator with gem databases.
 
-        Args:
-            spell_db_path: Path to spell gems JSON database
-            support_db_path: Path to support gems JSON database
+        Now uses FreshDataProvider as Single Source of Truth (SSoT).
+        Falls back to JSON files only if FreshDataProvider has no data.
+
+        NEW: Also loads PoB complete skills for constantStats (conversions, built-in mods, etc.)
         """
         self.spell_gems: Dict[str, GemStats] = {}
         self.support_gems: Dict[str, SupportGemEffect] = {}
+        self._fresh_provider = get_fresh_data_provider()
+        self._pob_skills = {}  # Cache for PoB complete skills with constantStats
 
-        # Default paths
-        if spell_db_path is None:
-            spell_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_spell_gems_database.json"
-        if support_db_path is None:
-            support_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_support_gems_database.json"
+        # Try to load from FreshDataProvider first (SSoT)
+        self._load_from_fresh_provider()
 
-        # Load databases
-        self._load_spell_database(spell_db_path)
-        self._load_support_database(support_db_path)
+        # Load PoB complete skills for enhanced data (constantStats, damage effectiveness, etc.)
+        self._load_pob_complete_skills()
 
-        logger.info(f"Loaded {len(self.spell_gems)} spell gems and {len(self.support_gems)} support gems")
+        # Fall back to JSON files if needed
+        if not self.spell_gems:
+            if spell_db_path is None:
+                spell_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_spell_gems_database.json"
+            self._load_spell_database(spell_db_path)
+
+        if not self.support_gems:
+            if support_db_path is None:
+                support_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_support_gems_database.json"
+            self._load_support_database(support_db_path)
+
+        logger.info(f"Loaded {len(self.spell_gems)} spell gems and {len(self.support_gems)} support gems (SSoT: Fresh Game Data + PoB)")
+
+    def _load_from_fresh_provider(self):
+        """Load gems from FreshDataProvider (Single Source of Truth)."""
+        # Load active skills as spell gems
+        active_skills = self._fresh_provider.get_all_active_skills()
+        for skill_id, skill_data in active_skills.items():
+            # Skip internal/meta skills
+            if skill_id.startswith('Art/') or 'Meta' in skill_id:
+                continue
+
+            self.spell_gems[skill_id.lower()] = GemStats(
+                name=skill_data.get('name', skill_id),
+                tags=[],  # Tags would need extraction from game files
+                base_damage_min=0,  # Damage values need grantedeffectsperlevel extraction
+                base_damage_max=0,
+                cast_time=1.0,
+                crit_chance=0.0,
+                damage_effectiveness=100.0,
+                mana_cost=0,
+                spirit_cost=0
+            )
+
+        # Load support gems
+        support_gems = self._fresh_provider.get_all_support_gems()
+        for support_id, support_data in support_gems.items():
+            # Skip meta supports for now
+            if 'Meta' in support_id and 'CastOn' not in support_id:
+                continue
+
+            name = support_data.get('name', support_id)
+            self.support_gems[support_id.lower()] = SupportGemEffect(
+                name=name,
+                tags=support_data.get('tags', []),
+                # Effects would need detailed extraction from grantedeffectsperlevel
+                # For now, use defaults (0) and rely on hardcoded values for key supports
+                more_damage=support_data.get('effects', {}).get('more_damage', 0.0),
+                more_cast_speed=support_data.get('effects', {}).get('more_cast_speed', 0.0),
+                more_aoe=support_data.get('effects', {}).get('more_area', 0.0),
+                more_crit_chance=support_data.get('effects', {}).get('more_crit_chance', 0.0),
+                more_crit_damage=support_data.get('effects', {}).get('more_crit_damage', 0.0),
+                less_damage=support_data.get('effects', {}).get('less_damage', 0.0),
+                less_cast_speed=support_data.get('effects', {}).get('less_cast_speed', 0.0),
+                increased_damage=support_data.get('effects', {}).get('increased_damage', 0.0),
+                increased_cast_speed=support_data.get('effects', {}).get('increased_cast_speed', 0.0),
+                increased_crit_chance=support_data.get('effects', {}).get('increased_crit_chance', 0.0),
+                spirit_cost=support_data.get('spirit_cost', 0) or 0,
+                mana_cost_multiplier=support_data.get('cost_multiplier', 100.0) or 100.0,
+                utility_effects=[],
+                required_tags=support_data.get('compatible_with', ['spell', 'attack']),
+                incompatible_with=support_data.get('incompatible_with', [])
+            )
+
+        logger.info(f"FreshDataProvider: {len(self.spell_gems)} active skills, {len(support_gems)} support gems")
+
+    def _load_pob_complete_skills(self):
+        """
+        Load PoB complete skills data for enhanced gem information.
+        This provides constantStats (conversions, built-in modifiers), damage effectiveness, etc.
+        """
+        try:
+            pob_skills_path = Path(__file__).parent.parent.parent / "data" / "pob_complete_skills.json"
+            if not pob_skills_path.exists():
+                logger.warning("pob_complete_skills.json not found, constantStats won't be available")
+                return
+
+            with open(pob_skills_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            skills = data.get('skills', {})
+            for skill_id, skill_data in skills.items():
+                if not isinstance(skill_data, dict):
+                    continue
+
+                self._pob_skills[skill_id.lower()] = skill_data
+                # Also index by name for easier lookup
+                skill_name = skill_data.get('name', '')
+                if skill_name:
+                    self._pob_skills[skill_name.lower()] = skill_data
+
+            logger.info(f"Loaded {len(skills)} skills from PoB complete skills (with constantStats)")
+
+        except Exception as e:
+            logger.error(f"Failed to load PoB complete skills: {e}")
+
+    def get_skill_constant_stats(self, skill_name: str) -> List[Tuple[str, Any]]:
+        """
+        Get constantStats for a skill from PoB data.
+        These include conversions (e.g., 80% phys -> lightning), built-in modifiers, etc.
+
+        Returns:
+            List of (stat_id, value) tuples
+        """
+        skill_name_lower = skill_name.lower()
+        skill_data = self._pob_skills.get(skill_name_lower)
+
+        if not skill_data:
+            return []
+
+        # Extract constantStats from statSets (usually the first statSet)
+        stat_sets = skill_data.get('statSets', [])
+        if not stat_sets:
+            return []
+
+        primary_stat_set = stat_sets[0] if isinstance(stat_sets, list) else stat_sets
+        if not isinstance(primary_stat_set, dict):
+            return []
+
+        const_stats = primary_stat_set.get('constantStats', [])
+        return const_stats
+
+    def get_skill_damage_effectiveness(self, skill_name: str) -> Dict[str, float]:
+        """
+        Get damage effectiveness for a skill from PoB data.
+
+        Returns:
+            Dict with 'base' and 'incremental' effectiveness values
+        """
+        skill_name_lower = skill_name.lower()
+        skill_data = self._pob_skills.get(skill_name_lower)
+
+        if not skill_data:
+            return {'base': 100.0, 'incremental': 0.0}
+
+        # Extract from statSets
+        stat_sets = skill_data.get('statSets', [])
+        if not stat_sets:
+            return {'base': 100.0, 'incremental': 0.0}
+
+        primary_stat_set = stat_sets[0] if isinstance(stat_sets, list) else stat_sets
+        if not isinstance(primary_stat_set, dict):
+            return {'base': 100.0, 'incremental': 0.0}
+
+        return {
+            'base': primary_stat_set.get('baseEffectiveness', 100.0),
+            'incremental': primary_stat_set.get('incrementalEffectiveness', 0.0)
+        }
 
     def _load_spell_database(self, path: Path):
         """Load spell gems from JSON database"""
