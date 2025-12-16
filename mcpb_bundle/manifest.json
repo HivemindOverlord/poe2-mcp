@@ -1,0 +1,54 @@
+{
+  "name": "poe2-mcp",
+  "version": "1.0.0",
+  "description": "AI-powered Path of Exile 2 build optimization MCP server. Community project - not affiliated with Grinding Gear Games.",
+  "author": {
+    "name": "HivemindOverlord",
+    "url": "https://github.com/HivemindOverlord/poe2-mcp"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/HivemindOverlord/poe2-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HivemindOverlord/poe2-mcp.git"
+  },
+  "keywords": [
+    "path-of-exile",
+    "poe2",
+    "build-optimizer",
+    "gaming",
+    "ai"
+  ],
+  "mcp_config": {
+    "server": {
+      "type": "python",
+      "command": "python",
+      "args": ["server/launch.py"]
+    },
+    "env": {
+      "PYTHONPATH": "server"
+    },
+    "tools": [
+      "analyze_character",
+      "compare_to_top_players",
+      "validate_support_combination",
+      "validate_build_constraints",
+      "inspect_support_gem",
+      "inspect_spell_gem",
+      "list_all_supports",
+      "list_all_spells",
+      "list_all_keystones",
+      "inspect_keystone",
+      "list_all_mods",
+      "inspect_mod",
+      "explain_mechanic",
+      "get_formula",
+      "import_pob",
+      "export_pob"
+    ]
+  },
+  "requirements": {
+    "python": ">=3.9"
+  },
+  "disclaimer": "This is an independent, fan-made community project. Not affiliated with or endorsed by Grinding Gear Games. Path of Exile is a trademark of Grinding Gear Games."
+}

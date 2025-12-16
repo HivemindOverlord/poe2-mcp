@@ -1,0 +1,32 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include CONTRIBUTING.md
+include config.yaml
+include .env.example
+include requirements.txt
+include launch.py
+
+recursive-include data *.json
+recursive-include src *.py
+recursive-include tests *.py
+
+exclude .env
+exclude *.db
+exclude *.sqlite
+exclude *.log
+
+prune .git
+prune .github
+prune .pytest_cache
+prune .mypy_cache
+prune __pycache__
+prune venv
+prune cache
+prune logs
+prune builds
+prune examples
+prune analysis
+prune ooz
+prune .development
+prune .claude

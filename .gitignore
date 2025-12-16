@@ -1,0 +1,353 @@
+# Claude Code project instructions (user-specific)
+CLAUDE.md
+
+# Git ignore file itself (user-specific)
+.gitignore
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+POESESSID*
+*_pat.txt
+hivemindminion_*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+*.egg-info/
+poe2_mcp.egg-info/
+
+# MCP Bundle artifacts
+*.mcpb
+mcpb_bundle/server/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Logs
+logs/
+*.log
+log/
+
+# Cache
+cache/
+*.cache
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Personal demo/test scripts
+analyze_*.py
+test_mcp_*.py
+test_user_*.py
+tests/analyze_*.py
+tests/debug_*.py
+tests/debug_*.js
+tests/debug_*.html
+tests/fetch_*.py
+tests/search_*.py
+tests/test_*_fix.py
+tests/test_new_*.py
+tests/test_*_direct.py
+tests/test_*_simple.py
+tests/test_*_term.py
+tests/test_end_to_end.py
+tests/test_comparison_system.py
+tests/test_comprehensive_*.py
+
+# Examples and demonstrations
+examples/
+
+# Personal character data files
+character_data*.json
+*_analysis.json
+astrophobic*.json
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Distribution / Packaging
+*.tar.gz
+*.whl
+
+# Playwright browsers
+ms-playwright/
+
+# Development and Session Notes
+DEBUGGING_*.md
+SESSION_*.md
+FIXES_ROUND_*.md
+ROUND_*.md
+*_SUMMARY.md
+IMPLEMENTATION_*.md
+INTEGRATION_*.md
+MCP_FIXES_*.md
+MCP_INTEGRATION_*.md
+MCP_TOOL_*.md
+MASTER_IMPLEMENTATION_PLAN.md
+TEST_RESULTS.md
+FINAL_TEST_PROMPT.md
+OPUS_TEST_PROMPT.md
+User_Prompts.md
+CHECK_CODE_VERSION.md
+RESTART_NEEDED.md
+REAL_ROOT_CAUSE.md
+*_FINDINGS.md
+*_ANALYSIS.md
+CODEBASE_ANALYSIS_*.md
+VERIFIED_WORKING_CHARACTERS.md
+LIVE_CHARACTER_TEST_CASES.md
+REAL_CHARACTER_TEST_SUITE.md
+COMPREHENSIVE_TEST_SUITE.md
+CLAUDE_DESKTOP_TEST_CASES_DUMMY_DATA_DO_NOT_USE.md
+START_HERE.md
+NEXT_STEPS.md
+CURRENT_STATUS.md
+analysis_output.txt
+POE_NINJA_EXTRACTION_EXAMPLE.txt
+SIMPLE_*.txt
+*.json.bak
+*_analysis.json
+*_debug.html
+character_data_*.json
+test_results_*.json
+
+# Development Planning (Private)
+.development/
+DEVELOPMENT_PLAN.md
+TODO_ACTIVE.md
+TECHNICAL_DEBT.md
+FEATURE_STATUS.md
+TESTING_PLAN.md
+
+# Keep testing guides but exclude results
+!.development/HUMAN_TESTING_GUIDE.md
+!.development/TEST_CHECKLIST.md
+!.development/quick_test.py
+test_report_*.txt
+test_results_*.txt
+TESTING_COMPLETE.md
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Web frontend build artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+
+# Alembic
+alembic.ini.bak
+
+# Character analysis outputs
+*_analysis.md
+data/*_analysis.md
+
+# External projects/folders
+awesome-poe-2/
+Exile-UI/
+PathOfBuilding-*/
+poe2scout/
+poe2scount/
+poe2-log-viewer/
+
+# Windows batch files
+*.bat
+*.ps1
+
+# Misc
+nul
+
+# GGPK Extraction Tools (external binaries from zao/ooz)
+scripts/ggpk_tools/
+bun_extract_file.exe
+libbun.dll
+libooz.dll
+*.bundle.bin
+
+# Extracted game data files
+data/extracted/
+*.datc64
+*.dat64
+*.psg
+
+# ===========================================
+# AI SESSION SLOP - DO NOT COMMIT
+# ===========================================
+
+# Claude Code local config
+.claude/
+
+# Root-level report files (AI session artifacts)
+*_REPORT.md
+*_REPORT*.md
+*_STATUS*.md
+*_ROADMAP*.md
+*_EXAMPLES*.txt
+*_SUMMARY*.txt
+*_PROMPT*.md
+INVESTIGATION_*.md
+SOLUTION_*.txt
+
+# Root-level debug/investigation scripts
+check_*.py
+debug_*.py
+diagnose_*.py
+dump_*.py
+decode_*.py
+find_*.py
+inspect_*.py
+trace_*.py
+manual_*.py
+map_*.py
+reanalyze_*.py
+regenerate_*.py
+reverse_engineer*.py
+search_*.py
+update_*.py
+upgrade_*.py
+validate_*.py
+verify_*.py
+final_*.py
+extract_*.py
+lookup_*.py
+merge_*.py
+parse_*.py
+read_*.py
+hexdump_*.py
+
+# Root-level example/test/wrapper scripts
+example_*.py
+mcp_server_standalone.py
+mcp_server_wrapper.py
+/test_*.py
+comprehensive_*.py
+optimal_*.py
+
+# Investigation/analysis directories
+analysis/
+builds/
+ooz/
+
+# Intermediate data files
+data/fresh_*.json
+data/*_backup*.json
+data/*_mapping*.json
+data/*_validation*.json
+data/*_extracted*.json
+data/*_binary*.json
+data/*_positions*.json
+data/pob_*.json
+data/reverse_*.json
+data/spirit_costs.*
+data/base_items_validation.json
+data/.poe2_watcher_state.json
+data/PASSIVE_TREE_MERGE_REPORT.md
+data/REVERSE_ENGINEERED_SPEC.md
+
+# Scripts intermediate data
+scripts/data/
+
+# Intermediate scripts (not core functionality)
+scripts/debug_*.py
+scripts/examine_*.py
+scripts/extract_*.py
+scripts/generate_*.py
+scripts/improve_*.py
+scripts/test_*.py
+scripts/validate_*.py
+scripts/apply_*.py
+scripts/auto_*.py
+scripts/build_*.py
+scripts/combinatorial_*.py
+scripts/list_*.py
+scripts/merge_*.py
+scripts/migrate_*.py
+scripts/process_*.py
+scripts/quick_*.py
+scripts/register_*.py
+scripts/simple_*.py
+scripts/update_*.py
+
+# Keep only essential scripts
+!scripts/populate_from_datc64.py
+!scripts/populate_all_datc64.py
+!scripts/reinit_database.py
+!scripts/setup_trade_auth.py
+!scripts/poe2_bundle_extractor.py
+
+# More intermediate data
+data/extracted_passive_stats.json
+data/merged_passive_tree.json
+data/fresh_gamedata/
+scripts/integration_test.py
