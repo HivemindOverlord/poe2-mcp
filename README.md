@@ -1,98 +1,123 @@
 # Path of Exile 2 Build Optimizer MCP
 
-A comprehensive Model Context Protocol (MCP) server and web application for Path of Exile 2 character optimization, featuring AI-powered build recommendations, local game database, and intelligent upgrade suggestions.
+A comprehensive Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 34 MCP tools for AI-powered build analysis, gear optimization, passive tree recommendations, and build scoring through Claude Desktop.
 
 ## Overview
 
-This project combines the power of MCP servers, AI analysis, and comprehensive PoE2 game knowledge to provide players with intelligent, personalized build recommendations through natural language interaction.
+This project provides an MCP server that integrates with Claude Desktop to offer intelligent character analysis and optimization through natural language queries. It fetches data from poe.ninja, official PoE API, and maintains a local game database with skill gems, passive trees, and item data.
 
 ## Key Features
 
-### MCP Server
-- **Character Data Fetcher**: Pulls character information via official PoE API
-- **Natural Language Interface**: Ask questions like "How can I increase my lightning damage?"
-- **Build Optimization**: AI-powered recommendations for gear, passives, and skills
-- **Rate-Limited API**: Respectful API usage with intelligent caching
+### 34 MCP Tools Available
+
+**Character Analysis**
+- `analyze_character` - Comprehensive character analysis with defensive stats, skills, gear
+- `import_poe_ninja_url` - Import characters directly from poe.ninja profile URLs
+- `nl_query` - Natural language queries about your build
+- `detect_weaknesses` - Identify build vulnerabilities and issues
+- `compare_to_top_players` - Compare your build to ladder leaders
+
+**Calculators**
+- `calculate_dps` - Damage per second calculations
+- `calculate_ehp` - Effective HP with all defensive layers
+- `analyze_spirit` - Spirit resource management (PoE2 system)
+- `analyze_stun` - Stun threshold mechanics
+- `analyze_damage_scaling` - Damage scaling efficiency
+
+**Optimization**
+- `optimize_gear` - Budget-aware gear upgrade recommendations
+- `optimize_passives` - Passive tree pathing and node selection
+- `optimize_skills` - Gem setup optimization
+- `find_best_supports` - Support gem recommendations
+- `optimize_metrics` - Overall build optimization
+
+**Comparison**
+- `compare_builds` - Compare two builds
+- `compare_items` - Compare item stats
+- `evaluate_upgrade` - Evaluate potential upgrades
+
+**Validation (New in PR #16)**
+- `validate_support_combination` - Check if supports work together
+- `inspect_support_gem` - View complete support gem data
+- `inspect_spell_gem` - View complete spell gem data
+- `list_all_supports` - Enumerate available support gems
+- `list_all_spells` - Enumerate available spell gems
+
+**Debugging**
+- `trace_support_selection` - Debug support gem selection logic
+- `trace_dps_calculation` - Step-by-step DPS calculation breakdown
+- `validate_build_constraints` - Validate build against game rules
+
+**Trade & PoB**
+- `search_items` - Search item database
+- `search_trade_items` - Search official trade site (requires auth)
+- `import_pob` - Import Path of Building codes
+- `export_pob` - Export to PoB format
+
+**Knowledge**
+- `explain_mechanic` - Explain PoE2 game mechanics
+- `check_content_readiness` - Check boss/content viability
+- `health_check` - Server status
+- `clear_cache` - Clear cached data
 
 ### Local Game Database
-- Complete item database (bases, modifiers, uniques)
-- Passive skill tree data (nodes, connections, keystones)
-- Skill gems and support interactions
-- Ascendancy classes and notables
-- Crafting bench options and influenced modifiers
+- 4,975+ passive tree nodes with connections
+- 335+ ascendancy nodes (99% coverage)
+- Complete skill gem database from PoB2
+- Support gem effects and interactions
+- Base items and unique items
 
-### AI-Powered Features
-- Natural language build queries
-- Goal-based optimization (DPS, survivability, boss killing, clear speed)
-- Trade-off analysis
-- Budget-aware recommendations (low/medium/high/unlimited)
-- Meta comparison and trends
-
-### Build Calculator
-- Accurate DPS calculations with all modifiers
-- Defense analysis (EHP, mitigation, avoidance)
-- Damage breakdown by type
-- Skill interaction calculations
-- Curse and aura effectiveness
-
-### Web Interface
-- Character import via account/character name
-- Visual passive tree with optimization highlights
-- Gear slot recommendations with trade links
-- Build sharing and saving
-- Real-time calculation updates
-
-### Path of Building Integration
-- Import PoB build codes
-- Export optimized builds to PoB format
-- Sync with PoB's calculation engine
-- Support for PoB Community Fork features
+### Multi-Source Character Fetching
+1. poe.ninja API (primary)
+2. poe.ninja SSE/model API (fallback)
+3. Official PoE ladder API (fallback)
+4. Direct HTML scraping (last resort)
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.9+
-- Node.js 18+ (for web interface)
 - Git
 
 ### Installation
 
 ```bash
 # Clone the repository
-cd ClaudesPathOfExile2EnhancementService
+git clone https://github.com/HivemindOverlord/poe2-mcp.git
+cd poe2-mcp
 
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Install Node dependencies for web interface
-cd web
-npm install
-cd ..
-
-# Initialize the database
-python scripts/init_database.py
-
-# Seed with game data from poe2db.tw
-python scripts/seed_game_data.py
-
-# Set up trade API authentication (required for item search)
-pip install playwright
-playwright install chromium
-python scripts/setup_trade_auth.py
+# Launch the MCP server (handles database initialization)
+python launch.py
 ```
 
-### Running the Server
+### Claude Desktop Integration
+
+Add to your Claude Desktop configuration (`%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+```json
+{
+  "mcpServers": {
+    "poe2-optimizer": {
+      "command": "python",
+      "args": ["C:/path/to/poe2-mcp/launch.py"],
+      "env": {}
+    }
+  }
+}
+```
+
+### Running the Server Standalone
 
 ```bash
-# Start the MCP server
+# Recommended: Use launch script (handles setup)
+python launch.py
+
+# Or run directly
 python src/mcp_server.py
-
-# In a separate terminal, start the web interface
-cd web
-npm run dev
 ```
-
-Access the web interface at `http://localhost:3000`
 
 ## Trade API Authentication
 
@@ -420,29 +445,28 @@ This is a personal project, but contributions are welcome!
 
 ## Roadmap
 
-### Phase 1 (Current)
-- [x] MCP server foundation
-- [x] Basic character analysis
-- [x] Local database setup
-- [x] API integration with rate limiting
+### Completed
+- [x] MCP server foundation with 34 tools
+- [x] Character analysis from poe.ninja
+- [x] Local game database (passives, skills, items)
+- [x] API integration with multi-tier fallback
+- [x] EHP, Spirit, Stun calculators
+- [x] DPS calculations
+- [x] Gear/passive/skill optimization
+- [x] Path of Building import/export
+- [x] Trade site integration (optional)
+- [x] Validation tools for AI recommendations
+- [x] poe.ninja URL import
 
-### Phase 2
-- [ ] Build calculator engine
-- [ ] Gear optimization
-- [ ] Passive tree optimization
+### In Progress
 - [ ] Web interface MVP
+- [ ] Complete ascendancy data from game files
+- [ ] Support gem incompatibility database
 
-### Phase 3
-- [ ] AI natural language queries
-- [ ] Path of Building integration
-- [ ] Trade integration
+### Future
 - [ ] Build sharing
-
-### Phase 4
-- [ ] Advanced AI insights
 - [ ] Meta trend analysis
-- [ ] Build version tracking
-- [ ] Mobile app
+- [ ] Mobile companion app
 
 ## License
 
@@ -451,10 +475,11 @@ Private project for personal use.
 ## Credits
 
 Built with data from:
-- [poe2db.tw](https://poe2db.tw) - Comprehensive PoE2 game data
-- [poe.ninja](https://poe.ninja) - Meta builds and economy data
+- [poe.ninja](https://poe.ninja) - Character data, builds, and economy data
+- [Path of Building (PoE2 Fork)](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2) - Skill gems and passive tree data
+- [Path of Grinding](https://pathofgrinding.com) - Passive tree node database
 - Path of Exile 2 by Grinding Gear Games
 
 ---
 
-**Built for the PoE2 community** | [Report Issues](https://github.com/yourusername/poe2-optimizer/issues)
+**Built for the PoE2 community** | [Report Issues](https://github.com/HivemindOverlord/poe2-mcp/issues)

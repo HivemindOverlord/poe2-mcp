@@ -354,6 +354,8 @@ class PoE2BuildOptimizerMCP:
                 return await self._handle_validate_build_constraints(arguments)
             elif name == "analyze_passive_tree":
                 return await self._handle_analyze_passive_tree(arguments)
+            elif name == "import_poe_ninja_url":
+                return await self._handle_import_poe_ninja_url(arguments)
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
@@ -740,6 +742,22 @@ class PoE2BuildOptimizerMCP:
                         },
                         "required": ["node_ids"]
                     }
+                ),
+
+                # URL Import Tool
+                types.Tool(
+                    name="import_poe_ninja_url",
+                    description="Import and analyze a character directly from a poe.ninja profile URL. Parses the URL to extract account and character, then fetches full character data.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string",
+                                "description": "poe.ninja profile URL (e.g., https://poe.ninja/poe2/profile/AccountName/character/CharacterName)"
+                            }
+                        },
+                        "required": ["url"]
+                    }
                 )
             ]
 
@@ -933,20 +951,16 @@ If the character is on the ladder, try `compare_to_top_players` instead.
                     )
 
                     # Calculate average EHP across damage types
-                    threat = ThreatProfile(damage_type=DamageType.PHYSICAL, hit_damage=1000)
-                    phys_ehp = self.ehp_calculator.calculate_ehp(defensive_stats, threat)
+                    threat = ThreatProfile(expected_hit_size=1000.0)
+                    phys_result = self.ehp_calculator.calculate_ehp(defensive_stats, DamageType.PHYSICAL, threat)
+                    fire_result = self.ehp_calculator.calculate_ehp(defensive_stats, DamageType.FIRE, threat)
+                    cold_result = self.ehp_calculator.calculate_ehp(defensive_stats, DamageType.COLD, threat)
+                    lightning_result = self.ehp_calculator.calculate_ehp(defensive_stats, DamageType.LIGHTNING, threat)
 
-                    threat = ThreatProfile(damage_type=DamageType.FIRE, hit_damage=1000)
-                    fire_ehp = self.ehp_calculator.calculate_ehp(defensive_stats, threat)
-
-                    threat = ThreatProfile(damage_type=DamageType.COLD, hit_damage=1000)
-                    cold_ehp = self.ehp_calculator.calculate_ehp(defensive_stats, threat)
-
-                    threat = ThreatProfile(damage_type=DamageType.LIGHTNING, hit_damage=1000)
-                    lightning_ehp = self.ehp_calculator.calculate_ehp(defensive_stats, threat)
-
-                    # Use average EHP
-                    analysis["ehp"] = int((phys_ehp + fire_ehp + cold_ehp + lightning_ehp) / 4)
+                    # Use average EHP from results
+                    avg_ehp = (phys_result.effective_hp + fire_result.effective_hp +
+                               cold_result.effective_hp + lightning_result.effective_hp) / 4
+                    analysis["ehp"] = int(avg_ehp)
                     logger.info(f"[ANALYZE_CHAR] Calculated EHP: {analysis['ehp']}")
 
                     # Simple defense rating based on life+ES pool
@@ -3622,6 +3636,56 @@ Consider:
                 type="text",
                 text=f"Error: {str(e)}"
             )]
+
+    async def _handle_import_poe_ninja_url(self, args: dict) -> List[types.TextContent]:
+        """Import and analyze a character from a poe.ninja URL"""
+        import re
+
+        url = args.get("url", "")
+
+        # Parse poe.ninja URL formats:
+        # https://poe.ninja/poe2/profile/AccountName/character/CharacterName
+        # https://poe.ninja/poe2/builds/character/AccountName/CharacterName
+        patterns = [
+            r'poe\.ninja/poe2/profile/([^/]+)/character/([^/?\s]+)',
+            r'poe\.ninja/poe2/builds/character/([^/]+)/([^/?\s]+)',
+            r'poe\.ninja/builds/character/([^/]+)/([^/?\s]+)',
+        ]
+
+        account = None
+        character = None
+
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                account = match.group(1)
+                character = match.group(2)
+                break
+
+        if not account or not character:
+            return [types.TextContent(
+                type="text",
+                text=f"""# URL Parse Error
+
+Could not extract account and character from URL.
+
+**URL provided:** `{url}`
+
+**Expected formats:**
+- `https://poe.ninja/poe2/profile/AccountName/character/CharacterName`
+- `https://poe.ninja/poe2/builds/character/AccountName/CharacterName`
+
+**Example:**
+`https://poe.ninja/poe2/profile/Tomawar40-2671/character/TomawarTheFourth`
+"""
+            )]
+
+        # Now fetch and analyze using existing handler
+        return await self._handle_analyze_character({
+            "account": account,
+            "character": character,
+            "league": "Abyss"
+        })
 
     # ============================================================================
     # FORMATTING METHODS
