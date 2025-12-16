@@ -6,10 +6,13 @@ Adapted for PoE2's .datc64 format (64-bit variant).
 """
 
 import struct
+import logging
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from typing import Any, BinaryIO, List, Optional, Tuple, Union
+
+logger = logging.getLogger(__name__)
 
 
 # Magic number that separates table data from variable-length data section
@@ -434,8 +437,10 @@ class Datc64Parser:
 
         # Extract sections
         table_data = self._data[4:header['magic_offset']]
-        data_section = self._data[header['data_section_offset']:]
-        self._data_section_offset = header['data_section_offset']
+        # IMPORTANT: String pointers are relative to magic_offset, not data_section_offset
+        # So we include the magic number (8 bytes) in the data section extraction
+        data_section = self._data[header['magic_offset']:]
+        self._data_section_offset = header['magic_offset']
 
         # Parse rows
         rows = []
@@ -455,7 +460,74 @@ class Datc64Parser:
 
             rows.append(row_dict)
 
+        # Detect and repair corrupted string pointers (sequential +2 offset pattern)
+        # This fixes a bug in supportgems.datc64 where pointers increment by 2,
+        # pointing into the middle of the same UTF-16 string
+        repaired = self._repair_string_corruption(rows, columns)
+        if repaired > 0:
+            logger.warning(
+                f"Detected and repaired {repaired} corrupted string pointers in {file_path.name}. "
+                f"This indicates a bug in the game's data export or extraction process."
+            )
+
         return rows
+
+    def _repair_string_corruption(self, rows: List[dict], columns: List[ColumnSpec]) -> int:
+        """
+        Detect and repair corrupted string pointers showing sequential +2 UTF-16 offset pattern.
+
+        This fixes a specific corruption pattern found in some .datc64 files where
+        rows have string pointers that increment by 2 bytes, causing each row to read from a
+        different offset within the same UTF-16 string.
+
+        Example corruption:
+            Row N:   "Art/Icons/Support/Fire.dds"
+            Row M:   "t/Icons/Support/Fire.dds"      (missing first 2 bytes = 1 UTF-16 char)
+            Row P:   "/Icons/Support/Fire.dds"       (missing first 4 bytes = 2 UTF-16 chars)
+
+        Args:
+            rows: List of parsed row dictionaries
+            columns: Column specifications
+
+        Returns:
+            Number of rows repaired
+        """
+        repaired = 0
+        string_columns = [col.name for col in columns if col.data_type == DataType.STRING]
+
+        for col_name in string_columns:
+            # Build a list of all non-empty string values with their row indices
+            values_with_indices = []
+            for i, row in enumerate(rows):
+                val = row.get(col_name, "")
+                if val:
+                    # Normalize: strip leading NULL bytes
+                    val_norm = val.lstrip('\x00')
+                    values_with_indices.append((i, val, val_norm))
+
+            # For each value, check if it's a suffix of any longer value (corruption pattern)
+            for i, (row_idx, val, val_norm) in enumerate(values_with_indices):
+                # Find the longest string that this value is a suffix of
+                longest_match = None
+                longest_match_val = None
+
+                for j, (other_idx, other_val, other_val_norm) in enumerate(values_with_indices):
+                    if i == j:
+                        continue
+
+                    # Check if val is a suffix of other_val (corruption pattern)
+                    if other_val_norm.endswith(val_norm) and len(other_val_norm) > len(val_norm):
+                        # Found a potential base string
+                        if longest_match is None or len(other_val_norm) > len(longest_match):
+                            longest_match = other_val_norm
+                            longest_match_val = other_val
+
+                # If we found a longer match, this row is corrupted - repair it
+                if longest_match_val is not None:
+                    rows[row_idx][col_name] = longest_match_val
+                    repaired += 1
+
+        return repaired
 
     @staticmethod
     def calculate_record_length(columns: List[ColumnSpec]) -> int:

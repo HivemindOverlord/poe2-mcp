@@ -72,7 +72,7 @@ class PassiveNode(Base):
     __tablename__ = "passive_nodes"
 
     id = Column(Integer, primary_key=True)
-    node_id = Column(Integer, nullable=False, unique=True, index=True)
+    node_id = Column(String, nullable=False, unique=True, index=True)  # Changed from Integer - uses Id field from .datc64
     name = Column(String)
     is_keystone = Column(Boolean, default=False)
     is_notable = Column(Boolean, default=False)
@@ -105,6 +105,8 @@ class SkillGem(Base):
     primary_attribute = Column(String)  # str, dex, int
     required_level = Column(Integer)
     mana_cost = Column(Integer)
+    spirit_cost = Column(Integer)  # Flat spirit reservation cost (if constant)
+    spirit_cost_by_level = Column(JSON)  # Spirit cost per gem level (if variable)
     base_damage = Column(JSON)
     damage_effectiveness = Column(Float)
     crit_chance = Column(Float)
@@ -123,6 +125,8 @@ class SupportGem(Base):
     tags = Column(JSON)
     required_level = Column(Integer)
     mana_multiplier = Column(Float)
+    spirit_cost = Column(Integer)  # Flat spirit reservation cost (if any)
+    spirit_cost_by_level = Column(JSON)  # Spirit cost per gem level (if variable)
     modifiers = Column(JSON)  # List of modifiers
     quality_stats = Column(JSON)
     compatible_tags = Column(JSON)  # Which skill tags this supports

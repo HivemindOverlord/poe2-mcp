@@ -49,6 +49,10 @@ try:
     from .analyzer.gear_comparator import GearComparator
     from .analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
     from .analyzer.content_readiness_checker import ContentReadinessChecker
+    # Passive tree resolver for poe.ninja node ID resolution
+    from .parsers.passive_tree_resolver import PassiveTreeResolver
+    # Fresh data provider - Single Source of Truth
+    from .data.fresh_data_provider import get_fresh_data_provider
 except ImportError:
     # Fallback for direct execution
     from src.config import settings
@@ -79,6 +83,10 @@ except ImportError:
     from src.analyzer.gear_comparator import GearComparator
     from src.analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
     from src.analyzer.content_readiness_checker import ContentReadinessChecker
+    # Passive tree resolver for poe.ninja node ID resolution
+    from src.parsers.passive_tree_resolver import PassiveTreeResolver
+    # Fresh data provider - Single Source of Truth
+    from src.data.fresh_data_provider import get_fresh_data_provider
 
 # Setup logging to both file and stderr (for Claude Desktop logs)
 import sys
@@ -150,6 +158,9 @@ class PoE2BuildOptimizerMCP:
         # Path of Building
         self.pob_importer: Optional[PoBImporter] = None
         self.pob_exporter: Optional[PoBExporter] = None
+
+        # Passive Tree Resolver (for poe.ninja node ID resolution)
+        self.passive_tree_resolver: Optional[PassiveTreeResolver] = None
 
         # Conversation context
         self.conversation_contexts: Dict[str, Any] = {}
@@ -229,7 +240,7 @@ class PoE2BuildOptimizerMCP:
 
             # Initialize new enhancement features
             self.gem_synergy_calculator = GemSynergyCalculator()
-            self.mechanics_kb = PoE2MechanicsKnowledgeBase()
+            self.mechanics_kb = PoE2MechanicsKnowledgeBase(db_manager=self.db_manager)  # Pass db_manager for .datc64 access
             self.gear_comparator = GearComparator()
             self.damage_scaling_analyzer = DamageScalingAnalyzer()
             self.content_readiness_checker = ContentReadinessChecker()
@@ -249,6 +260,15 @@ class PoE2BuildOptimizerMCP:
                 self.pob_importer = PoBImporter()
                 self.pob_exporter = PoBExporter()
                 logger.info("Path of Building components initialized")
+
+            # Initialize Passive Tree Resolver for poe.ninja node ID resolution
+            try:
+                self.passive_tree_resolver = PassiveTreeResolver()
+                node_count = self.passive_tree_resolver.get_node_count()
+                logger.info(f"Passive tree resolver initialized ({node_count} nodes)")
+                debug_log(f"Passive tree resolver loaded {node_count} nodes")
+            except Exception as e:
+                logger.warning(f"Passive tree resolver initialization failed (non-critical): {e}")
 
             logger.info("PoE2 Build Optimizer MCP Server initialized successfully")
 
@@ -278,16 +298,95 @@ class PoE2BuildOptimizerMCP:
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 
+    async def handle_call_tool(self, name: str, arguments: dict) -> List[types.TextContent]:
+        """
+        Public method for handling tool calls (used by integration tests and MCP SDK)
+        Dispatches to the appropriate internal handler
+
+        Args:
+            name: Tool name
+            arguments: Tool arguments dictionary
+
+        Returns:
+            List of TextContent responses
+        """
+        debug_log(f"Tool called: {name}")
+        debug_log(f"Arguments: {arguments}")
+
+        try:
+            # DATA ACCESS TOOLS (14 tools)
+            if name == "analyze_character":
+                return await self._handle_analyze_character(arguments)
+            elif name == "search_items":
+                return await self._handle_search_items(arguments)
+            elif name == "search_trade_items":
+                return await self._handle_search_trade_items(arguments)
+            elif name == "compare_to_top_players":
+                return await self._handle_compare_to_top_players(arguments)
+            elif name == "inspect_support_gem":
+                return await self._handle_inspect_support_gem(arguments)
+            elif name == "inspect_spell_gem":
+                return await self._handle_inspect_spell_gem(arguments)
+            elif name == "list_all_supports":
+                return await self._handle_list_all_supports(arguments)
+            elif name == "list_all_spells":
+                return await self._handle_list_all_spells(arguments)
+            elif name == "import_pob":
+                return await self._handle_import_pob(arguments)
+            elif name == "export_pob":
+                return await self._handle_export_pob(arguments)
+            elif name == "get_pob_code":
+                return await self._handle_get_pob_code(arguments)
+            elif name == "health_check":
+                return await self._handle_health_check(arguments)
+            elif name == "clear_cache":
+                return await self._handle_clear_cache(arguments)
+            elif name == "setup_trade_auth":
+                return await self._handle_setup_trade_auth(arguments)
+            # KNOWLEDGE TOOLS (4 tools)
+            elif name == "get_formula":
+                return await self._handle_get_formula(arguments)
+            elif name == "explain_mechanic":
+                return await self._handle_explain_mechanic(arguments)
+            elif name == "validate_support_combination":
+                return await self._handle_validate_support_combination(arguments)
+            elif name == "validate_build_constraints":
+                return await self._handle_validate_build_constraints(arguments)
+            elif name == "analyze_passive_tree":
+                return await self._handle_analyze_passive_tree(arguments)
+            else:
+                raise ValueError(f"Unknown tool: {name}")
+
+        except Exception as e:
+            debug_log(f"TOOL ERROR in {name}: {e}")
+            logger.error(f"Error in tool {name}: {e}")
+            import traceback
+            debug_log(f"Traceback:\n{traceback.format_exc()}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
     def _register_tools(self):
         """Register MCP tools"""
 
         @self.server.list_tools()
         async def handle_list_tools() -> List[types.Tool]:
-            """List all available tools"""
+            """List all available tools - 18 focused MCP tools
+
+            MCP Philosophy: MCP = Data Access Layer, Claude = Intelligence Layer
+            These tools provide data Claude cannot access natively. Claude handles
+            all analysis, optimization, and calculation using the formulas provided.
+            """
             return [
+                # ============================================
+                # DATA ACCESS TOOLS (14 tools)
+                # ============================================
+
+                # Character Data Access
                 types.Tool(
                     name="analyze_character",
-                    description="Analyze a PoE2 character by account and character name. Fetches real data from poe.ninja API and returns comprehensive build analysis.",
+                    description="Fetch PoE2 character data from poe.ninja API. Returns raw character stats, gear, skills, and passives for Claude to analyze.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -297,185 +396,51 @@ class PoE2BuildOptimizerMCP:
                             },
                             "character": {
                                 "type": "string",
-                                "description": "Character name to analyze"
+                                "description": "Character name to fetch"
                             },
                             "league": {
                                 "type": "string",
                                 "description": "League name (e.g., 'Abyss', 'Standard')",
                                 "default": "Abyss"
-                            },
-                            "include_recommendations": {
-                                "type": "boolean",
-                                "description": "Include AI-powered recommendations",
-                                "default": True
                             }
                         },
                         "required": ["account", "character"]
                     }
                 ),
+                # Compare to top players
                 types.Tool(
-                    name="natural_language_query",
-                    description="Ask questions about builds in natural language. Examples: 'How can I increase my DPS?', 'What gear should I upgrade?'",
+                    name="compare_to_top_players",
+                    description="Fetch top ladder players using the same skills for comparison. Returns raw data about what high-performers do differently.",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "query": {
+                            "account_name": {
                                 "type": "string",
-                                "description": "Natural language question about the build"
+                                "description": "PoE account name"
                             },
-                            "character_context": {
-                                "type": "object",
-                                "description": "Character data for context (optional)"
-                            }
-                        },
-                        "required": ["query"]
-                    }
-                ),
-                types.Tool(
-                    name="optimize_gear",
-                    description="Get gear upgrade recommendations with budget tiers and priority ranking",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character data to optimize"
-                            },
-                            "budget": {
+                            "character_name": {
                                 "type": "string",
-                                "enum": ["low", "medium", "high", "unlimited"],
-                                "description": "Budget tier for recommendations",
-                                "default": "medium"
+                                "description": "Character name to compare"
                             },
-                            "goal": {
+                            "league": {
                                 "type": "string",
-                                "enum": ["dps", "defense", "balanced", "boss_damage", "clear_speed"],
-                                "description": "Optimization goal",
-                                "default": "balanced"
-                            }
-                        },
-                        "required": ["character_data"]
-                    }
-                ),
-                types.Tool(
-                    name="optimize_passive_tree",
-                    description="Optimize passive skill tree allocation with respec recommendations",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character data with current passive tree"
+                                "description": "League name",
+                                "default": "Standard"
                             },
-                            "available_points": {
+                            "top_player_limit": {
                                 "type": "integer",
-                                "description": "Number of unallocated passive points"
-                            },
-                            "allow_respec": {
-                                "type": "boolean",
-                                "description": "Allow passive tree respec suggestions",
-                                "default": False
-                            },
-                            "goal": {
-                                "type": "string",
-                                "enum": ["damage", "defense", "utility", "balanced"],
-                                "description": "Optimization priority",
-                                "default": "balanced"
+                                "description": "Number of top players to fetch",
+                                "default": 10
                             }
                         },
-                        "required": ["character_data"]
+                        "required": ["account_name", "character_name"]
                     }
                 ),
-                types.Tool(
-                    name="optimize_skills",
-                    description="Optimize skill gem setup and links",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character data with current skill setup"
-                            },
-                            "goal": {
-                                "type": "string",
-                                "enum": ["dps", "clear_speed", "single_target", "balanced"],
-                                "description": "Optimization goal",
-                                "default": "balanced"
-                            }
-                        },
-                        "required": ["character_data"]
-                    }
-                ),
-                types.Tool(
-                    name="compare_builds",
-                    description="Compare multiple builds and highlight differences",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "builds": {
-                                "type": "array",
-                                "items": {"type": "object"},
-                                "description": "List of builds to compare"
-                            },
-                            "comparison_metrics": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "Metrics to compare (dps, defense, cost, etc.)",
-                                "default": ["overall_score", "dps", "defense"]
-                            }
-                        },
-                        "required": ["builds"]
-                    }
-                ),
-                types.Tool(
-                    name="import_pob",
-                    description="Import a Path of Building build code for analysis",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "pob_code": {
-                                "type": "string",
-                                "description": "Path of Building build code (base64 encoded)"
-                            }
-                        },
-                        "required": ["pob_code"]
-                    }
-                ),
-                types.Tool(
-                    name="export_pob",
-                    description="Export character to Path of Building format",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character data to export"
-                            }
-                        },
-                        "required": ["character_data"]
-                    }
-                ),
-                types.Tool(
-                    name="get_pob_code",
-                    description="Get Path of Building import code for a character from poe.ninja. Fetches a ready-to-use PoB code that can be imported into Path of Building application.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {
-                                "type": "string",
-                                "description": "Path of Exile account name"
-                            },
-                            "character": {
-                                "type": "string",
-                                "description": "Character name"
-                            }
-                        },
-                        "required": ["account", "character"]
-                    }
-                ),
+
+                # Database Searches
                 types.Tool(
                     name="search_items",
-                    description="Search for items in the game database",
+                    description="Search the local game database for items by name, type, or filters.",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -492,413 +457,180 @@ class PoE2BuildOptimizerMCP:
                     }
                 ),
                 types.Tool(
-                    name="calculate_dps",
-                    description="Calculate detailed DPS breakdown for a character",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character data for DPS calculation"
-                            },
-                            "include_buffs": {
-                                "type": "boolean",
-                                "description": "Include temporary buffs in calculation",
-                                "default": True
-                            }
-                        },
-                        "required": ["character_data"]
-                    }
-                ),
-                types.Tool(
-                    name="compare_to_top_players",
-                    description="Compare your character against top ladder players using the same skills. Identifies what high-DPS players do differently in terms of gear, passives, and skill setups.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account_name": {
-                                "type": "string",
-                                "description": "PoE account name"
-                            },
-                            "character_name": {
-                                "type": "string",
-                                "description": "Character name to compare"
-                            },
-                            "league": {
-                                "type": "string",
-                                "description": "League name (default: Standard)",
-                                "default": "Standard"
-                            },
-                            "min_level": {
-                                "type": "integer",
-                                "description": "Minimum level of players to compare against (default: your level)"
-                            },
-                            "top_player_limit": {
-                                "type": "integer",
-                                "description": "Number of top players to compare against (default: 10)",
-                                "default": 10
-                            }
-                        },
-                        "required": ["account_name", "character_name"]
-                    }
-                ),
-                types.Tool(
                     name="search_trade_items",
-                    description="Search Path of Exile 2 trade market for items that improve your character. Finds gear to address deficiencies like missing resistances, low life/ES, or needed stats. Requires POESESSID cookie (use setup_trade_auth tool first).",
+                    description="Search the official PoE2 trade site for items. Requires POESESSID (use setup_trade_auth first).",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "league": {
                                 "type": "string",
-                                "description": "League name (e.g., 'Abyss', 'Standard')",
+                                "description": "League name",
                                 "default": "Standard"
                             },
                             "character_needs": {
                                 "type": "object",
-                                "description": "Character deficiencies to address",
-                                "properties": {
-                                    "missing_resistances": {
-                                        "type": "object",
-                                        "description": "Resistances to fix (e.g., {\"fire\": 10, \"cold\": 15})"
-                                    },
-                                    "needs_life": {
-                                        "type": "boolean",
-                                        "description": "Whether character needs more life"
-                                    },
-                                    "needs_es": {
-                                        "type": "boolean",
-                                        "description": "Whether character needs more energy shield"
-                                    },
-                                    "item_slots": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "Which item slots to search (charm, amulet, helmet, etc.)"
-                                    }
-                                }
+                                "description": "What the character needs (resistances, life, ES, item_slots)"
                             },
                             "max_price_chaos": {
                                 "type": "integer",
-                                "description": "Maximum price in chaos orbs (optional)"
+                                "description": "Maximum price in chaos orbs"
                             }
                         },
                         "required": ["league", "character_needs"]
                     }
                 ),
-                # PHASE 1-3 CALCULATOR TOOLS
+
+                # Gem Inspection
                 types.Tool(
-                    name="detect_character_weaknesses",
-                    description="Automatically detect build weaknesses including resistance gaps, low life/ES, Spirit overflow, overcapped stats, and missing defense layers. Returns prioritized list with actionable recommendations. Supports two modes: provide account/character to fetch from API, or provide character_data for testing.",
+                    name="inspect_support_gem",
+                    description="Get complete data for a support gem including tags, effects, incompatibilities, spirit cost.",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "account": {"type": "string", "description": "Account name (use with 'character')"},
-                            "character": {"type": "string", "description": "Character name (use with 'account')"},
-                            "league": {
+                            "support_name": {
                                 "type": "string",
-                                "description": "League name (e.g., 'Abyss', 'Standard')",
-                                "default": "Abyss"
-                            },
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats (alternative to account/character for testing)",
-                                "properties": {
-                                    "level": {"type": "number"},
-                                    "class": {"type": "string"},
-                                    "life": {"type": "number"},
-                                    "energy_shield": {"type": "number"},
-                                    "fire_res": {"type": "number"},
-                                    "cold_res": {"type": "number"},
-                                    "lightning_res": {"type": "number"},
-                                    "chaos_res": {"type": "number"}
-                                }
-                            },
-                            "severity_filter": {
-                                "type": "string",
-                                "enum": ["all", "critical", "high", "medium"],
-                                "description": "Filter by severity level",
-                                "default": "all"
+                                "description": "Name of the support gem"
                             }
-                        }
-                    }
-                ),
-                types.Tool(
-                    name="evaluate_gear_upgrade",
-                    description="Evaluate the exact value of a gear upgrade. Calculates EHP changes, resistance impact, and priority score. Returns upgrade recommendation (STRONG_UPGRADE/UPGRADE/SKIP/DOWNGRADE).",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {"type": "string", "description": "Account name"},
-                            "character": {"type": "string", "description": "Character name"},
-                            "item_slot": {
-                                "type": "string",
-                                "enum": ["helmet", "body", "gloves", "boots", "amulet", "ring", "belt", "weapon", "charm"],
-                                "description": "Item slot to evaluate"
-                            },
-                            "upgrade_stats": {
-                                "type": "object",
-                                "description": "Stats of the potential upgrade item"
-                            },
-                            "price_chaos": {"type": "number", "description": "Price in chaos orbs (optional)"}
                         },
-                        "required": ["account", "character", "item_slot", "upgrade_stats"]
+                        "required": ["support_name"]
                     }
                 ),
                 types.Tool(
-                    name="calculate_character_ehp",
-                    description="Calculate Effective Health Pool for all damage types (physical, fire, cold, lightning, chaos). Uses PoE2 formulas including layered defenses, armor scaling, and chaos double-damage vs ES. Supports two modes: provide account/character to fetch from API, or provide character_data for testing.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {"type": "string", "description": "Account name (use with 'character')"},
-                            "character": {"type": "string", "description": "Character name (use with 'account')"},
-                            "league": {
-                                "type": "string",
-                                "description": "League name (e.g., 'Abyss', 'Standard')",
-                                "default": "Abyss"
-                            },
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats (alternative to account/character for testing)",
-                                "properties": {
-                                    "life": {"type": "number"},
-                                    "energy_shield": {"type": "number"},
-                                    "fire_res": {"type": "number"},
-                                    "cold_res": {"type": "number"},
-                                    "lightning_res": {"type": "number"},
-                                    "chaos_res": {"type": "number"},
-                                    "armor": {"type": "number"},
-                                    "evasion": {"type": "number"},
-                                    "block_chance": {"type": "number"}
-                                }
-                            },
-                            "expected_hit_size": {
-                                "type": "number",
-                                "description": "Expected incoming hit size for armor calculations",
-                                "default": 1000
-                            }
-                        }
-                    }
-                ),
-                types.Tool(
-                    name="analyze_spirit_usage",
-                    description="Analyze PoE2 Spirit system usage. Detects overflow, shows reservations, suggests optimizations. Returns current Spirit status and recommendations. Supports two modes: provide account/character to fetch from API, or provide character_data for testing.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {"type": "string", "description": "Account name (use with 'character')"},
-                            "character": {"type": "string", "description": "Character name (use with 'account')"},
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats (alternative to account/character for testing)",
-                                "properties": {
-                                    "spirit": {"type": "number"},
-                                    "spirit_reserved": {"type": "number"}
-                                }
-                            }
-                        }
-                    }
-                ),
-                types.Tool(
-                    name="analyze_stun_vulnerability",
-                    description="Analyze character's vulnerability to PoE2 stun mechanics (Light Stun and Heavy Stun). Supports two modes: provide account/character to fetch from API, or provide character_data for testing.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {"type": "string", "description": "Account name (use with 'character')"},
-                            "character": {"type": "string", "description": "Character name (use with 'account')"},
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats (alternative to account/character for testing)",
-                                "properties": {
-                                    "life": {"type": "number"},
-                                    "energy_shield": {"type": "number"}
-                                }
-                            },
-                            "enemy_damage": {
-                                "type": "number",
-                                "description": "Enemy hit damage for analysis",
-                                "default": 500
-                            }
-                        }
-                    }
-                ),
-                types.Tool(
-                    name="optimize_build_metrics",
-                    description="Comprehensive build optimization using all calculators. Supports two modes: provide account/character to fetch from API, or provide character_data for testing. Combines weakness detection, EHP calculation, spirit analysis, and stun vulnerability.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "account": {"type": "string", "description": "Account name (use with 'character')"},
-                            "character": {"type": "string", "description": "Character name (use with 'account')"},
-                            "league": {"type": "string", "description": "League name", "default": "Standard"},
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats (alternative to account/character for testing)",
-                                "properties": {
-                                    "level": {"type": "number"},
-                                    "class": {"type": "string"},
-                                    "life": {"type": "number"},
-                                    "energy_shield": {"type": "number"},
-                                    "mana": {"type": "number"},
-                                    "spirit": {"type": "number"},
-                                    "spirit_reserved": {"type": "number"},
-                                    "fire_res": {"type": "number"},
-                                    "cold_res": {"type": "number"},
-                                    "lightning_res": {"type": "number"},
-                                    "chaos_res": {"type": "number"},
-                                    "armor": {"type": "number"},
-                                    "evasion": {"type": "number"},
-                                    "block_chance": {"type": "number"}
-                                }
-                            },
-                            "budget_chaos": {
-                                "type": "number",
-                                "description": "Budget for upgrades in chaos orbs",
-                                "default": 100
-                            },
-                            "focus": {
-                                "type": "string",
-                                "enum": ["defense", "offense", "balanced"],
-                                "description": "Optimization focus",
-                                "default": "balanced"
-                            }
-                        }
-                    }
-                ),
-                types.Tool(
-                    name="health_check",
-                    description="Run diagnostic checks on the MCP server to verify all systems are operational. Checks database status, API connectivity, calculator initialization, and configuration validity.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "verbose": {
-                                "type": "boolean",
-                                "description": "Show detailed diagnostic information",
-                                "default": False
-                            }
-                        }
-                    }
-                ),
-                # NEW ENHANCEMENT FEATURES
-                types.Tool(
-                    name="find_best_supports",
-                    description="Find the best support gem combinations for a spell. Calculates optimal DPS based on support gem synergy, considers spirit costs, and provides detailed analysis. Uses real support gem database.",
+                    name="inspect_spell_gem",
+                    description="Get complete data for a spell gem including tags, base damage, cast time, mana/spirit cost.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "spell_name": {
                                 "type": "string",
-                                "description": "Name of the spell gem (e.g., 'Fireball', 'Arc', 'Freezing Pulse')"
-                            },
-                            "max_spirit": {
-                                "type": "integer",
-                                "description": "Maximum spirit available for supports",
-                                "default": 100
-                            },
-                            "num_supports": {
-                                "type": "integer",
-                                "description": "Number of support gems to find (1-6)",
-                                "default": 5
-                            },
-                            "goal": {
-                                "type": "string",
-                                "enum": ["dps", "efficiency", "balanced", "utility"],
-                                "description": "Optimization goal: dps (maximum damage), efficiency (damage per spirit), balanced, or utility",
-                                "default": "dps"
-                            },
-                            "top_n": {
-                                "type": "integer",
-                                "description": "Number of top combinations to return",
-                                "default": 5
+                                "description": "Name of the spell gem"
                             }
                         },
                         "required": ["spell_name"]
                     }
                 ),
                 types.Tool(
-                    name="explain_mechanic",
-                    description="Explain Path of Exile 2 game mechanics in detail. Covers ailments (freeze, shock, chill, ignite), crowd control (stun, heavy stun), damage scaling, critical strikes, spirit system, and more. Includes formulas and examples.",
+                    name="list_all_supports",
+                    description="List all support gems with optional filtering by tags, spirit cost, etc.",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "mechanic_name": {
+                            "filter_tags": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Filter by tags"
+                            },
+                            "max_spirit": {
+                                "type": "integer",
+                                "description": "Maximum spirit cost"
+                            },
+                            "sort_by": {
                                 "type": "string",
-                                "description": "Name of mechanic to explain (e.g., 'freeze', 'stun', 'critical strike', 'spirit'). Can also be a question like 'How does freeze work?'"
+                                "enum": ["name", "spirit_cost", "damage_multiplier"],
+                                "default": "name"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "default": 50
                             }
-                        },
-                        "required": ["mechanic_name"]
+                        }
                     }
                 ),
                 types.Tool(
-                    name="compare_items",
-                    description="Compare two items to determine which is better for your build. Analyzes offense, defense, resistances, and utility stats. Provides detailed reasoning and confidence score. Supports build goal customization (dps/defense/balanced).",
+                    name="list_all_spells",
+                    description="List all spell gems with optional filtering by element, tags, damage.",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "item_a": {
-                                "type": "object",
-                                "description": "First item to compare (include name and stats)"
-                            },
-                            "item_b": {
-                                "type": "object",
-                                "description": "Second item to compare (include name and stats)"
-                            },
-                            "character_data": {
-                                "type": "object",
-                                "description": "Current character stats for context (optional but recommended)"
-                            },
-                            "build_goal": {
+                            "filter_element": {
                                 "type": "string",
-                                "enum": ["dps", "defense", "balanced"],
-                                "description": "Build goal for comparison",
-                                "default": "balanced"
+                                "enum": ["fire", "cold", "lightning", "physical", "chaos"]
+                            },
+                            "filter_tags": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "min_damage": {
+                                "type": "number"
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["name", "base_damage", "cast_time", "dps"],
+                                "default": "name"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "default": 50
+                            }
+                        }
+                    }
+                ),
+
+                # Path of Building Integration
+                types.Tool(
+                    name="import_pob",
+                    description="Import a Path of Building build code. Returns parsed build data.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "pob_code": {
+                                "type": "string",
+                                "description": "Path of Building build code (base64)"
                             }
                         },
-                        "required": ["item_a", "item_b"]
+                        "required": ["pob_code"]
                     }
                 ),
                 types.Tool(
-                    name="analyze_damage_scaling",
-                    description="Analyze ALL damage scaling vectors and identify bottlenecks. Examines increased damage (diminishing returns), more multipliers (support gems), critical strike scaling, added flat damage, cast/attack speed. Provides prioritized recommendations for damage improvements.",
+                    name="export_pob",
+                    description="Export character data to Path of Building format.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "character_data": {
                                 "type": "object",
-                                "description": "Character damage stats and modifiers"
-                            },
-                            "skill_type": {
-                                "type": "string",
-                                "enum": ["spell", "attack", "dot"],
-                                "description": "Type of skill being analyzed",
-                                "default": "spell"
+                                "description": "Character data to export"
                             }
                         },
                         "required": ["character_data"]
                     }
                 ),
                 types.Tool(
-                    name="check_content_readiness",
-                    description="Check if character is ready for specific content (campaign, maps T1-T16+, endgame bosses, pinnacle bosses). Validates life, EHP, resistances, DPS requirements. Identifies critical gaps and provides upgrade priorities.",
+                    name="get_pob_code",
+                    description="Fetch a ready-to-use PoB code from poe.ninja for a character.",
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "character_data": {
-                                "type": "object",
-                                "description": "Character stats to evaluate"
-                            },
-                            "content": {
+                            "account": {
                                 "type": "string",
-                                "enum": ["campaign", "early_maps", "mid_maps", "high_maps", "pinnacle_maps", "normal_bosses", "pinnacle_bosses"],
-                                "description": "Content to check readiness for"
+                                "description": "Account name"
+                            },
+                            "character": {
+                                "type": "string",
+                                "description": "Character name"
                             }
                         },
-                        "required": ["character_data", "content"]
+                        "required": ["account", "character"]
+                    }
+                ),
+
+                # System Tools
+                types.Tool(
+                    name="health_check",
+                    description="Run diagnostic checks on the MCP server (database, API, config).",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "verbose": {
+                                "type": "boolean",
+                                "default": False
+                            }
+                        }
                     }
                 ),
                 types.Tool(
                     name="clear_cache",
-                    description="Clear all cached character data (in-memory, SQLite, Redis). Use this when character data seems stale or after code updates.",
+                    description="Clear all cached data (memory, SQLite, Redis).",
                     inputSchema={
                         "type": "object",
                         "properties": {}
@@ -906,94 +638,115 @@ class PoE2BuildOptimizerMCP:
                 ),
                 types.Tool(
                     name="setup_trade_auth",
-                    description="Set up Path of Exile trade API authentication by opening a browser and automatically extracting your session cookie. This is required before using search_trade_items. The tool will open a browser window where you log into pathofexile.com, then automatically detect and save your POESESSID cookie. Takes 2-3 minutes.",
+                    description="Set up trade API authentication by extracting POESESSID via browser login.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "headless": {
                                 "type": "boolean",
-                                "description": "Run browser in headless mode (not recommended - you need to see login page)",
                                 "default": False
                             }
                         }
+                    }
+                ),
+
+                # ============================================
+                # KNOWLEDGE TOOLS (4 tools)
+                # ============================================
+
+                # Formulas - Claude does the math
+                types.Tool(
+                    name="get_formula",
+                    description="Get PoE2 calculation formulas for Claude to use. Covers DPS, EHP, armor, resistance, spirit, stun, crit, conversion, DoT, block. Claude performs calculations using these formulas.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "formula_type": {
+                                "type": "string",
+                                "description": "Formula type: dps, ehp, armor, resistance, spirit, stun, crit, conversion, dot, block. Leave empty to list all."
+                            }
+                        }
+                    }
+                ),
+
+                # Mechanic Explanations
+                types.Tool(
+                    name="explain_mechanic",
+                    description="Explain PoE2 game mechanics (ailments, crowd control, damage scaling, etc.). Returns detailed explanations with formulas.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "mechanic_name": {
+                                "type": "string",
+                                "description": "Mechanic to explain (e.g., 'freeze', 'stun', 'critical strike')"
+                            }
+                        },
+                        "required": ["mechanic_name"]
+                    }
+                ),
+
+                # Validation
+                types.Tool(
+                    name="validate_support_combination",
+                    description="Check if support gems are compatible. Detects conflicts like Faster+Slower Projectiles.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "support_gems": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Support gem names to validate"
+                            }
+                        },
+                        "required": ["support_gems"]
+                    }
+                ),
+                types.Tool(
+                    name="validate_build_constraints",
+                    description="Validate build against game constraints (resistances, spirit, mana reservation).",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "character_data": {
+                                "type": "object",
+                                "description": "Character stats to validate"
+                            }
+                        },
+                        "required": ["character_data"]
+                    }
+                ),
+
+                # Passive Tree Analysis Tool
+                types.Tool(
+                    name="analyze_passive_tree",
+                    description="Analyze passive tree allocation, find paths to notables, and get recommendations. Resolves poe.ninja node IDs to full passive data including names, stats, and connections.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "node_ids": {
+                                "type": "array",
+                                "items": {"type": "integer"},
+                                "description": "List of allocated passive node IDs from poe.ninja"
+                            },
+                            "target_notable": {
+                                "type": "string",
+                                "description": "Optional: Name of a notable to find path to"
+                            },
+                            "find_recommendations": {
+                                "type": "boolean",
+                                "description": "Whether to find nearest unallocated notables",
+                                "default": True
+                            }
+                        },
+                        "required": ["node_ids"]
                     }
                 )
             ]
 
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: dict) -> List[types.TextContent]:
-            """Handle tool calls"""
-            debug_log(f"Tool called: {name}")
-            debug_log(f"Arguments: {arguments}")
-            try:
-                if name == "analyze_character":
-                    return await self._handle_analyze_character(arguments)
-                elif name == "natural_language_query":
-                    return await self._handle_nl_query(arguments)
-                elif name == "optimize_gear":
-                    return await self._handle_optimize_gear(arguments)
-                elif name == "optimize_passive_tree":
-                    return await self._handle_optimize_passives(arguments)
-                elif name == "optimize_skills":
-                    return await self._handle_optimize_skills(arguments)
-                elif name == "compare_builds":
-                    return await self._handle_compare_builds(arguments)
-                elif name == "import_pob":
-                    return await self._handle_import_pob(arguments)
-                elif name == "export_pob":
-                    return await self._handle_export_pob(arguments)
-                elif name == "get_pob_code":
-                    return await self._handle_get_pob_code(arguments)
-                elif name == "search_items":
-                    return await self._handle_search_items(arguments)
-                elif name == "calculate_dps":
-                    return await self._handle_calculate_dps(arguments)
-                elif name == "compare_to_top_players":
-                    return await self._handle_compare_to_top_players(arguments)
-                elif name == "search_trade_items":
-                    return await self._handle_search_trade_items(arguments)
-                # PHASE 1-3 CALCULATOR HANDLERS
-                elif name == "detect_character_weaknesses":
-                    return await self._handle_detect_weaknesses(arguments)
-                elif name == "evaluate_gear_upgrade":
-                    return await self._handle_evaluate_upgrade(arguments)
-                elif name == "calculate_character_ehp":
-                    return await self._handle_calculate_ehp(arguments)
-                elif name == "analyze_spirit_usage":
-                    return await self._handle_analyze_spirit(arguments)
-                elif name == "analyze_stun_vulnerability":
-                    return await self._handle_analyze_stun(arguments)
-                elif name == "optimize_build_metrics":
-                    return await self._handle_optimize_metrics(arguments)
-                elif name == "health_check":
-                    return await self._handle_health_check(arguments)
-                elif name == "clear_cache":
-                    return await self._handle_clear_cache(arguments)
-                # NEW ENHANCEMENT HANDLERS
-                elif name == "find_best_supports":
-                    return await self._handle_find_best_supports(arguments)
-                elif name == "explain_mechanic":
-                    return await self._handle_explain_mechanic(arguments)
-                elif name == "compare_items":
-                    return await self._handle_compare_items(arguments)
-                elif name == "analyze_damage_scaling":
-                    return await self._handle_analyze_damage_scaling(arguments)
-                elif name == "check_content_readiness":
-                    return await self._handle_check_content_readiness(arguments)
-                elif name == "setup_trade_auth":
-                    return await self._handle_setup_trade_auth(arguments)
-                else:
-                    raise ValueError(f"Unknown tool: {name}")
-
-            except Exception as e:
-                debug_log(f"TOOL ERROR in {name}: {e}")
-                logger.error(f"Error in tool {name}: {e}")
-                import traceback
-                debug_log(f"Traceback:\n{traceback.format_exc()}")
-                return [types.TextContent(
-                    type="text",
-                    text=f"Error: {str(e)}"
-                )]
+            """Handle tool calls (MCP SDK callback - delegates to class method)"""
+            return await self.handle_call_tool(name, arguments)
 
     def _register_resources(self):
         """Register MCP resources"""
@@ -1147,21 +900,36 @@ If the character is on the ladder, try `compare_to_top_players` instead.
             # Calculate EHP if calculator is available
             if self.ehp_calculator:
                 try:
-                    from .calculator.ehp_calculator import DefensiveStats, ThreatProfile, DamageType
+                    # Import with fallback for both direct and module execution
+                    try:
+                        from .calculator.ehp_calculator import DefensiveStats, ThreatProfile, DamageType
+                    except ImportError:
+                        from src.calculator.ehp_calculator import DefensiveStats, ThreatProfile, DamageType
 
-                    # DEBUG: Log the stats we're using
-                    logger.info(f"[ANALYZE_CHAR] Calculating EHP with Life: {character_data.get('life')}, ES: {character_data.get('energy_shield')}")
+                    # Get stats from the nested stats object (poe.ninja format uses camelCase)
+                    stats = character_data.get("stats", {})
+                    life = stats.get("life", 0) or 0
+                    energy_shield = stats.get("energyShield", 0) or 0
+                    armor = stats.get("armour", 0) or 0
+                    evasion = stats.get("evasionRating", 0) or 0
+                    block_chance = stats.get("blockChance", 0) or 0
+                    fire_res = stats.get("fireResistance", 0) or 0
+                    cold_res = stats.get("coldResistance", 0) or 0
+                    lightning_res = stats.get("lightningResistance", 0) or 0
+                    chaos_res = stats.get("chaosResistance", 0) or 0
+
+                    logger.info(f"[ANALYZE_CHAR] Calculating EHP with Life: {life}, ES: {energy_shield}")
 
                     defensive_stats = DefensiveStats(
-                        life=character_data.get("life", 0),
-                        energy_shield=character_data.get("energy_shield", 0),
-                        armor=character_data.get("armor", 0),
-                        evasion=character_data.get("evasion", 0),
-                        block_chance=character_data.get("block_chance", 0),
-                        fire_res=character_data.get("fire_res", 0),
-                        cold_res=character_data.get("cold_res", 0),
-                        lightning_res=character_data.get("lightning_res", 0),
-                        chaos_res=character_data.get("chaos_res", 0)
+                        life=life,
+                        energy_shield=energy_shield,
+                        armor=armor,
+                        evasion=evasion,
+                        block_chance=block_chance,
+                        fire_res=fire_res,
+                        cold_res=cold_res,
+                        lightning_res=lightning_res,
+                        chaos_res=chaos_res
                     )
 
                     # Calculate average EHP across damage types
@@ -1182,7 +950,7 @@ If the character is on the ladder, try `compare_to_top_players` instead.
                     logger.info(f"[ANALYZE_CHAR] Calculated EHP: {analysis['ehp']}")
 
                     # Simple defense rating based on life+ES pool
-                    total_pool = character_data.get("life", 0) + character_data.get("energy_shield", 0)
+                    total_pool = life + energy_shield
                     if total_pool > 0:
                         analysis["defense_rating"] = min(1.0, total_pool / 8000)
                         logger.info(f"[ANALYZE_CHAR] Defense rating: {analysis['defense_rating']}")
@@ -1190,15 +958,17 @@ If the character is on the ladder, try `compare_to_top_players` instead.
                 except Exception as e:
                     logger.error(f"[ANALYZE_CHAR] EHP calculation failed: {e}", exc_info=True)
                     # Set a fallback EHP based on raw pool
-                    total_pool = character_data.get("life", 0) + character_data.get("energy_shield", 0)
+                    stats = character_data.get("stats", {})
+                    total_pool = (stats.get("life", 0) or 0) + (stats.get("energyShield", 0) or 0)
                     analysis["ehp"] = total_pool
                     logger.info(f"[ANALYZE_CHAR] Using fallback EHP: {total_pool}")
             else:
                 logger.warning("[ANALYZE_CHAR] ehp_calculator not available!")
 
-            # Identify strengths/weaknesses based on actual stats
-            life = character_data.get("life", 0)
-            es = character_data.get("energy_shield", 0)
+            # Identify strengths/weaknesses based on actual stats (from nested stats object)
+            stats = character_data.get("stats", {})
+            life = stats.get("life", 0) or 0
+            es = stats.get("energyShield", 0) or 0
             total_pool = life + es
 
             if total_pool > 6000:
@@ -1206,10 +976,10 @@ If the character is on the ladder, try `compare_to_top_players` instead.
             elif total_pool < 4000:
                 analysis["weaknesses"].append(f"Low defensive pool ({total_pool:,.0f} combined life+ES)")
 
-            # Check resistances
-            fire_res = character_data.get("fire_res", 0)
-            cold_res = character_data.get("cold_res", 0)
-            lightning_res = character_data.get("lightning_res", 0)
+            # Check resistances (poe.ninja format uses camelCase)
+            fire_res = stats.get("fireResistance", 0) or 0
+            cold_res = stats.get("coldResistance", 0) or 0
+            lightning_res = stats.get("lightningResistance", 0) or 0
 
             if fire_res >= 75 and cold_res >= 75 and lightning_res >= 75:
                 analysis["strengths"].append("All elemental resistances capped")
@@ -1253,8 +1023,19 @@ If the character is on the ladder, try `compare_to_top_players` instead.
                     analysis
                 )
 
+            # Resolve passive tree node IDs to full data
+            passive_analysis = None
+            if self.passive_tree_resolver:
+                try:
+                    passive_ids = character_data.get('passive_tree', [])
+                    if passive_ids:
+                        passive_analysis = self.passive_tree_resolver.analyze_build(passive_ids)
+                        logger.info(f"[ANALYZE_CHAR] Resolved {passive_analysis.total_nodes} passive nodes")
+                except Exception as e:
+                    logger.warning(f"[ANALYZE_CHAR] Passive tree resolution failed: {e}")
+
             # Format response
-            response = self._format_character_analysis(character_data, analysis, recommendations)
+            response = self._format_character_analysis(character_data, analysis, recommendations, passive_analysis)
 
             return [types.TextContent(type="text", text=response)]
 
@@ -1463,25 +1244,45 @@ If the character is on the ladder, try `compare_to_top_players` instead.
             )]
 
     async def _handle_search_items(self, args: dict) -> List[types.TextContent]:
-        """Handle item search"""
+        """Handle item search using .datc64 game database"""
         query = args["query"]
         filters = args.get("filters", {})
 
         try:
             items = await self.db_manager.search_items(query, filters)
-            response = f"Found {len(items)} items:\n\n"
+
+            if not items:
+                return [types.TextContent(
+                    type="text",
+                    text=f"No items found matching '{query}'"
+                )]
+
+            response = f"Found {len(items)} items matching '{query}':\n\n"
 
             for item in items[:10]:  # Limit to 10 results
-                response += f"- {item['name']} ({item['item_class']})\n"
-                if 'description' in item:
-                    response += f"  {item['description']}\n"
+                name = item.get('name', 'Unknown')
+                item_class = item.get('item_class', 'Unknown')
+                base_type = item.get('base_type', '')
+                width = item.get('width', 1)
+                height = item.get('height', 1)
+                drop_level = item.get('drop_level', 0)
+
+                response += f"- {name}\n"
+                response += f"  Class: {item_class}\n"
+                if base_type:
+                    response += f"  Base: {base_type}\n"
+                response += f"  Size: {width}x{height}"
+                if drop_level > 0:
+                    response += f" | Drop Level: {drop_level}"
+                response += "\n\n"
 
             if len(items) > 10:
-                response += f"\n... and {len(items) - 10} more results"
+                response += f"... and {len(items) - 10} more results\n"
 
             return [types.TextContent(type="text", text=response)]
 
         except Exception as e:
+            logger.error(f"search_items error: {e}")
             return [types.TextContent(
                 type="text",
                 text=f"Item search failed: {str(e)}"
@@ -2483,7 +2284,8 @@ Consider:
     async def _handle_find_best_supports(self, args: dict) -> List[types.TextContent]:
         """Find best support gem combinations for a spell"""
         try:
-            spell_name = args.get("spell_name")
+            # Accept both spell_name and skill_name for compatibility
+            spell_name = args.get("spell_name") or args.get("skill_name")
             max_spirit = args.get("max_spirit", 100)
             num_supports = args.get("num_supports", 5)
             goal = args.get("goal", "dps")
@@ -2492,7 +2294,7 @@ Consider:
             if not spell_name:
                 return [types.TextContent(
                     type="text",
-                    text="Error: spell_name is required"
+                    text="Error: spell_name or skill_name is required"
                 )]
 
             debug_log(f"Finding best supports for {spell_name} (goal: {goal}, spirit: {max_spirit})")
@@ -2540,24 +2342,16 @@ Consider:
             mechanic_name = args.get("mechanic_name", "").lower()
 
             if not mechanic_name:
-                # Show available mechanics
-                available = self.mechanics_kb.list_all_mechanics()
+                # Show available mechanics from the mechanics dictionary
                 response = "# Available PoE2 Mechanics\n\n"
-
-                by_category = {}
-                for mech in available:
-                    cat = mech.category.value
-                    if cat not in by_category:
-                        by_category[cat] = []
-                    by_category[cat].append(mech.name)
-
-                for category, mechs in sorted(by_category.items()):
-                    response += f"## {category.title()}\n"
-                    for name in mechs:
-                        response += f"- {name}\n"
-                    response += "\n"
-
-                response += "\n**Usage:** Call this tool with a mechanic name (e.g., 'freeze', 'stun', 'critical strike')"
+                response += "**Common mechanics to ask about:**\n"
+                response += "- Ailments: freeze, chill, ignite, shock, poison, bleed\n"
+                response += "- Damage: critical strike, damage conversion, penetration\n"
+                response += "- Defense: armor, evasion, energy shield, block, deflect\n"
+                response += "- Crowd Control: stun, knockback, taunt\n"
+                response += "- Resources: mana, life, energy shield, spirit\n"
+                response += "- Other: accuracy, attack speed, cast speed\n\n"
+                response += "**Usage:** Call this tool with a mechanic name (e.g., 'freeze', 'stun', 'critical strike')"
                 return [types.TextContent(type="text", text=response)]
 
             debug_log(f"Explaining mechanic: {mechanic_name}")
@@ -2584,6 +2378,16 @@ Consider:
 
             # Format explanation
             response = self.mechanics_kb.format_mechanic_explanation(mechanic)
+
+            # Enhance with official .datc64 clientstrings if available
+            try:
+                official_strings = await self.mechanics_kb.get_official_terminology(mechanic.name)
+                if official_strings:
+                    official_text = self.mechanics_kb.enhance_explanation_with_official_text(mechanic, official_strings)
+                    response += official_text
+            except Exception as e:
+                logger.debug(f"Could not fetch official terminology: {e}")
+
             logger.info(f"Explained mechanic: {mechanic_name}")
             return [types.TextContent(type="text", text=response)]
 
@@ -2592,6 +2396,78 @@ Consider:
             return [types.TextContent(
                 type="text",
                 text=f"Error explaining mechanic: {str(e)}"
+            )]
+
+    async def _handle_get_formula(self, args: dict) -> List[types.TextContent]:
+        """Get a PoE2 calculation formula for Claude to use"""
+        try:
+            from .knowledge.formulas import get_formula, get_all_formula_names, FORMULAS
+
+            formula_type = args.get("formula_type", "").lower().strip()
+
+            if not formula_type:
+                # Return list of all available formulas
+                response = "# Available PoE2 Calculation Formulas\n\n"
+                response += "Use these formulas to perform calculations. MCP provides the formulas, you do the math.\n\n"
+
+                for name, data in FORMULAS.items():
+                    response += f"## {name}\n"
+                    response += f"**{data['name']}**\n"
+                    response += f"```\n{data['formula']}\n```\n\n"
+
+                response += "\n**Usage:** Call `get_formula` with a formula_type (e.g., 'dps', 'ehp', 'armor')"
+                return [types.TextContent(type="text", text=response)]
+
+            # Get specific formula
+            formula_data = get_formula(formula_type)
+
+            if "error" in formula_data:
+                return [types.TextContent(
+                    type="text",
+                    text=f"Unknown formula: {formula_type}\n\nAvailable formulas: {', '.join(get_all_formula_names())}"
+                )]
+
+            # Format comprehensive formula response
+            response = f"# {formula_data['name']}\n\n"
+            response += f"## Formula\n```\n{formula_data['formula']}\n```\n\n"
+
+            if "expanded" in formula_data:
+                response += f"## Expanded Form\n```\n{formula_data['expanded']}\n```\n\n"
+
+            response += "## Variables\n"
+            for var_name, var_desc in formula_data.get("variables", {}).items():
+                response += f"- **{var_name}**: {var_desc}\n"
+
+            if "calculation_order" in formula_data:
+                response += "\n## Calculation Order\n"
+                for step in formula_data["calculation_order"]:
+                    response += f"{step}\n"
+
+            if "key_rules" in formula_data:
+                response += "\n## Key Rules\n"
+                for rule in formula_data["key_rules"]:
+                    response += f"- {rule}\n"
+
+            if "reference_table" in formula_data:
+                response += f"\n## Reference Table\n```\n{formula_data['reference_table']}\n```\n"
+
+            if "example" in formula_data:
+                example = formula_data["example"]
+                response += f"\n## Example\n"
+                response += f"**Scenario:** {example.get('scenario', 'N/A')}\n\n"
+                if "calculation" in example:
+                    response += f"**Calculation:**\n```\n{example['calculation']}\n```\n"
+                if "result" in example:
+                    response += f"**Result:** {example['result']}\n"
+
+            logger.info(f"Returned formula: {formula_type}")
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error getting formula: {e}", exc_info=True)
+            return [types.TextContent(
+                type="text",
+                text=f"Error getting formula: {str(e)}"
             )]
 
     async def _handle_compare_items(self, args: dict) -> List[types.TextContent]:
@@ -2859,6 +2735,898 @@ Consider:
                      f"Traceback:\n```\n{traceback.format_exc()}\n```"
             )]
 
+    # ============================================================================
+    # TIER 1 VALIDATION TOOL HANDLERS
+    # ============================================================================
+
+    async def _handle_validate_support_combination(self, args: dict) -> List[types.TextContent]:
+        """Validate if support gems can work together"""
+        try:
+            support_gems = args.get("support_gems", [])
+
+            if not support_gems:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_gems list is required"
+                )]
+
+            # Use gem synergy calculator's validation method
+            result = self.gem_synergy_calculator.validate_combination(support_gems)
+
+            if result["valid"]:
+                response = f"Valid combination: {', '.join(support_gems)}\n\n"
+                response += f"Reason: {result['reason']}"
+            else:
+                response = f"Invalid combination\n\n"
+                response += f"Reason: {result['reason']}\n\n"
+                if result['conflicts']:
+                    response += "Conflicting pairs:\n"
+                    for conflict_a, conflict_b in result['conflicts']:
+                        response += f"  - {conflict_a} + {conflict_b}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error validating support combination: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_inspect_support_gem(self, args: dict) -> List[types.TextContent]:
+        """Inspect complete details of a support gem (uses FreshDataProvider SSoT)"""
+        try:
+            support_name = args.get("support_name")
+
+            if not support_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_name is required"
+                )]
+
+            # Use FreshDataProvider as Single Source of Truth
+            fresh_provider = get_fresh_data_provider()
+
+            # Search for support (case-insensitive)
+            support_data = fresh_provider.get_support_gem_by_name(support_name)
+
+            # Also try direct ID match
+            if not support_data:
+                support_data = fresh_provider.get_support_gem(support_name)
+
+            # Try search if still not found
+            if not support_data:
+                results = fresh_provider.search_support_gems(support_name)
+                if results:
+                    support_data = results[0]
+
+            if not support_data:
+                return [types.TextContent(
+                    type="text",
+                    text=f"Support gem '{support_name}' not found in database"
+                )]
+
+            # Format response
+            response = f"# {support_data.get('name', support_name)}\n\n"
+
+            # Basic info
+            if support_data.get('tags'):
+                response += f"**Tags**: {', '.join(support_data['tags'])}\n"
+
+            if support_data.get('tier'):
+                response += f"**Tier**: {support_data['tier']}\n"
+
+            if support_data.get('acquisition'):
+                response += f"**Acquisition**: {support_data['acquisition']}\n\n"
+
+            # Requirements
+            reqs = support_data.get('requirements', {})
+            if reqs:
+                req_parts = []
+                if 'level' in reqs:
+                    req_parts.append(f"Level {reqs['level']}")
+                if 'str' in reqs:
+                    req_parts.append(f"{reqs['str']} Str")
+                if 'dex' in reqs:
+                    req_parts.append(f"{reqs['dex']} Dex")
+                if 'int' in reqs:
+                    req_parts.append(f"{reqs['int']} Int")
+                if req_parts:
+                    response += f"**Requirements**: {', '.join(req_parts)}\n\n"
+
+            # Costs
+            spirit_cost = support_data.get('spirit_cost', 0)
+            if spirit_cost:
+                response += f"**Spirit Cost**: {spirit_cost}\n"
+
+            cost_multi = support_data.get('cost_multiplier')
+            if cost_multi:
+                response += f"**Cost Multiplier**: {cost_multi}%\n\n"
+
+            # Effects (the meat of the support)
+            effects = support_data.get('effects', {})
+            if effects:
+                response += "**Effects**:\n"
+                for effect_name, effect_value in effects.items():
+                    # Format effect names nicely
+                    formatted_name = effect_name.replace('_', ' ').title()
+                    if isinstance(effect_value, bool):
+                        response += f"- {formatted_name}\n"
+                    else:
+                        response += f"- {formatted_name}: {effect_value}\n"
+                response += "\n"
+
+            # Compatibility
+            req_tags = support_data.get('compatible_with', [])
+            if req_tags:
+                response += f"**Compatible With**: {', '.join(req_tags)}\n"
+
+            # Restrictions
+            restrictions = support_data.get('restrictions', [])
+            if restrictions:
+                response += f"**Restrictions**: {', '.join(restrictions)}\n"
+
+            # Incompatibilities
+            incomp = support_data.get('incompatible_with', [])
+            if incomp:
+                response += f"**Incompatible With**: {', '.join(incomp)}\n"
+
+            # Notes
+            notes = support_data.get('notes')
+            if notes:
+                response += f"\n**Notes**: {notes}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting support gem: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_inspect_spell_gem(self, args: dict) -> List[types.TextContent]:
+        """Inspect complete details of a spell gem (uses pob_complete_skills.json with full per-level data)"""
+        try:
+            spell_name = args.get("spell_name")
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            # Load from pob_complete_skills.json (has full per-level stats, statSets, constantStats)
+            pob_skills_file = Path(__file__).parent.parent / 'data' / 'pob_complete_skills.json'
+
+            if not pob_skills_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: pob_complete_skills.json not found"
+                )]
+
+            with open(pob_skills_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # Search for spell by name (case-insensitive) or ID
+            spell_data = None
+            spell_id = None
+            skills = data.get('skills', {})
+
+            for skill_id_candidate, skill in skills.items():
+                if not isinstance(skill, dict):
+                    continue
+                # Check if name matches or ID matches
+                skill_name = skill.get('name', '')
+                if (skill_name.lower() == spell_name.lower() or
+                    skill_id_candidate.lower() == spell_name.lower() or
+                    spell_name.lower() in skill_name.lower()):
+                    spell_data = skill
+                    spell_id = skill_id_candidate
+                    break
+
+            if not spell_data:
+                return [types.TextContent(
+                    type="text",
+                    text=f"Spell gem '{spell_name}' not found in PoB database"
+                )]
+
+            # Format response
+            response = f"# {spell_data.get('name', spell_name)}\n\n"
+            response += f"**ID**: {spell_id}\n"
+
+            # Description
+            if spell_data.get('description'):
+                response += f"**Description**: {spell_data['description']}\n\n"
+
+            # Skill types (tags)
+            if spell_data.get('skillTypes'):
+                response += f"**Skill Types**: {', '.join(spell_data['skillTypes'])}\n"
+
+            # Weapon types
+            if spell_data.get('weaponTypes'):
+                response += f"**Weapon Types**: {', '.join(spell_data['weaponTypes'])}\n"
+
+            # Cast time
+            if spell_data.get('castTime'):
+                response += f"**Cast Time**: {spell_data['castTime']}s\n\n"
+
+            # Per-level stats (show L1, L10, L20)
+            levels = spell_data.get('levels', {})
+            if levels:
+                response += "**Per-Level Stats**:\n"
+                for level_key in ['1', '10', '20']:
+                    if level_key in levels:
+                        level_data = levels[level_key]
+                        response += f"\nLevel {level_key}:\n"
+
+                        # Level requirement
+                        if 'levelRequirement' in level_data:
+                            response += f"  - Level Requirement: {level_data['levelRequirement']}\n"
+
+                        # Base multiplier
+                        if 'baseMultiplier' in level_data:
+                            response += f"  - Base Multiplier: {level_data['baseMultiplier']:.2f}\n"
+
+                        # Mana/resource cost
+                        if 'cost' in level_data:
+                            costs = level_data['cost']
+                            cost_parts = [f"{k}: {v}" for k, v in costs.items()]
+                            response += f"  - Cost: {', '.join(cost_parts)}\n"
+
+                        # Crit chance
+                        if 'critChance' in level_data:
+                            response += f"  - Crit Chance: {level_data['critChance']}%\n"
+
+                        # Cooldown
+                        if 'cooldown' in level_data:
+                            response += f"  - Cooldown: {level_data['cooldown']}s\n"
+
+                response += "\n"
+
+            # StatSets (damage effectiveness, constantStats)
+            stat_sets = spell_data.get('statSets', [])
+            if stat_sets:
+                response += "**Stat Sets**:\n"
+                for i, stat_set in enumerate(stat_sets):
+                    label = stat_set.get('label', f'Set {i+1}')
+                    response += f"\n{label}:\n"
+
+                    # Damage effectiveness
+                    if 'baseEffectiveness' in stat_set:
+                        base_eff = stat_set['baseEffectiveness']
+                        incr_eff = stat_set.get('incrementalEffectiveness', 0)
+                        response += f"  - Base Effectiveness: {base_eff}%\n"
+                        if incr_eff:
+                            response += f"  - Incremental Effectiveness: {incr_eff}% per level\n"
+
+                    # Constant stats (built-in modifiers)
+                    const_stats = stat_set.get('constantStats', [])
+                    if const_stats:
+                        response += f"  - Built-in Modifiers:\n"
+                        for stat in const_stats[:10]:  # Limit to first 10
+                            if isinstance(stat, list) and len(stat) >= 2:
+                                stat_id, value = stat[0], stat[1]
+                                response += f"    - {stat_id}: {value}\n"
+                        if len(const_stats) > 10:
+                            response += f"    - ... and {len(const_stats) - 10} more\n"
+
+                response += "\n"
+
+            # Quality stats
+            quality_stats = spell_data.get('qualityStats', [])
+            if quality_stats:
+                response += "**Quality Stats**:\n"
+                for stat in quality_stats:
+                    if isinstance(stat, list) and len(stat) >= 2:
+                        stat_id, value = stat[0], stat[1]
+                        response += f"  - {stat_id}: {value} per 1% quality\n"
+                response += "\n"
+
+            response += f"**Data Source**: pob_complete_skills.json (Path of Building, {data.get('metadata', {}).get('extraction_date', 'Unknown date')})\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting spell gem: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_list_all_supports(self, args: dict) -> List[types.TextContent]:
+        """List all support gems with filtering and sorting (uses FreshDataProvider SSoT)"""
+        try:
+            filter_tags = args.get("filter_tags", [])
+            min_spirit = args.get("min_spirit")
+            max_spirit = args.get("max_spirit")
+            sort_by = args.get("sort_by", "name")
+            limit = args.get("limit", 50)
+
+            # Use FreshDataProvider as Single Source of Truth
+            fresh_provider = get_fresh_data_provider()
+            support_gems = fresh_provider.get_all_support_gems()
+
+            # Extract and filter supports
+            all_supports = []
+            for support_id, support_data in support_gems.items():
+                if not isinstance(support_data, dict) or 'name' not in support_data:
+                    continue
+
+                spirit_cost = support_data.get('spirit_cost', 0) or 0
+
+                # Apply filters
+                if filter_tags:
+                    support_tags = [t.lower() for t in support_data.get('tags', [])]
+                    if not any(ft.lower() in support_tags for ft in filter_tags):
+                        continue
+
+                if min_spirit is not None and spirit_cost < min_spirit:
+                    continue
+                if max_spirit is not None and spirit_cost > max_spirit:
+                    continue
+
+                # Get key effects for display
+                effects = support_data.get('effects', {})
+                effect_summary = ""
+                if effects:
+                    # Show first 2 most important effects
+                    key_effects = []
+                    for k, v in list(effects.items())[:2]:
+                        if isinstance(v, bool):
+                            key_effects.append(k.replace('_', ' ').title())
+                        else:
+                            key_effects.append(f"{k.replace('_', ' ').title()}: {v}")
+                    effect_summary = ", ".join(key_effects)
+
+                all_supports.append({
+                    'name': support_data['name'],
+                    'tags': support_data.get('tags', []),
+                    'tier': support_data.get('tier', '?'),
+                    'spirit_cost': spirit_cost,
+                    'effect_summary': effect_summary
+                })
+
+            # Sort
+            if sort_by == "spirit_cost":
+                all_supports.sort(key=lambda x: x['spirit_cost'])
+            elif sort_by == "tier":
+                all_supports.sort(key=lambda x: (x['tier'] if isinstance(x['tier'], int) else 99, x['name']))
+            else:  # name
+                all_supports.sort(key=lambda x: x['name'])
+
+            # Limit
+            all_supports = all_supports[:limit]
+
+            # Format response
+            response = f"# Support Gems ({len(all_supports)} results)\n\n"
+            for sup in all_supports:
+                response += f"**{sup['name']}** (Tier {sup['tier']})\n"
+                response += f"  Spirit: {sup['spirit_cost']}, Tags: {', '.join(sup['tags'][:3])}\n"
+                if sup['effect_summary']:
+                    response += f"  Effects: {sup['effect_summary']}\n"
+                response += "\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing supports: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_list_all_spells(self, args: dict) -> List[types.TextContent]:
+        """List all spell/active skill gems with filtering and sorting (uses pob_complete_skills.json)"""
+        try:
+            filter_element = args.get("filter_element")
+            filter_tags = args.get("filter_tags", [])
+            min_damage = args.get("min_damage")
+            sort_by = args.get("sort_by", "name")
+            limit = args.get("limit", 50)
+
+            # Load from pob_complete_skills.json (has complete data)
+            pob_skills_file = Path(__file__).parent.parent / 'data' / 'pob_complete_skills.json'
+
+            if not pob_skills_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: pob_complete_skills.json not found"
+                )]
+
+            with open(pob_skills_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # Extract and filter spells
+            all_spells = []
+            skills = data.get('skills', {})
+
+            for skill_id, skill_data in skills.items():
+                if not isinstance(skill_data, dict):
+                    continue
+
+                # Skip support gems and hidden skills
+                if skill_data.get('hidden'):
+                    continue
+
+                name = skill_data.get('name', skill_id)
+                skill_types = skill_data.get('skillTypes', [])
+
+                # Apply tag filter if provided
+                if filter_tags:
+                    if not any(tag.lower() in [st.lower() for st in skill_types] for tag in filter_tags):
+                        continue
+
+                # Get level 20 stats (or highest available)
+                levels = skill_data.get('levels', {})
+                level_20_data = levels.get('20', levels.get('1', {}))
+
+                # Get cast time
+                cast_time = skill_data.get('castTime', 0)
+
+                # Get base multiplier at level 20
+                base_mult = level_20_data.get('baseMultiplier', 0)
+
+                # Get mana cost at level 20
+                cost = level_20_data.get('cost', {})
+                mana_cost = cost.get('Mana', 0)
+
+                # Detect element from skill types
+                element = 'Physical'
+                for st in skill_types:
+                    if st in ['Fire', 'Cold', 'Lightning', 'Chaos']:
+                        element = st
+                        break
+
+                # Apply element filter if provided
+                if filter_element and element.lower() != filter_element.lower():
+                    continue
+
+                all_spells.append({
+                    'name': name,
+                    'id': skill_id,
+                    'element': element,
+                    'tags': skill_types,
+                    'base_multiplier': base_mult,
+                    'cast_time': cast_time,
+                    'mana_cost': mana_cost
+                })
+
+            # Sort
+            if sort_by == "base_damage" or sort_by == "base_multiplier":
+                all_spells.sort(key=lambda x: x['base_multiplier'], reverse=True)
+            elif sort_by == "cast_time":
+                all_spells.sort(key=lambda x: x['cast_time'] if x['cast_time'] > 0 else 999)
+            elif sort_by == "mana_cost":
+                all_spells.sort(key=lambda x: x['mana_cost'], reverse=True)
+            else:  # name
+                all_spells.sort(key=lambda x: x['name'])
+
+            # Limit
+            all_spells = all_spells[:limit]
+
+            # Format response
+            response = f"# Spell Gems ({len(all_spells)} results)\n\n"
+            for spell in all_spells:
+                mult_str = f"{spell['base_multiplier']:.1f}x" if spell['base_multiplier'] > 0 else "N/A"
+                cast_str = f"{spell['cast_time']:.2f}s" if spell['cast_time'] > 0 else "N/A"
+                mana_str = f"{spell['mana_cost']}" if spell['mana_cost'] > 0 else "N/A"
+
+                response += f"**{spell['name']}** ({spell['element']})\n"
+                response += f"  Base Mult: {mult_str}, Cast: {cast_str}, Mana: {mana_str}\n"
+                response += f"  Tags: {', '.join(spell['tags'][:4])}\n\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing spells: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    # ============================================================================
+    # TIER 2 DEBUGGING TOOL HANDLERS
+    # ============================================================================
+
+    async def _handle_trace_support_selection(self, args: dict) -> List[types.TextContent]:
+        """Trace how support gems were selected"""
+        try:
+            spell_name = args.get("spell_name")
+            max_spirit = args.get("max_spirit", 100)
+            num_supports = args.get("num_supports", 5)
+            goal = args.get("goal", "dps")
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            # Call with trace enabled
+            result = self.gem_synergy_calculator.find_best_combinations(
+                spell_name=spell_name,
+                max_spirit=max_spirit,
+                num_supports=num_supports,
+                optimization_goal=goal,
+                return_trace=True
+            )
+
+            if isinstance(result, dict) and "trace" in result:
+                trace = result["trace"]
+                results = result["results"]
+
+                response = f"# Support Selection Trace: {spell_name}\n\n"
+
+                if not trace["spell_found"]:
+                    response += f"X Spell '{spell_name}' not found in database\n"
+                    return [types.TextContent(type="text", text=response)]
+
+                response += f"**Optimization Goal**: {trace['optimization_goal']}\n\n"
+
+                response += "## Step 1: Compatible Support Filtering\n"
+                response += f"- Found {trace['compatible_supports_count']} compatible supports\n"
+                if trace['compatible_supports']:
+                    response += f"- Examples: {', '.join(trace['compatible_supports'][:10])}\n"
+                response += "\n"
+
+                response += "## Step 2: Combination Generation\n"
+                response += f"- Total combinations tested: {trace['total_combinations']:,}\n"
+                response += f"- Valid combinations: {trace['valid_combinations']:,}\n"
+                response += f"- Invalid combinations (incompatible gems): {trace['invalid_combinations']:,}\n"
+                response += f"- Filtered by spirit budget: {trace['spirit_filtered']:,}\n"
+                response += "\n"
+
+                response += "## Step 3: Top Result\n"
+                if results:
+                    top = results[0]
+                    response += f"- Best DPS: {trace.get('top_result_dps', top.total_dps):.1f}\n"
+                    response += f"- Support combination: {', '.join(top.support_names)}\n"
+                    response += f"- Spirit cost: {top.total_spirit}\n"
+                else:
+                    response += "- No valid combinations found\n"
+
+                return [types.TextContent(type="text", text=response)]
+            else:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Trace data not available"
+                )]
+
+        except Exception as e:
+            logger.error(f"Error tracing support selection: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_trace_dps_calculation(self, args: dict) -> List[types.TextContent]:
+        """Trace step-by-step DPS calculation"""
+        try:
+            spell_name = args.get("spell_name")
+            support_gems = args.get("support_gems", [])
+            character_mods = args.get("character_mods", {})
+            max_spirit = args.get("max_spirit", 100)
+
+            if not spell_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: spell_name is required"
+                )]
+
+            if not support_gems:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: support_gems list is required"
+                )]
+
+            # Get trace
+            trace = self.gem_synergy_calculator.trace_dps_calculation(
+                spell_name=spell_name,
+                support_names=support_gems,
+                character_mods=character_mods,
+                max_spirit=max_spirit
+            )
+
+            response = f"# DPS Calculation Trace: {spell_name}\n\n"
+
+            if not trace["valid"]:
+                response += "## Errors\n"
+                for error in trace["errors"]:
+                    response += f"- X {error}\n"
+                return [types.TextContent(type="text", text=response)]
+
+            # Spell info
+            spell = trace["spell"]
+            response += f"## Spell: {spell['name']}\n"
+            response += f"- Base damage: {spell['base_damage_min']}-{spell['base_damage_max']}\n"
+            response += f"- Cast time: {spell['cast_time']}s\n\n"
+
+            # Supports
+            response += "## Supports\n"
+            for sup in trace["supports"]:
+                response += f"- {sup['name']}: "
+                if sup['more_damage'] != 0:
+                    response += f"+{sup['more_damage']}% more damage "
+                if sup['less_damage'] != 0:
+                    response += f"{sup['less_damage']}% less damage "
+                if sup['increased_damage'] != 0:
+                    response += f"+{sup['increased_damage']}% increased damage "
+                response += f"(Spirit: {sup['spirit_cost']})\n"
+            response += "\n"
+
+            # Spirit
+            spirit = trace["spirit"]
+            response += f"## Spirit Budget\n"
+            response += f"- Total: {spirit['total']} / {spirit['available']}\n"
+            if spirit['overflow'] > 0:
+                response += f"- Warning: Overflow: {spirit['overflow']}\n"
+            response += "\n"
+
+            # Calculations
+            calc = trace["calculations"]
+            response += "## DPS Calculation Steps\n\n"
+
+            response += f"**Step 1: Base Damage**\n"
+            response += f"- Average: {calc['base_damage_avg']:.1f}\n\n"
+
+            response += f"**Step 2: More Multipliers (multiplicative)**\n"
+            for step in calc["more_multipliers"]:
+                response += f"- {step['support_name']}: x{step['net_multiplier']:.3f} -> cumulative: x{step['cumulative']:.3f}\n"
+            response += f"- Total more multiplier: x{calc['more_total']:.3f}\n\n"
+
+            response += f"**Step 3: Increased Modifiers (additive)**\n"
+            response += f"- Character increased: +{calc['increased_char']:.1f}%\n"
+            response += f"- Support increased: +{calc['increased_supports']:.1f}%\n"
+            response += f"- Total increased multiplier: x{calc['increased_total']:.3f}\n\n"
+
+            response += f"**Step 4: Final Damage Per Cast**\n"
+            response += f"- {calc['base_damage_avg']:.1f} x {calc['more_total']:.3f} x {calc['increased_total']:.3f} = {calc['final_damage_per_cast']:.1f}\n\n"
+
+            response += f"**Step 5: DPS**\n"
+            response += f"- {calc['final_damage_per_cast']:.1f} / {calc['cast_time']:.2f}s = **{calc['final_dps']:.1f} DPS**\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error tracing DPS calculation: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_validate_build_constraints(self, args: dict) -> List[types.TextContent]:
+        """Comprehensive build validation"""
+        try:
+            character_data = args.get("character_data", {})
+
+            if not character_data:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: character_data is required"
+                )]
+
+            violations = []
+
+            # Check resistances
+            for res_type in ["fire_res", "cold_res", "lightning_res"]:
+                res_value = character_data.get(res_type, 0)
+                if res_value < -60:
+                    violations.append({
+                        "severity": "CRITICAL",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} is below minimum (-60%): {res_value}%"
+                    })
+                elif res_value < 75:
+                    violations.append({
+                        "severity": "HIGH",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} is below cap (75%): {res_value}%"
+                    })
+                elif res_value > 90:
+                    violations.append({
+                        "severity": "MEDIUM",
+                        "category": "Resistances",
+                        "message": f"{res_type.replace('_', ' ').title()} exceeds hard cap (90%): {res_value}%"
+                    })
+
+            # Check spirit
+            spirit = character_data.get("spirit", 0)
+            spirit_reserved = character_data.get("spirit_reserved", 0)
+            if spirit_reserved > spirit:
+                violations.append({
+                    "severity": "CRITICAL",
+                    "category": "Spirit",
+                    "message": f"Spirit overflow: {spirit_reserved} reserved > {spirit} available"
+                })
+
+            # NOTE: PoE2 uses Spirit system, not mana reservation
+            # Mana reservation validation removed - it's a PoE1 mechanic
+
+            # Check life/ES
+            life = character_data.get("life", 0)
+            es = character_data.get("energy_shield", 0)
+            level = character_data.get("level", 1)
+
+            expected_min_life = 300 + (level * 50)  # Rough guideline
+            if life + es < expected_min_life:
+                violations.append({
+                    "severity": "HIGH",
+                    "category": "Survivability",
+                    "message": f"Combined Life+ES ({life + es}) below recommended for level {level} ({expected_min_life})"
+                })
+
+            # Format response
+            response = "# Build Constraint Validation\n\n"
+
+            if not violations:
+                response += "✓ **All constraints satisfied**\n\n"
+                response += "No issues detected with:\n"
+                response += "- Resistances (within -60% to 90% range)\n"
+                response += "- Spirit allocation\n"
+                response += "- Mana reservation\n"
+                response += "- Survivability baseline\n"
+            else:
+                # Group by severity
+                critical = [v for v in violations if v["severity"] == "CRITICAL"]
+                high = [v for v in violations if v["severity"] == "HIGH"]
+                medium = [v for v in violations if v["severity"] == "MEDIUM"]
+
+                response += f"**Found {len(violations)} constraint violations**\n\n"
+
+                if critical:
+                    response += "## X CRITICAL Issues\n"
+                    for v in critical:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+                if high:
+                    response += "## Warning HIGH Priority Issues\n"
+                    for v in high:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+                if medium:
+                    response += "## Info MEDIUM Priority Issues\n"
+                    for v in medium:
+                        response += f"- [{v['category']}] {v['message']}\n"
+                    response += "\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error validating build constraints: {e}")
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    async def _handle_analyze_passive_tree(self, args: dict) -> List[types.TextContent]:
+        """Analyze passive tree allocation with pathfinding and recommendations"""
+        try:
+            if not self.passive_tree_resolver:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Passive tree resolver not initialized. PSG database may be missing."
+                )]
+
+            node_ids = args.get("node_ids", [])
+            target_notable = args.get("target_notable")
+            find_recommendations = args.get("find_recommendations", True)
+
+            if not node_ids:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: node_ids is required (list of allocated passive node IDs)"
+                )]
+
+            # Analyze the build
+            analysis = self.passive_tree_resolver.analyze_build(
+                node_ids,
+                find_recommendations=find_recommendations
+            )
+
+            # Build response
+            response = f"""# Passive Tree Analysis
+
+## Summary
+- **Total Nodes Allocated:** {analysis.total_nodes}
+- **Starting Class:** {analysis.class_start or 'Unknown'}
+- **Build Connected:** {'Yes' if analysis.is_connected else 'NO - Disconnected nodes detected!'}
+
+## Keystones ({len(analysis.keystones)})
+"""
+            if analysis.keystones:
+                for node in analysis.keystones:
+                    response += f"### {node.name}\n"
+                    for stat in node.stats:
+                        response += f"- {stat}\n"
+                    response += "\n"
+            else:
+                response += "*None allocated*\n"
+
+            response += f"\n## Notables ({len(analysis.notables)})\n"
+            if analysis.notables:
+                for node in analysis.notables:
+                    response += f"### {node.name}\n"
+                    for stat in node.stats[:3]:  # Limit to first 3 stats
+                        response += f"- {stat}\n"
+                    response += "\n"
+            else:
+                response += "*None allocated*\n"
+
+            response += f"\n## Small Nodes ({len(analysis.small_nodes)})\n"
+            # Group small nodes by name
+            small_by_name = {}
+            for node in analysis.small_nodes:
+                small_by_name.setdefault(node.name, []).append(node)
+
+            for name, nodes in sorted(small_by_name.items(), key=lambda x: -len(x[1])):
+                stat_preview = nodes[0].stats[0] if nodes[0].stats else "No stats"
+                response += f"- {len(nodes)}x {name}: {stat_preview}\n"
+
+            if analysis.jewel_sockets:
+                response += f"\n## Jewel Sockets ({len(analysis.jewel_sockets)})\n"
+                for node in analysis.jewel_sockets:
+                    response += f"- Socket at ({node.x:.0f}, {node.y:.0f})\n"
+
+            # Pathfinding to target notable
+            if target_notable:
+                response += f"\n## Path to '{target_notable}'\n"
+                # Find the notable by name
+                all_notables = self.passive_tree_resolver.get_all_notables()
+                target_node = None
+                for notable in all_notables:
+                    if notable and notable.name.lower() == target_notable.lower():
+                        target_node = notable
+                        break
+
+                if target_node:
+                    # Find path from current build
+                    best_path = None
+                    best_start = None
+                    for allocated in node_ids:
+                        path = self.passive_tree_resolver.find_path(allocated, target_node.node_id)
+                        if path and (best_path is None or path.distance < best_path.distance):
+                            best_path = path
+                            best_start = allocated
+
+                    if best_path:
+                        response += f"**Distance:** {best_path.distance} nodes from your current build\n\n"
+                        response += "**Path:**\n"
+                        for i, node in enumerate(best_path.nodes):
+                            in_build = "*" if node.node_id in node_ids else " "
+                            response += f"{in_build} {i+1}. {node.name} ({node.node_type})\n"
+
+                        response += f"\n**{target_node.name} Stats:**\n"
+                        for stat in target_node.stats:
+                            response += f"- {stat}\n"
+                    else:
+                        response += f"*No path found to {target_notable}*\n"
+                else:
+                    response += f"*Notable '{target_notable}' not found in database*\n"
+
+            # Recommendations
+            if find_recommendations and analysis.nearest_notables:
+                response += "\n## Nearest Unallocated Notables\n"
+                for node, dist in analysis.nearest_notables[:5]:
+                    response += f"\n### {node.name} ({dist} nodes away)\n"
+                    for stat in node.stats[:2]:
+                        response += f"- {stat}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error analyzing passive tree: {e}", exc_info=True)
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
+
+    # ============================================================================
+    # FORMATTING METHODS
+    # ============================================================================
+
     def _format_gear_stats(self, gear: dict) -> str:
         """Format gear stats for display"""
         if not gear:
@@ -2871,7 +3639,7 @@ Consider:
 
     # Formatting Methods
 
-    def _format_character_analysis(self, character_data: dict, analysis: dict, recommendations: str) -> str:
+    def _format_character_analysis(self, character_data: dict, analysis: dict, recommendations: str, passive_analysis=None) -> str:
         """Format character analysis response"""
         response = f"""# Character Analysis: {character_data.get('name', 'Unknown')}
 
@@ -2895,6 +3663,38 @@ Consider:
 - Effective HP: {analysis.get('ehp', 0):,.0f}
 - Defense Rating: {analysis.get('defense_rating', 0):.2f}/1.00
 """
+
+        # Add passive tree analysis if available
+        if passive_analysis:
+            response += f"""
+## Passive Tree ({passive_analysis.total_nodes} nodes allocated)
+"""
+            if passive_analysis.class_start:
+                response += f"- Starting Class: {passive_analysis.class_start}\n"
+
+            if passive_analysis.keystones:
+                response += f"- Keystones ({len(passive_analysis.keystones)}): "
+                response += ", ".join(n.name for n in passive_analysis.keystones) + "\n"
+
+            if passive_analysis.notables:
+                response += f"- Notables ({len(passive_analysis.notables)}): "
+                response += ", ".join(n.name for n in passive_analysis.notables) + "\n"
+
+            if passive_analysis.jewel_sockets:
+                response += f"- Jewel Sockets: {len(passive_analysis.jewel_sockets)}\n"
+
+            response += f"- Small Nodes: {len(passive_analysis.small_nodes)}\n"
+
+            if not passive_analysis.is_connected:
+                response += "- WARNING: Build has disconnected nodes!\n"
+
+            # Show nearest unallocated notables
+            if passive_analysis.nearest_notables:
+                response += "\n### Nearest Unallocated Notables\n"
+                for node, dist in passive_analysis.nearest_notables[:5]:
+                    response += f"- {node.name} ({dist} nodes away)\n"
+                    if node.stats:
+                        response += f"  - {node.stats[0]}\n"
 
         if recommendations:
             response += f"\n## AI Recommendations\n{recommendations}"

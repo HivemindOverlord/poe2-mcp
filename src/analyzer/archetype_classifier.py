@@ -37,7 +37,7 @@ class BuildArchetype(Enum):
     BALANCED_ALLROUNDER = "balanced_allrounder"  # Jack of all trades
     ES_RECHARGE_TANK = "es_recharge_tank"      # ES recharge focused
     BLOCK_TANK = "block_tank"                  # Block-based defense
-    EVASION_DODGE = "evasion_dodge"            # Evasion-based defense
+    EVASION = "evasion"                        # Evasion-based defense
     LIFE_REGEN = "life_regen"                  # Life regeneration tank
 
 
@@ -177,7 +177,7 @@ class ArchetypeClassifier:
                 dps_range=(1200000, 6000000, 2500000),
                 ehp_range=(25000, 80000, 45000),
                 requires_auras=True,
-                priority_stats=["aura_effect", "spirit", "mana_reservation"],
+                priority_stats=["aura_effect", "spirit", "increased_effect"],
                 common_weaknesses=["early_game_power", "gear_dependency"]
             ),
 
@@ -199,13 +199,13 @@ class ArchetypeClassifier:
                 common_weaknesses=["spell_damage", "dot_damage"]
             ),
 
-            BuildArchetype.EVASION_DODGE: ArchetypeSignature(
-                name=BuildArchetype.EVASION_DODGE,
+            BuildArchetype.EVASION: ArchetypeSignature(
+                name=BuildArchetype.EVASION,
                 dps_range=(600000, 2500000, 1200000),
                 ehp_range=(12000, 30000, 18000),
                 requires_evasion=True,
                 requires_movement_speed=True,
-                priority_stats=["evasion", "movement_speed", "dodge"],
+                priority_stats=["evasion", "movement_speed", "spell_suppression"],
                 common_weaknesses=["spell_hits", "unavoidable_damage", "stun"]
             ),
 

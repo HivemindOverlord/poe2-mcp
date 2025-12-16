@@ -286,7 +286,7 @@ class PoeNinjaAPI:
             "block_chance": defensive_stats.get("blockChance", 0),
             "spell_block_chance": defensive_stats.get("spellBlockChance", 0),
             "spell_suppression": defensive_stats.get("spellSuppressionChance", 0),
-            "spell_dodge": defensive_stats.get("spellDodgeChance", 0),
+            # NOTE: spell_dodge removed - PoE2 uses evasion for all hits, not dodge
 
             # Other stats
             "movement_speed": defensive_stats.get("movementSpeed", 0),

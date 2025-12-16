@@ -602,6 +602,15 @@ class CharacterFetcher:
         # Check if this is poe.ninja format with charModel
         char_model = raw_data.get('charModel', raw_data)
 
+        # Passive tree data - poe.ninja uses 'passiveSelection' (list of node IDs)
+        passive_data = (
+            char_model.get('passiveSelection') or  # poe.ninja format: list of node IDs
+            char_model.get('passives') or          # Alternative format
+            char_model.get('passiveTree') or       # Another alternative
+            char_model.get('hashes') or            # Official API format
+            []
+        )
+
         return {
             'name': char_model.get('name', character_name),
             'account': char_model.get('account', account_name),
@@ -611,8 +620,11 @@ class CharacterFetcher:
             'experience': char_model.get('experience', 0),
             'items': char_model.get('items', char_model.get('equipment', [])),
             'skills': char_model.get('skills', []),
-            'passive_tree': char_model.get('passives', char_model.get('passiveTree', {})),
+            'passive_tree': passive_data,
+            'keystones': char_model.get('keystones', []),
+            'jewels': char_model.get('jewels', []),
             'stats': char_model.get('defensiveStats', {}),
+            'pob_export': char_model.get('pathOfBuildingExport', ''),
             'raw_data': raw_data  # Keep original data for reference
         }
 

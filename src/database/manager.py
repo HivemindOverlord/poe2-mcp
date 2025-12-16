@@ -5,16 +5,17 @@ Handles database initialization, queries, and management
 
 import logging
 import re
+import json
 from typing import List, Dict, Any, Optional
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from pydantic import BaseModel, Field, field_validator
 
 from .models import Base, Item, PassiveNode, SkillGem, SavedBuild
 try:
-    from ..config import settings
+    from ..config import settings, DATA_DIR
 except ImportError:
-    from src.config import settings
+    from src.config import settings, DATA_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +117,11 @@ class DatabaseManager:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
-        Search for items in the database with input validation.
+        Search for items in the .datc64 game database with input validation.
 
         Args:
-            query: Search term for item name
-            filters: Optional filters (item_class, rarity)
+            query: Search term for item name or ID
+            filters: Optional filters (item_class)
 
         Returns:
             List of matching items (max 50 results)
@@ -133,7 +134,7 @@ class DatabaseManager:
             search_input = ItemSearchInput(
                 query=query,
                 item_class=filters.get("item_class") if filters else None,
-                rarity=filters.get("rarity") if filters else None
+                rarity=None  # Not applicable for .datc64 base items
             )
         except Exception as e:
             logger.warning(f"Invalid search input: {e}")
@@ -143,31 +144,87 @@ class DatabaseManager:
         safe_query = self._escape_like_pattern(search_input.query)
 
         async with self.async_session() as session:
-            # Use parameterized query with escaped wildcards
-            stmt = select(Item).where(
-                Item.name.like(f"%{safe_query}%", escape='\\')
-            )
+            # Attach the .datc64 database for querying
+            datc64_db_path = DATA_DIR / "poe2_datc64.db"
+            await session.execute(text(f"ATTACH DATABASE '{datc64_db_path}' AS datc64"))
 
-            # Apply validated filters
-            if search_input.item_class:
-                stmt = stmt.where(Item.item_class == search_input.item_class)
-            if search_input.rarity:
-                stmt = stmt.where(Item.rarity == search_input.rarity)
+            try:
+                # Query baseitemtypes with join to itemclasses
+                # Extract name from Id if Name is empty (known .datc64 issue)
+                sql_query = text("""
+                    SELECT
+                        b.data,
+                        i.data as class_data
+                    FROM datc64.baseitemtypes b
+                    LEFT JOIN datc64.itemclasses i
+                        ON i.row_index = CAST(json_extract(b.data, '$.ItemClassesKey') AS INTEGER)
+                    WHERE (
+                        json_extract(b.data, '$.Name') LIKE :term
+                        OR json_extract(b.data, '$.InheritsFrom') LIKE :term
+                        OR json_extract(b.data, '$.Id') LIKE :term
+                    )
+                    LIMIT 50
+                """)
 
-            result = await session.execute(stmt.limit(50))
-            items = result.scalars().all()
+                result = await session.execute(sql_query, {"term": f"%{safe_query}%"})
+                rows = result.fetchall()
 
-            return [
-                {
-                    "id": item.id,
-                    "name": item.name,
-                    "base_type": item.base_type,
-                    "item_class": item.item_class,
-                    "rarity": item.rarity,
-                    "properties": item.properties
-                }
-                for item in items
-            ]
+                items = []
+                for row in rows:
+                    base_data = json.loads(row[0])
+                    class_data = json.loads(row[1]) if row[1] else {}
+
+                    # Extract name from Id if Name is empty
+                    item_name = base_data.get("Name", "")
+                    if not item_name:
+                        # Try InheritsFrom first (often has better name)
+                        item_name = base_data.get("InheritsFrom", "")
+
+                        # If still no name, extract from Id
+                        if not item_name:
+                            item_id = base_data.get("Id", "")
+                            if item_id:
+                                item_name = item_id.split("/")[-1]
+
+                    # Convert camelCase to Title Case (e.g., "SkillGemIceNova" -> "Ice Nova")
+                    if item_name and not " " in item_name:
+                        # Remove common prefixes
+                        for prefix in ["SkillGem", "SupportGem", "CurrencyAdd", "Currency", "OneHand", "TwoHand"]:
+                            if item_name.startswith(prefix):
+                                item_name = item_name[len(prefix):]
+                                break
+
+                        # Add spaces before capital letters
+                        import re
+                        item_name = re.sub(r'([A-Z])', r' \1', item_name).strip()
+
+                    # Get item class name
+                    item_class = class_data.get("Name", "Unknown")
+
+                    # Apply item_class filter if specified
+                    if search_input.item_class and item_class.lower() != search_input.item_class.lower():
+                        continue
+
+                    items.append({
+                        "id": base_data.get("Id", ""),
+                        "name": item_name,
+                        "base_type": base_data.get("InheritsFrom", ""),
+                        "item_class": item_class,
+                        "width": base_data.get("Width", 1),
+                        "height": base_data.get("Height", 1),
+                        "drop_level": base_data.get("DropLevel", 0),
+                        "row_index": base_data.get("row_index", 0),
+                        "properties": {
+                            "tags": base_data.get("TagsKeys", []),
+                            "implicit_mods": base_data.get("Implicit_ModsKeys", [])
+                        }
+                    })
+
+                return items
+
+            finally:
+                # Always detach the database
+                await session.execute(text("DETACH DATABASE datc64"))
 
     async def get_all_items(self) -> List[Dict[str, Any]]:
         """Get all items from database"""

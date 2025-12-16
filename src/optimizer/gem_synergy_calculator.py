@@ -13,13 +13,44 @@ Date: 2025-10-24
 
 import logging
 import json
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, Union
 from dataclasses import dataclass, field
 from pathlib import Path
 from itertools import combinations
 import math
 
+# Import fresh data provider - Single Source of Truth
+try:
+    from ..data.fresh_data_provider import get_fresh_data_provider
+except ImportError:
+    from src.data.fresh_data_provider import get_fresh_data_provider
+
 logger = logging.getLogger(__name__)
+
+
+# Hardcoded support gem incompatibilities (until database is complete)
+# Based on PoE2 game mechanics - supports that modify the same stat in opposite directions
+# or have mutually exclusive effects cannot be used together
+HARDCODED_INCOMPATIBILITIES = {
+    # PoE2 uses Projectile Acceleration/Deceleration instead of Faster/Slower
+    "Projectile Acceleration Support": ["Projectile Deceleration Support"],
+    "Projectile Deceleration Support": ["Projectile Acceleration Support"],
+    "SupportProjectileAccelerationPlayer": ["SupportProjectileDecelerationPlayer"],
+    "SupportProjectileDecelerationPlayer": ["SupportProjectileAccelerationPlayer"],
+    # AoE incompatibilities
+    "Concentrated Effect Support": ["Increased Area of Effect Support"],
+    "Increased Area of Effect Support": ["Concentrated Effect Support"],
+    # Legacy PoE1 names (for backward compatibility)
+    "Faster Projectiles": ["Slower Projectiles"],
+    "Slower Projectiles": ["Faster Projectiles"],
+    "Faster Projectiles Support": ["Slower Projectiles Support"],
+    "Slower Projectiles Support": ["Faster Projectiles Support"],
+    # Lowercase variations
+    "faster_projectiles": ["slower_projectiles"],
+    "slower_projectiles": ["faster_projectiles"],
+    "projectile_acceleration": ["projectile_deceleration"],
+    "projectile_deceleration": ["projectile_acceleration"],
+}
 
 
 @dataclass
@@ -106,6 +137,17 @@ class SynergyResult:
     # Breakdown
     calculation_breakdown: Dict[str, Any] = field(default_factory=dict)
 
+    # Convenience properties for access
+    @property
+    def support_names(self) -> List[str]:
+        """Alias for support_gems for compatibility"""
+        return self.support_gems
+
+    @property
+    def total_spirit(self) -> int:
+        """Alias for total_spirit_cost for compatibility"""
+        return self.total_spirit_cost
+
 
 class GemSynergyCalculator:
     """
@@ -125,26 +167,172 @@ class GemSynergyCalculator:
 
     def __init__(self, spell_db_path: Optional[Path] = None, support_db_path: Optional[Path] = None) -> None:
         """
-        Initialize calculator with gem databases
+        Initialize calculator with gem databases.
 
-        Args:
-            spell_db_path: Path to spell gems JSON database
-            support_db_path: Path to support gems JSON database
+        Now uses FreshDataProvider as Single Source of Truth (SSoT).
+        Falls back to JSON files only if FreshDataProvider has no data.
+
+        NEW: Also loads PoB complete skills for constantStats (conversions, built-in mods, etc.)
         """
         self.spell_gems: Dict[str, GemStats] = {}
         self.support_gems: Dict[str, SupportGemEffect] = {}
+        self._fresh_provider = get_fresh_data_provider()
+        self._pob_skills = {}  # Cache for PoB complete skills with constantStats
 
-        # Default paths
-        if spell_db_path is None:
-            spell_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_spell_gems_database.json"
-        if support_db_path is None:
-            support_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_support_gems_database.json"
+        # Try to load from FreshDataProvider first (SSoT)
+        self._load_from_fresh_provider()
 
-        # Load databases
-        self._load_spell_database(spell_db_path)
-        self._load_support_database(support_db_path)
+        # Load PoB complete skills for enhanced data (constantStats, damage effectiveness, etc.)
+        self._load_pob_complete_skills()
 
-        logger.info(f"Loaded {len(self.spell_gems)} spell gems and {len(self.support_gems)} support gems")
+        # Fall back to JSON files if needed
+        if not self.spell_gems:
+            if spell_db_path is None:
+                spell_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_spell_gems_database.json"
+            self._load_spell_database(spell_db_path)
+
+        if not self.support_gems:
+            if support_db_path is None:
+                support_db_path = Path(__file__).parent.parent.parent / "data" / "poe2_support_gems_database.json"
+            self._load_support_database(support_db_path)
+
+        logger.info(f"Loaded {len(self.spell_gems)} spell gems and {len(self.support_gems)} support gems (SSoT: Fresh Game Data + PoB)")
+
+    def _load_from_fresh_provider(self):
+        """Load gems from FreshDataProvider (Single Source of Truth)."""
+        # Load active skills as spell gems
+        active_skills = self._fresh_provider.get_all_active_skills()
+        for skill_id, skill_data in active_skills.items():
+            # Skip internal/meta skills
+            if skill_id.startswith('Art/') or 'Meta' in skill_id:
+                continue
+
+            self.spell_gems[skill_id.lower()] = GemStats(
+                name=skill_data.get('name', skill_id),
+                tags=[],  # Tags would need extraction from game files
+                base_damage_min=0,  # Damage values need grantedeffectsperlevel extraction
+                base_damage_max=0,
+                cast_time=1.0,
+                crit_chance=0.0,
+                damage_effectiveness=100.0,
+                mana_cost=0,
+                spirit_cost=0
+            )
+
+        # Load support gems
+        support_gems = self._fresh_provider.get_all_support_gems()
+        for support_id, support_data in support_gems.items():
+            # Skip meta supports for now
+            if 'Meta' in support_id and 'CastOn' not in support_id:
+                continue
+
+            name = support_data.get('name', support_id)
+            self.support_gems[support_id.lower()] = SupportGemEffect(
+                name=name,
+                tags=support_data.get('tags', []),
+                # Effects would need detailed extraction from grantedeffectsperlevel
+                # For now, use defaults (0) and rely on hardcoded values for key supports
+                more_damage=support_data.get('effects', {}).get('more_damage', 0.0),
+                more_cast_speed=support_data.get('effects', {}).get('more_cast_speed', 0.0),
+                more_aoe=support_data.get('effects', {}).get('more_area', 0.0),
+                more_crit_chance=support_data.get('effects', {}).get('more_crit_chance', 0.0),
+                more_crit_damage=support_data.get('effects', {}).get('more_crit_damage', 0.0),
+                less_damage=support_data.get('effects', {}).get('less_damage', 0.0),
+                less_cast_speed=support_data.get('effects', {}).get('less_cast_speed', 0.0),
+                increased_damage=support_data.get('effects', {}).get('increased_damage', 0.0),
+                increased_cast_speed=support_data.get('effects', {}).get('increased_cast_speed', 0.0),
+                increased_crit_chance=support_data.get('effects', {}).get('increased_crit_chance', 0.0),
+                spirit_cost=support_data.get('spirit_cost', 0) or 0,
+                mana_cost_multiplier=support_data.get('cost_multiplier', 100.0) or 100.0,
+                utility_effects=[],
+                required_tags=support_data.get('compatible_with', ['spell', 'attack']),
+                incompatible_with=support_data.get('incompatible_with', [])
+            )
+
+        logger.info(f"FreshDataProvider: {len(self.spell_gems)} active skills, {len(support_gems)} support gems")
+
+    def _load_pob_complete_skills(self):
+        """
+        Load PoB complete skills data for enhanced gem information.
+        This provides constantStats (conversions, built-in modifiers), damage effectiveness, etc.
+        """
+        try:
+            pob_skills_path = Path(__file__).parent.parent.parent / "data" / "pob_complete_skills.json"
+            if not pob_skills_path.exists():
+                logger.warning("pob_complete_skills.json not found, constantStats won't be available")
+                return
+
+            with open(pob_skills_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            skills = data.get('skills', {})
+            for skill_id, skill_data in skills.items():
+                if not isinstance(skill_data, dict):
+                    continue
+
+                self._pob_skills[skill_id.lower()] = skill_data
+                # Also index by name for easier lookup
+                skill_name = skill_data.get('name', '')
+                if skill_name:
+                    self._pob_skills[skill_name.lower()] = skill_data
+
+            logger.info(f"Loaded {len(skills)} skills from PoB complete skills (with constantStats)")
+
+        except Exception as e:
+            logger.error(f"Failed to load PoB complete skills: {e}")
+
+    def get_skill_constant_stats(self, skill_name: str) -> List[Tuple[str, Any]]:
+        """
+        Get constantStats for a skill from PoB data.
+        These include conversions (e.g., 80% phys -> lightning), built-in modifiers, etc.
+
+        Returns:
+            List of (stat_id, value) tuples
+        """
+        skill_name_lower = skill_name.lower()
+        skill_data = self._pob_skills.get(skill_name_lower)
+
+        if not skill_data:
+            return []
+
+        # Extract constantStats from statSets (usually the first statSet)
+        stat_sets = skill_data.get('statSets', [])
+        if not stat_sets:
+            return []
+
+        primary_stat_set = stat_sets[0] if isinstance(stat_sets, list) else stat_sets
+        if not isinstance(primary_stat_set, dict):
+            return []
+
+        const_stats = primary_stat_set.get('constantStats', [])
+        return const_stats
+
+    def get_skill_damage_effectiveness(self, skill_name: str) -> Dict[str, float]:
+        """
+        Get damage effectiveness for a skill from PoB data.
+
+        Returns:
+            Dict with 'base' and 'incremental' effectiveness values
+        """
+        skill_name_lower = skill_name.lower()
+        skill_data = self._pob_skills.get(skill_name_lower)
+
+        if not skill_data:
+            return {'base': 100.0, 'incremental': 0.0}
+
+        # Extract from statSets
+        stat_sets = skill_data.get('statSets', [])
+        if not stat_sets:
+            return {'base': 100.0, 'incremental': 0.0}
+
+        primary_stat_set = stat_sets[0] if isinstance(stat_sets, list) else stat_sets
+        if not isinstance(primary_stat_set, dict):
+            return {'base': 100.0, 'incremental': 0.0}
+
+        return {
+            'base': primary_stat_set.get('baseEffectiveness', 100.0),
+            'incremental': primary_stat_set.get('incrementalEffectiveness', 0.0)
+        }
 
     def _load_spell_database(self, path: Path):
         """Load spell gems from JSON database"""
@@ -229,8 +417,9 @@ class GemSynergyCalculator:
         max_spirit: int = 100,
         num_supports: int = 5,
         optimization_goal: str = "dps",
-        top_n: int = 10
-    ) -> List[SynergyResult]:
+        top_n: int = 10,
+        return_trace: bool = False
+    ) -> Union[List[SynergyResult], Dict[str, Any]]:
         """
         Find the best support gem combinations for a spell
 
@@ -241,24 +430,43 @@ class GemSynergyCalculator:
             num_supports: Number of support gems to use (1-5)
             optimization_goal: "dps", "efficiency", "balanced", "utility"
             top_n: Number of top combinations to return
+            return_trace: If True, return trace data showing selection process
 
         Returns:
-            List of top N synergy results, sorted by score
+            If return_trace=False: List of top N synergy results, sorted by score
+            If return_trace=True: Dict with "results" and "trace" keys
         """
         if character_mods is None:
             character_mods = {}
+
+        trace_data = {
+            "spell_found": False,
+            "compatible_supports_count": 0,
+            "compatible_supports": [],
+            "total_combinations": 0,
+            "valid_combinations": 0,
+            "invalid_combinations": 0,
+            "spirit_filtered": 0,
+            "optimization_goal": optimization_goal
+        }
 
         # Get spell
         spell = self.spell_gems.get(spell_name.lower())
         if not spell:
             logger.error(f"Spell '{spell_name}' not found in database")
+            if return_trace:
+                return {"results": [], "trace": trace_data}
             return []
+
+        trace_data["spell_found"] = True
 
         logger.info(f"Finding best {num_supports}-support combinations for {spell.name}")
         logger.info(f"Optimization goal: {optimization_goal}, Max spirit: {max_spirit}")
 
         # Get compatible supports
         compatible_supports = self._get_compatible_supports(spell)
+        trace_data["compatible_supports_count"] = len(compatible_supports)
+        trace_data["compatible_supports"] = [s[0] for s in compatible_supports[:20]]  # First 20
 
         if len(compatible_supports) < num_supports:
             logger.warning(f"Only {len(compatible_supports)} compatible supports found (need {num_supports})")
@@ -269,12 +477,16 @@ class GemSynergyCalculator:
         # Generate all combinations
         all_results = []
         total_combinations = math.comb(len(compatible_supports), num_supports)
+        trace_data["total_combinations"] = total_combinations
         logger.info(f"Testing {total_combinations} combinations...")
 
         for i, support_combo in enumerate(combinations(compatible_supports, num_supports)):
             # Check if combination is valid (no conflicts)
             if not self._is_valid_combination(support_combo):
+                trace_data["invalid_combinations"] += 1
                 continue
+
+            trace_data["valid_combinations"] += 1
 
             # Calculate DPS and metrics
             result = self._calculate_combination_dps(
@@ -284,10 +496,13 @@ class GemSynergyCalculator:
                 max_spirit
             )
 
-            if result:
-                # Calculate scores based on optimization goal
-                result = self._score_result(result, optimization_goal)
-                all_results.append(result)
+            if result is None:
+                trace_data["spirit_filtered"] += 1
+                continue
+
+            # Calculate scores based on optimization goal
+            result = self._score_result(result, optimization_goal)
+            all_results.append(result)
 
             # Log progress every 1000 combinations
             if (i + 1) % 1000 == 0:
@@ -298,7 +513,13 @@ class GemSynergyCalculator:
         # Sort by overall score
         all_results.sort(key=lambda r: r.overall_score, reverse=True)
 
-        return all_results[:top_n]
+        sorted_results = all_results[:top_n]
+        if sorted_results:
+            trace_data["top_result_dps"] = sorted_results[0].total_dps
+
+        if return_trace:
+            return {"results": sorted_results, "trace": trace_data}
+        return sorted_results
 
     def _get_compatible_supports(self, spell: GemStats) -> List[Tuple[str, SupportGemEffect]]:
         """Get all support gems compatible with this spell"""
@@ -332,13 +553,227 @@ class GemSynergyCalculator:
         support_names = [s[0] for s in support_combo]
 
         for support_id, support in support_combo:
-            # Check incompatibilities
+            # Check database incompatibilities (currently empty but checked for future)
             if support.incompatible_with:
                 for incompatible in support.incompatible_with:
                     if incompatible in support_names:
+                        logger.warning(f"Rejecting {support_id} + {incompatible} (database incompatibility)")
                         return False
 
+            # Check hardcoded incompatibilities
+            if support_id in HARDCODED_INCOMPATIBILITIES:
+                for incompatible in HARDCODED_INCOMPATIBILITIES[support_id]:
+                    if incompatible in support_names:
+                        logger.warning(f"Rejecting {support_id} + {incompatible} (hardcoded incompatibility)")
+                        return False
+
+            # Also check normalized names (without "Support" suffix)
+            support_base_name = support_id.replace(" Support", "")
+            if support_base_name in HARDCODED_INCOMPATIBILITIES:
+                for incompatible in HARDCODED_INCOMPATIBILITIES[support_base_name]:
+                    incomp_variations = [incompatible, incompatible + " Support"]
+                    for variation in incomp_variations:
+                        if variation in support_names:
+                            logger.warning(f"Rejecting {support_id} + {incompatible} (hardcoded incompatibility - normalized)")
+                            return False
+
         return True
+
+    def validate_combination(self, support_names: List[str]) -> Dict[str, Any]:
+        """
+        Validate if a combination of support gems is valid
+
+        Args:
+            support_names: List of support gem names
+
+        Returns:
+            {
+                "valid": bool,
+                "reason": str (if invalid),
+                "conflicts": List[Tuple[str, str]] (pairs of incompatible gems)
+            }
+        """
+        conflicts = []
+
+        for i, support_a in enumerate(support_names):
+            # Check hardcoded incompatibilities
+            if support_a in HARDCODED_INCOMPATIBILITIES:
+                for incompatible in HARDCODED_INCOMPATIBILITIES[support_a]:
+                    if incompatible in support_names:
+                        conflicts.append((support_a, incompatible))
+
+            # Also check normalized names
+            support_base = support_a.replace(" Support", "")
+            if support_base in HARDCODED_INCOMPATIBILITIES:
+                for incompatible in HARDCODED_INCOMPATIBILITIES[support_base]:
+                    incomp_variations = [incompatible, incompatible + " Support"]
+                    for variation in incomp_variations:
+                        if variation in support_names:
+                            conflicts.append((support_a, variation))
+
+        if conflicts:
+            conflict_pairs = [f"{a} + {b}" for a, b in conflicts]
+            return {
+                "valid": False,
+                "reason": f"Incompatible support combinations detected: {', '.join(conflict_pairs)}",
+                "conflicts": conflicts
+            }
+
+        return {
+            "valid": True,
+            "reason": "All supports are compatible",
+            "conflicts": []
+        }
+
+    def trace_dps_calculation(
+        self,
+        spell_name: str,
+        support_names: List[str],
+        character_mods: Optional[Dict[str, float]] = None,
+        max_spirit: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Trace DPS calculation step-by-step for debugging and explanation
+
+        Args:
+            spell_name: Name of the spell gem
+            support_names: List of support gem names
+            character_mods: Character modifiers (increased_damage, etc.)
+            max_spirit: Maximum spirit available
+
+        Returns:
+            {
+                "spell": {name, base_damage_min, base_damage_max, cast_time},
+                "supports": [{name, more_damage, increased_damage, ...}],
+                "calculations": {
+                    "base_damage_avg": float,
+                    "more_multipliers": [{support_name, value, cumulative}],
+                    "more_total": float,
+                    "increased_char": float,
+                    "increased_supports": float,
+                    "increased_total": float,
+                    "final_damage_per_cast": float,
+                    "cast_time": float,
+                    "final_dps": float
+                },
+                "spirit": {total, available, overflow},
+                "valid": bool,
+                "errors": List[str]
+            }
+        """
+        if character_mods is None:
+            character_mods = {}
+
+        trace = {
+            "spell": {},
+            "supports": [],
+            "calculations": {},
+            "spirit": {},
+            "valid": True,
+            "errors": []
+        }
+
+        # Get spell
+        spell = self.spell_gems.get(spell_name.lower())
+        if not spell:
+            trace["valid"] = False
+            trace["errors"].append(f"Spell '{spell_name}' not found")
+            return trace
+
+        trace["spell"] = {
+            "name": spell.name,
+            "base_damage_min": spell.base_damage_min,
+            "base_damage_max": spell.base_damage_max,
+            "cast_time": spell.cast_time
+        }
+
+        # Get supports
+        support_objs = []
+        for sup_name in support_names:
+            found = False
+            for sup_id, sup_obj in self.support_gems.items():
+                if sup_obj.name.lower() == sup_name.lower() or sup_id.lower() == sup_name.lower():
+                    support_objs.append((sup_id, sup_obj))
+                    trace["supports"].append({
+                        "name": sup_obj.name,
+                        "more_damage": sup_obj.more_damage,
+                        "less_damage": sup_obj.less_damage,
+                        "increased_damage": sup_obj.increased_damage,
+                        "spirit_cost": sup_obj.spirit_cost
+                    })
+                    found = True
+                    break
+            if not found:
+                trace["errors"].append(f"Support '{sup_name}' not found")
+
+        if trace["errors"]:
+            trace["valid"] = False
+            return trace
+
+        # Validate combination
+        validation = self.validate_combination(support_names)
+        if not validation["valid"]:
+            trace["valid"] = False
+            trace["errors"].append(validation["reason"])
+            return trace
+
+        # Calculate spirit
+        total_spirit = spell.spirit_cost + sum(s[1].spirit_cost for s in support_objs)
+        trace["spirit"] = {
+            "total": total_spirit,
+            "available": max_spirit,
+            "overflow": max(0, total_spirit - max_spirit)
+        }
+
+        if total_spirit > max_spirit:
+            trace["valid"] = False
+            trace["errors"].append(f"Spirit overflow: {total_spirit} > {max_spirit}")
+
+        # Step 1: Base damage
+        base_damage_avg = (spell.base_damage_min + spell.base_damage_max) / 2
+        trace["calculations"]["base_damage_avg"] = base_damage_avg
+
+        # Step 2: More multipliers (multiplicative)
+        more_total = 1.0
+        more_steps = []
+        for sup_id, sup in support_objs:
+            # Net more multiplier (more_damage - less_damage)
+            net_more = (1.0 + sup.more_damage / 100.0) * (1.0 - sup.less_damage / 100.0)
+            more_total *= net_more
+            more_steps.append({
+                "support_name": sup.name,
+                "net_multiplier": net_more,
+                "cumulative": more_total
+            })
+
+        trace["calculations"]["more_multipliers"] = more_steps
+        trace["calculations"]["more_total"] = more_total
+
+        # Step 3: Increased modifiers (additive)
+        increased_char = character_mods.get("increased_damage", 0.0)
+        increased_supports = sum(s[1].increased_damage for s in support_objs)
+        increased_total = 1.0 + (increased_char + increased_supports) / 100.0
+
+        trace["calculations"]["increased_char"] = increased_char
+        trace["calculations"]["increased_supports"] = increased_supports
+        trace["calculations"]["increased_total"] = increased_total
+
+        # Step 4: Final damage per cast
+        final_damage = base_damage_avg * more_total * increased_total
+        trace["calculations"]["final_damage_per_cast"] = final_damage
+
+        # Step 5: DPS
+        cast_time = spell.cast_time
+        if cast_time > 0:
+            final_dps = final_damage / cast_time
+        else:
+            final_dps = 0
+            trace["errors"].append("Cast time is 0, cannot calculate DPS")
+
+        trace["calculations"]["cast_time"] = cast_time
+        trace["calculations"]["final_dps"] = final_dps
+
+        return trace
 
     def _calculate_combination_dps(
         self,
