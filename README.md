@@ -1,6 +1,6 @@
 # Path of Exile 2 Build Optimizer MCP
 
-A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 20 MCP tools for AI-powered build analysis, passive tree analysis, support gem validation, and Path of Building integration.
+A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 26 MCP tools for AI-powered build analysis, passive tree analysis, support gem validation, and Path of Building integration.
 
 ## What is This?
 
@@ -155,7 +155,7 @@ Check each platform's documentation for MCP server configuration.
 
 ---
 
-## Available Tools (20 Registered)
+## Available Tools (26 Registered)
 
 Once connected, you can ask your AI assistant to use these tools:
 
@@ -176,6 +176,20 @@ Once connected, you can ask your AI assistant to use these tools:
 | `inspect_spell_gem` | View complete spell gem data |
 | `list_all_supports` | List all available support gems |
 | `list_all_spells` | List all available spell gems |
+
+### Passive Tree Data
+| Tool | Description |
+|------|-------------|
+| `list_all_keystones` | List all keystones with full stats |
+| `inspect_keystone` | Get complete keystone details by name |
+| `list_all_notables` | List all notable passives with stats |
+| `inspect_passive_node` | Get details for any passive node |
+
+### Base Item Data
+| Tool | Description |
+|------|-------------|
+| `list_all_base_items` | List all base item types |
+| `inspect_base_item` | Get details for a specific base item |
 
 ### Path of Building
 | Tool | Description |
@@ -214,6 +228,10 @@ Once configured, just talk to your AI naturally:
 > "Can I use Faster Projectiles and Slower Projectiles together?" (uses `validate_support_combination`)
 
 > "Show me all support gems that work with projectiles" (uses `list_all_supports`)
+
+> "What keystones are available for life builds?" (uses `list_all_keystones`)
+
+> "Tell me about Chaos Inoculation" (uses `inspect_keystone`)
 
 > "Compare my build to top Witchhunter players"
 
@@ -256,7 +274,7 @@ Data is loaded from `data/` directory on startup.
 poe2-mcp/
 ├── launch.py              # Entry point
 ├── src/
-│   ├── mcp_server.py      # Main MCP server (20 tools registered)
+│   ├── mcp_server.py      # Main MCP server (26 tools registered)
 │   ├── api/               # External API clients
 │   │   ├── poe_ninja_api.py
 │   │   ├── character_fetcher.py
@@ -299,7 +317,7 @@ python src/mcp_server.py
 ```
 
 ### Key Files
-- `src/mcp_server.py` - MCP server with 20 registered tools (39 handlers total)
+- `src/mcp_server.py` - MCP server with 26 registered tools (45 handlers total)
 - `src/calculator/ehp_calculator.py` - EHP calculations
 - `src/optimizer/gem_synergy_calculator.py` - Support gem logic
 - `data/psg_passive_nodes.json` - Passive tree database

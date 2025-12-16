@@ -356,6 +356,20 @@ class PoE2BuildOptimizerMCP:
                 return await self._handle_analyze_passive_tree(arguments)
             elif name == "import_poe_ninja_url":
                 return await self._handle_import_poe_ninja_url(arguments)
+            # PASSIVE TREE DATA TOOLS (4 new tools)
+            elif name == "list_all_keystones":
+                return await self._handle_list_all_keystones(arguments)
+            elif name == "inspect_keystone":
+                return await self._handle_inspect_keystone(arguments)
+            elif name == "list_all_notables":
+                return await self._handle_list_all_notables(arguments)
+            elif name == "inspect_passive_node":
+                return await self._handle_inspect_passive_node(arguments)
+            # BASE ITEM DATA TOOLS (2 new tools)
+            elif name == "list_all_base_items":
+                return await self._handle_list_all_base_items(arguments)
+            elif name == "inspect_base_item":
+                return await self._handle_inspect_base_item(arguments)
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
@@ -757,6 +771,121 @@ class PoE2BuildOptimizerMCP:
                             }
                         },
                         "required": ["url"]
+                    }
+                ),
+
+                # ============================================
+                # PASSIVE TREE DATA TOOLS (4 new tools)
+                # ============================================
+                types.Tool(
+                    name="list_all_keystones",
+                    description="List all keystone passive nodes with their full stats. Keystones are powerful build-defining passives with major tradeoffs.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "filter_stat": {
+                                "type": "string",
+                                "description": "Filter keystones by stat text (e.g., 'life', 'crit', 'leech')"
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["name", "stat_count"],
+                                "default": "name"
+                            }
+                        }
+                    }
+                ),
+                types.Tool(
+                    name="inspect_keystone",
+                    description="Get complete details for a specific keystone by name, including all stats and effects.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "keystone_name": {
+                                "type": "string",
+                                "description": "Name of the keystone (e.g., 'Chaos Inoculation', 'Vaal Pact')"
+                            }
+                        },
+                        "required": ["keystone_name"]
+                    }
+                ),
+                types.Tool(
+                    name="list_all_notables",
+                    description="List all notable passive nodes. Notables are medium-power passives that define build paths.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "filter_stat": {
+                                "type": "string",
+                                "description": "Filter notables by stat text (e.g., 'projectile', 'fire', 'attack')"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number to return",
+                                "default": 100
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["name", "stat_count"],
+                                "default": "name"
+                            }
+                        }
+                    }
+                ),
+                types.Tool(
+                    name="inspect_passive_node",
+                    description="Get complete details for any passive node by name or ID. Works for keystones, notables, and small nodes.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "node_name": {
+                                "type": "string",
+                                "description": "Name of the passive node"
+                            },
+                            "node_id": {
+                                "type": "integer",
+                                "description": "Numeric ID of the passive node (alternative to name)"
+                            }
+                        }
+                    }
+                ),
+
+                # ============================================
+                # BASE ITEM DATA TOOLS (2 new tools)
+                # ============================================
+                types.Tool(
+                    name="list_all_base_items",
+                    description="List all base item types in the game (weapons, armor, accessories).",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "filter_type": {
+                                "type": "string",
+                                "description": "Filter by item type (e.g., 'Sword', 'Helmet', 'Ring')"
+                            },
+                            "filter_name": {
+                                "type": "string",
+                                "description": "Filter by name substring"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "default": 100
+                            }
+                        }
+                    }
+                ),
+                types.Tool(
+                    name="inspect_base_item",
+                    description="Get complete details for a specific base item type.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "item_name": {
+                                "type": "string",
+                                "description": "Name of the base item"
+                            }
+                        },
+                        "required": ["item_name"]
                     }
                 )
             ]
@@ -3686,6 +3815,371 @@ Could not extract account and character from URL.
             "character": character,
             "league": "Abyss"
         })
+
+    # ============================================================================
+    # PASSIVE TREE DATA HANDLERS (4 new handlers)
+    # ============================================================================
+
+    async def _handle_list_all_keystones(self, args: dict) -> List[types.TextContent]:
+        """List all keystone passive nodes with full stats"""
+        try:
+            if not self.passive_tree_resolver:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Passive tree resolver not initialized. PSG database may be missing."
+                )]
+
+            filter_stat = args.get("filter_stat", "").lower()
+            sort_by = args.get("sort_by", "name")
+
+            # Get keystones from PassiveTreeResolver (has full stats)
+            keystones = self.passive_tree_resolver.get_all_keystones()
+
+            # Filter by stat text if provided
+            if filter_stat:
+                keystones = [
+                    k for k in keystones
+                    if k and any(filter_stat in stat.lower() for stat in k.stats)
+                ]
+
+            # Sort
+            if sort_by == "stat_count":
+                keystones.sort(key=lambda k: -len(k.stats) if k else 0)
+            else:  # name
+                keystones.sort(key=lambda k: k.name if k else "")
+
+            # Format response
+            response = f"# All Keystones ({len(keystones)} total)\n\n"
+            response += "Keystones are powerful build-defining passives with major tradeoffs.\n\n"
+
+            for keystone in keystones:
+                if not keystone:
+                    continue
+                response += f"## {keystone.name}\n"
+                for stat in keystone.stats:
+                    response += f"- {stat}\n"
+                response += "\n"
+
+            if not keystones:
+                response += "*No keystones found matching filter.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing keystones: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_inspect_keystone(self, args: dict) -> List[types.TextContent]:
+        """Get complete details for a specific keystone"""
+        try:
+            if not self.passive_tree_resolver:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Passive tree resolver not initialized. PSG database may be missing."
+                )]
+
+            keystone_name = args.get("keystone_name", "").strip()
+
+            if not keystone_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: keystone_name is required"
+                )]
+
+            # Search for keystone by name (case-insensitive)
+            keystones = self.passive_tree_resolver.get_all_keystones()
+            found = None
+            for k in keystones:
+                if k and k.name.lower() == keystone_name.lower():
+                    found = k
+                    break
+
+            # Try partial match if exact match not found
+            if not found:
+                for k in keystones:
+                    if k and keystone_name.lower() in k.name.lower():
+                        found = k
+                        break
+
+            if not found:
+                # List available keystones
+                available = [k.name for k in keystones if k][:10]
+                return [types.TextContent(
+                    type="text",
+                    text=f"# Keystone Not Found\n\nNo keystone matching '{keystone_name}'.\n\n**Available keystones (sample):**\n" +
+                         "\n".join(f"- {name}" for name in available)
+                )]
+
+            # Format detailed response
+            response = f"# {found.name}\n\n"
+            response += f"**Type:** Keystone\n"
+            response += f"**Node ID:** {found.node_id}\n\n"
+            response += "## Stats\n"
+            for stat in found.stats:
+                response += f"- {stat}\n"
+
+            if found.connections:
+                response += f"\n**Connected to {len(found.connections)} nodes**\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting keystone: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_list_all_notables(self, args: dict) -> List[types.TextContent]:
+        """List all notable passive nodes"""
+        try:
+            if not self.passive_tree_resolver:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Passive tree resolver not initialized. PSG database may be missing."
+                )]
+
+            filter_stat = args.get("filter_stat", "").lower()
+            limit = args.get("limit", 100)
+            sort_by = args.get("sort_by", "name")
+
+            # Get notables from PassiveTreeResolver
+            notables = self.passive_tree_resolver.get_all_notables()
+
+            # Filter by stat text if provided
+            if filter_stat:
+                notables = [
+                    n for n in notables
+                    if n and any(filter_stat in stat.lower() for stat in n.stats)
+                ]
+
+            # Sort
+            if sort_by == "stat_count":
+                notables.sort(key=lambda n: -len(n.stats) if n else 0)
+            else:  # name
+                notables.sort(key=lambda n: n.name if n else "")
+
+            # Limit results
+            total_count = len(notables)
+            notables = notables[:limit]
+
+            # Format response
+            response = f"# Notable Passives ({len(notables)} shown, {total_count} total)\n\n"
+
+            for notable in notables:
+                if not notable:
+                    continue
+                response += f"### {notable.name}\n"
+                for stat in notable.stats[:3]:  # Limit stats shown
+                    response += f"- {stat}\n"
+                if len(notable.stats) > 3:
+                    response += f"- *(+{len(notable.stats) - 3} more stats)*\n"
+                response += "\n"
+
+            if not notables:
+                response += "*No notables found matching filter.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing notables: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_inspect_passive_node(self, args: dict) -> List[types.TextContent]:
+        """Get complete details for any passive node"""
+        try:
+            if not self.passive_tree_resolver:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Passive tree resolver not initialized. PSG database may be missing."
+                )]
+
+            node_name = args.get("node_name", "").strip()
+            node_id = args.get("node_id")
+
+            if not node_name and node_id is None:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Either node_name or node_id is required"
+                )]
+
+            found = None
+
+            # Search by ID first if provided
+            if node_id is not None:
+                found = self.passive_tree_resolver.resolve(node_id)
+
+            # Search by name if not found by ID
+            if not found and node_name:
+                # Check keystones
+                for k in self.passive_tree_resolver.get_all_keystones():
+                    if k and k.name.lower() == node_name.lower():
+                        found = k
+                        break
+
+                # Check notables
+                if not found:
+                    for n in self.passive_tree_resolver.get_all_notables():
+                        if n and n.name.lower() == node_name.lower():
+                            found = n
+                            break
+
+                # Try partial match
+                if not found:
+                    all_keystones = self.passive_tree_resolver.get_all_keystones()
+                    all_notables = self.passive_tree_resolver.get_all_notables()
+                    for node in all_keystones + all_notables:
+                        if node and node_name.lower() in node.name.lower():
+                            found = node
+                            break
+
+            if not found:
+                return [types.TextContent(
+                    type="text",
+                    text=f"# Node Not Found\n\nNo passive node matching '{node_name or node_id}'.\n\nTry using `list_all_keystones` or `list_all_notables` to find available nodes."
+                )]
+
+            # Format detailed response
+            response = f"# {found.name}\n\n"
+            response += f"**Type:** {found.node_type.title()}\n"
+            response += f"**Node ID:** {found.node_id}\n"
+
+            if found.x != 0 or found.y != 0:
+                response += f"**Position:** ({found.x:.0f}, {found.y:.0f})\n"
+
+            response += "\n## Stats\n"
+            if found.stats:
+                for stat in found.stats:
+                    response += f"- {stat}\n"
+            else:
+                response += "*No stats*\n"
+
+            if found.connections:
+                response += f"\n## Connections\n"
+                response += f"Connected to {len(found.connections)} adjacent nodes.\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting passive node: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    # ============================================================================
+    # BASE ITEM DATA HANDLERS (2 new handlers)
+    # ============================================================================
+
+    async def _handle_list_all_base_items(self, args: dict) -> List[types.TextContent]:
+        """List all base item types"""
+        try:
+            filter_type = args.get("filter_type", "").lower()
+            filter_name = args.get("filter_name", "").lower()
+            limit = args.get("limit", 100)
+
+            # Get base items from FreshDataProvider
+            fresh_provider = get_fresh_data_provider()
+            base_items = fresh_provider.get_all_base_items()
+
+            # Filter and format
+            items_list = []
+            for item_id, item_data in base_items.items():
+                name = item_data.get('name', item_id)
+
+                # Apply filters
+                if filter_type and filter_type not in item_id.lower() and filter_type not in name.lower():
+                    continue
+                if filter_name and filter_name not in name.lower():
+                    continue
+
+                items_list.append({
+                    'id': item_id,
+                    'name': name
+                })
+
+            # Sort by name
+            items_list.sort(key=lambda x: x['name'])
+
+            # Limit
+            total_count = len(items_list)
+            items_list = items_list[:limit]
+
+            # Format response
+            response = f"# Base Item Types ({len(items_list)} shown, {total_count} total)\n\n"
+
+            # Group by type prefix for better organization
+            current_prefix = ""
+            for item in items_list:
+                # Extract category from ID
+                parts = item['id'].split('/')
+                prefix = parts[0] if len(parts) > 1 else ""
+                if prefix != current_prefix:
+                    current_prefix = prefix
+                    if prefix:
+                        response += f"\n## {prefix.replace('Metadata', '').replace('Items', '').strip()}\n"
+
+                response += f"- **{item['name']}** (`{item['id']}`)\n"
+
+            if not items_list:
+                response += "*No base items found matching filters.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing base items: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_inspect_base_item(self, args: dict) -> List[types.TextContent]:
+        """Get complete details for a specific base item"""
+        try:
+            item_name = args.get("item_name", "").strip()
+
+            if not item_name:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: item_name is required"
+                )]
+
+            # Get base items from FreshDataProvider
+            fresh_provider = get_fresh_data_provider()
+            base_items = fresh_provider.get_all_base_items()
+
+            # Search by name (case-insensitive)
+            found = None
+            found_id = None
+            item_name_lower = item_name.lower()
+
+            for item_id, item_data in base_items.items():
+                name = item_data.get('name', '')
+                if name.lower() == item_name_lower or item_name_lower in item_id.lower():
+                    found = item_data
+                    found_id = item_id
+                    break
+
+            # Try partial match
+            if not found:
+                for item_id, item_data in base_items.items():
+                    name = item_data.get('name', '')
+                    if item_name_lower in name.lower():
+                        found = item_data
+                        found_id = item_id
+                        break
+
+            if not found:
+                return [types.TextContent(
+                    type="text",
+                    text=f"# Base Item Not Found\n\nNo base item matching '{item_name}'.\n\nTry using `list_all_base_items` to see available items."
+                )]
+
+            # Format detailed response
+            response = f"# {found.get('name', found_id)}\n\n"
+            response += f"**Internal ID:** `{found_id}`\n"
+
+            # Show all available fields
+            for key, value in found.items():
+                if key not in ('name', 'id', 'row_index'):
+                    response += f"**{key.replace('_', ' ').title()}:** {value}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting base item: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
 
     # ============================================================================
     # FORMATTING METHODS
