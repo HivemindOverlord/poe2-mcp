@@ -11,7 +11,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from pydantic import BaseModel, Field, field_validator
 
-from .models import Base, Item, PassiveNode, SkillGem, SavedBuild
+from .models import Base, Item, PassiveNode, SkillGem, SavedBuild, ItemMod
 try:
     from ..config import settings, DATA_DIR
 except ImportError:

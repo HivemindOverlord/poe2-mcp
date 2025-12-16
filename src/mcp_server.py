@@ -21,7 +21,7 @@ import mcp.types as types
 
 # Import with fallback for both direct and module execution
 try:
-    from .config import settings
+    from .config import settings, DATA_DIR
     from .database.manager import DatabaseManager
     from .api.poe_api import PoEAPIClient
     from .api.rate_limiter import RateLimiter
@@ -55,7 +55,7 @@ try:
     from .data.fresh_data_provider import get_fresh_data_provider
 except ImportError:
     # Fallback for direct execution
-    from src.config import settings
+    from src.config import settings, DATA_DIR
     from src.database.manager import DatabaseManager
     from src.api.poe_api import PoEAPIClient
     from src.api.rate_limiter import RateLimiter
@@ -370,6 +370,20 @@ class PoE2BuildOptimizerMCP:
                 return await self._handle_list_all_base_items(arguments)
             elif name == "inspect_base_item":
                 return await self._handle_inspect_base_item(arguments)
+            # MOD DATA TOOLS (4 new tools)
+            elif name == "inspect_mod":
+                return await self._handle_inspect_mod(arguments)
+            elif name == "list_all_mods":
+                return await self._handle_list_all_mods(arguments)
+            elif name == "search_mods_by_stat":
+                return await self._handle_search_mods_by_stat(arguments)
+            elif name == "get_mod_tiers":
+                return await self._handle_get_mod_tiers(arguments)
+            # MOD VALIDATION TOOLS (Tier 2)
+            elif name == "validate_item_mods":
+                return await self._handle_validate_item_mods(arguments)
+            elif name == "get_available_mods":
+                return await self._handle_get_available_mods(arguments)
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
@@ -886,6 +900,128 @@ class PoE2BuildOptimizerMCP:
                             }
                         },
                         "required": ["item_name"]
+                    }
+                ),
+                # MOD DATA TOOLS (4 new tools)
+                types.Tool(
+                    name="inspect_mod",
+                    description="Get complete details for a specific mod by ID, including generation type, level requirement, and stat values.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "mod_id": {
+                                "type": "string",
+                                "description": "Mod ID (e.g., 'IncreasedLife5', 'FireResist3')"
+                            }
+                        },
+                        "required": ["mod_id"]
+                    }
+                ),
+                types.Tool(
+                    name="list_all_mods",
+                    description="List all mods with optional filtering by generation type (PREFIX, SUFFIX, IMPLICIT, CORRUPTED) and stat keywords.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "generation_type": {
+                                "type": "string",
+                                "description": "Filter by generation type: PREFIX, SUFFIX, IMPLICIT, or CORRUPTED",
+                                "enum": ["PREFIX", "SUFFIX", "IMPLICIT", "CORRUPTED"]
+                            },
+                            "filter_stat": {
+                                "type": "string",
+                                "description": "Filter by stat keyword (e.g., 'life', 'fire', 'resistance')"
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of mods to return",
+                                "default": 50
+                            }
+                        }
+                    }
+                ),
+                types.Tool(
+                    name="search_mods_by_stat",
+                    description="Search for mods that grant a specific stat effect. Returns all mods matching the stat keyword.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "stat_keyword": {
+                                "type": "string",
+                                "description": "Stat keyword to search for (e.g., 'fire resistance', 'increased life', 'physical damage')"
+                            },
+                            "generation_type": {
+                                "type": "string",
+                                "description": "Optional: Filter by generation type (PREFIX, SUFFIX, IMPLICIT, CORRUPTED)",
+                                "enum": ["PREFIX", "SUFFIX", "IMPLICIT", "CORRUPTED"]
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of results",
+                                "default": 50
+                            }
+                        },
+                        "required": ["stat_keyword"]
+                    }
+                ),
+                types.Tool(
+                    name="get_mod_tiers",
+                    description="Get all tier variations of a mod family (e.g., IncreasedLife1-13). Shows progression from T1 to highest tier with level requirements and values.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "mod_base": {
+                                "type": "string",
+                                "description": "Base mod name without tier number (e.g., 'IncreasedLife', 'FireResist')"
+                            }
+                        },
+                        "required": ["mod_base"]
+                    }
+                ),
+                # TIER 2 MOD VALIDATION TOOLS
+                types.Tool(
+                    name="validate_item_mods",
+                    description="Validate if a set of mods can legally exist on an item. Checks for mod family conflicts (can't have 2 tiers of same mod), prefix/suffix limits, and generation type rules.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "mod_ids": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of mod IDs to validate (e.g., ['Strength1', 'FireResist3', 'AddedLightningDamage5'])"
+                            },
+                            "item_level": {
+                                "type": "integer",
+                                "description": "Item level to check mod requirements against",
+                                "default": 83
+                            }
+                        },
+                        "required": ["mod_ids"]
+                    }
+                ),
+                types.Tool(
+                    name="get_available_mods",
+                    description="Get all mods that could roll on an item type. Filter by generation type (PREFIX/SUFFIX) and level requirements.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "generation_type": {
+                                "type": "string",
+                                "description": "Filter by generation type: PREFIX or SUFFIX",
+                                "enum": ["PREFIX", "SUFFIX"]
+                            },
+                            "max_level": {
+                                "type": "integer",
+                                "description": "Maximum level requirement (filters mods you can't roll yet)",
+                                "default": 100
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of mods to return",
+                                "default": 100
+                            }
+                        },
+                        "required": ["generation_type"]
                     }
                 )
             ]
@@ -4179,6 +4315,511 @@ Could not extract account and character from URL.
 
         except Exception as e:
             logger.error(f"Error inspecting base item: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    # ============================================================================
+    # MOD DATA TOOLS HANDLERS
+    # ============================================================================
+
+    async def _handle_inspect_mod(self, args: dict) -> List[types.TextContent]:
+        """Get complete details for a specific mod"""
+        try:
+            mod_id = args.get("mod_id", "").strip()
+
+            if not mod_id:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: mod_id is required"
+                )]
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Search for mod by ID (case-insensitive)
+            found = None
+            mod_id_lower = mod_id.lower()
+
+            for mod in mods_data.get('mods', []):
+                if mod.get('mod_id', '').lower() == mod_id_lower:
+                    found = mod
+                    break
+
+            # Try partial match if exact not found
+            if not found:
+                for mod in mods_data.get('mods', []):
+                    if mod_id_lower in mod.get('mod_id', '').lower():
+                        found = mod
+                        break
+
+            if not found:
+                return [types.TextContent(
+                    type="text",
+                    text=f"# Mod Not Found\n\nNo mod matching '{mod_id}'.\n\nTry using `list_all_mods` or `search_mods_by_stat` to find mods."
+                )]
+
+            # Format detailed response
+            response = f"# {found['mod_id']}\n\n"
+            response += f"**Generation Type:** {found.get('generation_type_name', 'Unknown')}\n"
+            response += f"**Level Requirement:** {found.get('level_requirement', 0)}\n"
+            response += f"**Min Value:** {found.get('min_value', 0)}\n"
+            response += f"**Max Value:** {found.get('max_value', 0)}\n"
+            response += f"**Domain Flag:** {found.get('domain_flag', 0)}\n\n"
+
+            # Show stats
+            if found.get('stats'):
+                response += "## Stats\n"
+                for stat in found['stats']:
+                    response += f"- Slot {stat['slot']}: Index={stat['stat_index']}, Value={stat['stat_value']}\n"
+                response += "\n"
+
+            # Show strings if available
+            if found.get('strings'):
+                response += "## String References\n"
+                for key, value in found['strings'].items():
+                    response += f"- {key}: {value}\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error inspecting mod: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_list_all_mods(self, args: dict) -> List[types.TextContent]:
+        """List all mods with filtering"""
+        try:
+            generation_type = args.get("generation_type")
+            filter_stat = args.get("filter_stat", "").strip().lower()
+            limit = args.get("limit", 50)
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Filter mods
+            filtered_mods = []
+            for mod in mods_data.get('mods', []):
+                # Apply generation type filter
+                if generation_type and mod.get('generation_type_name') != generation_type:
+                    continue
+
+                # Apply stat filter (search in mod_id)
+                if filter_stat and filter_stat not in mod.get('mod_id', '').lower():
+                    continue
+
+                filtered_mods.append(mod)
+
+            # Sort by level requirement
+            filtered_mods.sort(key=lambda m: m.get('level_requirement', 0))
+
+            # Apply limit
+            filtered_mods = filtered_mods[:limit]
+
+            # Format response
+            metadata = mods_data.get('metadata', {})
+            response = f"# Mods Database\n\n"
+            response += f"**Total in database:** {metadata.get('total_mods', 0)}\n"
+            response += f"**Filtered results:** {len(filtered_mods)}\n"
+
+            if generation_type:
+                response += f"**Filter:** {generation_type}\n"
+            if filter_stat:
+                response += f"**Stat keyword:** '{filter_stat}'\n"
+
+            response += f"\n## Mods (showing {len(filtered_mods)})\n\n"
+
+            for mod in filtered_mods:
+                response += f"### {mod['mod_id']}\n"
+                response += f"- Type: {mod.get('generation_type_name', 'Unknown')}\n"
+                response += f"- Level: {mod.get('level_requirement', 0)}\n"
+                response += f"- Value: {mod.get('min_value', 0)} - {mod.get('max_value', 0)}\n\n"
+
+            if len(filtered_mods) >= limit:
+                response += f"\n*Showing first {limit} results. Use limit parameter to see more.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error listing mods: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_search_mods_by_stat(self, args: dict) -> List[types.TextContent]:
+        """Search for mods by stat keyword"""
+        try:
+            stat_keyword = args.get("stat_keyword", "").strip().lower()
+            generation_type = args.get("generation_type")
+            limit = args.get("limit", 50)
+
+            if not stat_keyword:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: stat_keyword is required"
+                )]
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Search for mods matching the stat keyword
+            matching_mods = []
+            for mod in mods_data.get('mods', []):
+                mod_id = mod.get('mod_id', '').lower()
+
+                # Check if stat keyword is in mod_id
+                if stat_keyword not in mod_id:
+                    continue
+
+                # Apply generation type filter
+                if generation_type and mod.get('generation_type_name') != generation_type:
+                    continue
+
+                matching_mods.append(mod)
+
+            # Sort by level requirement
+            matching_mods.sort(key=lambda m: m.get('level_requirement', 0))
+
+            # Apply limit
+            matching_mods = matching_mods[:limit]
+
+            # Format response
+            response = f"# Mods Search: '{stat_keyword}'\n\n"
+            response += f"**Found:** {len(matching_mods)} mods\n"
+
+            if generation_type:
+                response += f"**Filter:** {generation_type}\n"
+
+            response += f"\n## Results\n\n"
+
+            if not matching_mods:
+                response += "*No mods found matching your search.*\n"
+                response += "\nTry different keywords like:\n"
+                response += "- 'life' for life mods\n"
+                response += "- 'fire' for fire-related mods\n"
+                response += "- 'resist' for resistance mods\n"
+                response += "- 'damage' for damage mods\n"
+            else:
+                for mod in matching_mods:
+                    response += f"### {mod['mod_id']}\n"
+                    response += f"- Type: {mod.get('generation_type_name', 'Unknown')}\n"
+                    response += f"- Level: {mod.get('level_requirement', 0)}\n"
+                    response += f"- Value: {mod.get('min_value', 0)}"
+                    if mod.get('max_value', 0) > 0:
+                        response += f" - {mod.get('max_value', 0)}"
+                    response += "\n\n"
+
+            if len(matching_mods) >= limit:
+                response += f"\n*Showing first {limit} results. Use limit parameter to see more.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error searching mods by stat: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_get_mod_tiers(self, args: dict) -> List[types.TextContent]:
+        """Get all tiers of a mod family"""
+        try:
+            mod_base = args.get("mod_base", "").strip()
+
+            if not mod_base:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: mod_base is required"
+                )]
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Find all mods matching the base name
+            tier_mods = []
+            mod_base_lower = mod_base.lower()
+
+            for mod in mods_data.get('mods', []):
+                mod_id = mod.get('mod_id', '')
+                mod_id_lower = mod_id.lower()
+
+                # Check if this mod belongs to the family
+                # Match pattern: base name followed by optional number
+                if mod_id_lower.startswith(mod_base_lower):
+                    # Extract the part after base name
+                    suffix = mod_id[len(mod_base):]
+                    # Check if it's empty or a number
+                    if not suffix or suffix.isdigit():
+                        tier_mods.append(mod)
+
+            if not tier_mods:
+                return [types.TextContent(
+                    type="text",
+                    text=f"# No Mod Tiers Found\n\nNo mods found with base name '{mod_base}'.\n\nTry using `list_all_mods` to browse available mods."
+                )]
+
+            # Sort by level requirement (which usually correlates with tier)
+            tier_mods.sort(key=lambda m: m.get('level_requirement', 0))
+
+            # Format response
+            response = f"# Mod Tiers: {mod_base}\n\n"
+            response += f"**Total tiers found:** {len(tier_mods)}\n"
+
+            # Show generation type if consistent
+            gen_types = set(m.get('generation_type_name') for m in tier_mods)
+            if len(gen_types) == 1:
+                response += f"**Generation Type:** {gen_types.pop()}\n"
+
+            response += "\n## Tier Progression\n\n"
+
+            for i, mod in enumerate(tier_mods, 1):
+                tier_label = f"T{i}"
+                response += f"### {tier_label}: {mod['mod_id']}\n"
+                response += f"- Level Requirement: {mod.get('level_requirement', 0)}\n"
+                response += f"- Value: {mod.get('min_value', 0)}"
+                if mod.get('max_value', 0) > 0:
+                    response += f" - {mod.get('max_value', 0)}"
+                response += "\n"
+                response += f"- Type: {mod.get('generation_type_name', 'Unknown')}\n\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error getting mod tiers: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    # ============================================================================
+    # TIER 2 MOD VALIDATION TOOL HANDLERS
+    # ============================================================================
+
+    async def _handle_validate_item_mods(self, args: dict) -> List[types.TextContent]:
+        """Validate if a set of mods can legally exist on an item"""
+        try:
+            mod_ids = args.get("mod_ids", [])
+            item_level = args.get("item_level", 83)
+
+            if not mod_ids:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: mod_ids list is required"
+                )]
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Create a lookup dictionary
+            mods_by_id = {m['mod_id']: m for m in mods_data.get('mods', [])}
+
+            # Validate mods and collect info
+            errors = []
+            warnings = []
+            conflicts = []
+            found_mods = []
+            not_found = []
+
+            for mod_id in mod_ids:
+                if mod_id in mods_by_id:
+                    found_mods.append(mods_by_id[mod_id])
+                else:
+                    not_found.append(mod_id)
+                    errors.append(f"Mod not found: {mod_id}")
+
+            if not_found:
+                # Still continue validation with found mods
+                pass
+
+            # Check mod family conflicts (can't have 2 tiers of same mod family)
+            families_seen = {}
+            for mod in found_mods:
+                mod_id = mod.get('mod_id', '')
+                # Extract family by removing trailing digits
+                family = mod_id.rstrip('0123456789')
+                if not family:
+                    family = mod_id
+
+                if family in families_seen:
+                    conflict_mod = families_seen[family]
+                    conflicts.append((conflict_mod, mod_id))
+                    errors.append(f"Mod family conflict: {conflict_mod} and {mod_id} are both from '{family}' family")
+                else:
+                    families_seen[family] = mod_id
+
+            # Check prefix/suffix counts
+            prefix_count = sum(1 for m in found_mods if m.get('generation_type_name') == 'PREFIX')
+            suffix_count = sum(1 for m in found_mods if m.get('generation_type_name') == 'SUFFIX')
+            implicit_count = sum(1 for m in found_mods if m.get('generation_type_name') == 'IMPLICIT')
+            corrupted_count = sum(1 for m in found_mods if m.get('generation_type_name') == 'CORRUPTED')
+
+            MAX_PREFIXES = 3
+            MAX_SUFFIXES = 3
+            MAX_IMPLICITS = 2
+
+            if prefix_count > MAX_PREFIXES:
+                errors.append(f"Too many prefixes: {prefix_count} (max {MAX_PREFIXES})")
+
+            if suffix_count > MAX_SUFFIXES:
+                errors.append(f"Too many suffixes: {suffix_count} (max {MAX_SUFFIXES})")
+
+            if implicit_count > MAX_IMPLICITS:
+                warnings.append(f"High implicit count: {implicit_count} (typical max {MAX_IMPLICITS})")
+
+            # Check level requirements
+            for mod in found_mods:
+                mod_level = mod.get('level_requirement', 0)
+                if mod_level > item_level:
+                    warnings.append(f"{mod.get('mod_id')} requires ilvl {mod_level}, item is ilvl {item_level}")
+
+            # Determine overall validity
+            is_valid = len(errors) == 0
+
+            # Format response
+            response = "# Mod Validation Result\n\n"
+            response += f"**Valid:** {'YES' if is_valid else 'NO'}\n"
+            response += f"**Item Level:** {item_level}\n\n"
+
+            response += "## Mod Counts\n"
+            response += f"- Prefixes: {prefix_count}/{MAX_PREFIXES}\n"
+            response += f"- Suffixes: {suffix_count}/{MAX_SUFFIXES}\n"
+            if implicit_count > 0:
+                response += f"- Implicits: {implicit_count}\n"
+            if corrupted_count > 0:
+                response += f"- Corrupted: {corrupted_count}\n"
+            response += "\n"
+
+            if errors:
+                response += "## ERRORS\n"
+                for error in errors:
+                    response += f"- {error}\n"
+                response += "\n"
+
+            if warnings:
+                response += "## Warnings\n"
+                for warning in warnings:
+                    response += f"- {warning}\n"
+                response += "\n"
+
+            if conflicts:
+                response += "## Conflicts\n"
+                for mod1, mod2 in conflicts:
+                    response += f"- {mod1} conflicts with {mod2}\n"
+                response += "\n"
+
+            if found_mods:
+                response += "## Validated Mods\n"
+                for mod in found_mods:
+                    response += f"- {mod.get('mod_id')}: {mod.get('generation_type_name')} (Level {mod.get('level_requirement', 0)})\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error validating item mods: {e}")
+            return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+
+    async def _handle_get_available_mods(self, args: dict) -> List[types.TextContent]:
+        """Get all mods that could roll on an item by generation type"""
+        try:
+            generation_type = args.get("generation_type", "").upper()
+            max_level = args.get("max_level", 100)
+            limit = min(args.get("limit", 100), 200)  # Cap at 200
+
+            if generation_type not in ["PREFIX", "SUFFIX"]:
+                return [types.TextContent(
+                    type="text",
+                    text="Error: generation_type must be 'PREFIX' or 'SUFFIX'"
+                )]
+
+            # Load mods from JSON file
+            mods_file = DATA_DIR / "poe2_mods_extracted.json"
+            if not mods_file.exists():
+                return [types.TextContent(
+                    type="text",
+                    text="Error: Mod database not found. File poe2_mods_extracted.json is missing."
+                )]
+
+            with open(mods_file, 'r', encoding='utf-8') as f:
+                mods_data = json.load(f)
+
+            # Filter mods
+            available_mods = []
+            for mod in mods_data.get('mods', []):
+                if mod.get('generation_type_name') != generation_type:
+                    continue
+                if mod.get('level_requirement', 0) > max_level:
+                    continue
+                available_mods.append(mod)
+
+            # Sort by level requirement
+            available_mods.sort(key=lambda m: m.get('level_requirement', 0))
+
+            # Group by mod family for better presentation
+            families = {}
+            for mod in available_mods:
+                mod_id = mod.get('mod_id', '')
+                family = mod_id.rstrip('0123456789')
+                if not family:
+                    family = mod_id
+
+                if family not in families:
+                    families[family] = []
+                families[family].append(mod)
+
+            # Apply limit to families
+            limited_families = list(families.items())[:limit]
+
+            # Format response
+            response = f"# Available {generation_type} Mods\n\n"
+            response += f"**Total families:** {len(families)}\n"
+            response += f"**Total mods:** {len(available_mods)}\n"
+            response += f"**Max level filter:** {max_level}\n\n"
+
+            response += "## Mod Families\n\n"
+
+            for family, mods in limited_families:
+                highest_tier = mods[-1]  # Last one has highest level
+                response += f"### {family}\n"
+                response += f"- Tiers: {len(mods)}\n"
+                response += f"- Level range: {mods[0].get('level_requirement', 0)} - {highest_tier.get('level_requirement', 0)}\n"
+                response += f"- Best tier: {highest_tier.get('mod_id')}\n\n"
+
+            if len(families) > limit:
+                response += f"\n*Showing {limit} of {len(families)} families. Increase limit to see more.*\n"
+
+            return [types.TextContent(type="text", text=response)]
+
+        except Exception as e:
+            logger.error(f"Error getting available mods: {e}")
             return [types.TextContent(type="text", text=f"Error: {str(e)}")]
 
     # ============================================================================

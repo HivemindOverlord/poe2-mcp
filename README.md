@@ -1,6 +1,6 @@
 # Path of Exile 2 Build Optimizer MCP
 
-A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 26 MCP tools for AI-powered build analysis, passive tree analysis, support gem validation, and Path of Building integration.
+A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 32 MCP tools for AI-powered build analysis, passive tree analysis, item mod validation, support gem validation, and Path of Building integration.
 
 ## What is This?
 
@@ -155,7 +155,7 @@ Check each platform's documentation for MCP server configuration.
 
 ---
 
-## Available Tools (26 Registered)
+## Available Tools (32 Registered)
 
 Once connected, you can ask your AI assistant to use these tools:
 
@@ -190,6 +190,16 @@ Once connected, you can ask your AI assistant to use these tools:
 |------|-------------|
 | `list_all_base_items` | List all base item types |
 | `inspect_base_item` | Get details for a specific base item |
+
+### Item Mod Data
+| Tool | Description |
+|------|-------------|
+| `inspect_mod` | Get complete details for a specific mod by ID |
+| `list_all_mods` | List mods with filtering by type (PREFIX/SUFFIX/IMPLICIT) |
+| `search_mods_by_stat` | Search for mods by keyword (e.g., "fire", "life") |
+| `get_mod_tiers` | Show all tier variations of a mod family |
+| `validate_item_mods` | Check if mods can legally exist together on an item |
+| `get_available_mods` | List all mods available for a generation type |
 
 ### Path of Building
 | Tool | Description |
@@ -237,6 +247,14 @@ Once configured, just talk to your AI naturally:
 
 > "Explain how armor works in PoE2"
 
+> "What prefixes can roll on items?" (uses `get_available_mods`)
+
+> "Show me all tiers of the Strength mod" (uses `get_mod_tiers`)
+
+> "Can Strength1 and Strength2 exist on the same item?" (uses `validate_item_mods`)
+
+> "Search for fire resistance mods" (uses `search_mods_by_stat`)
+
 The AI will use the appropriate tools automatically.
 
 ---
@@ -260,6 +278,7 @@ This opens a browser for you to log in, then saves your session cookie.
 The server includes a local database with:
 - 4,975+ passive tree nodes
 - 335+ ascendancy nodes (99% coverage)
+- 14,269 item modifiers (2,252 prefixes, 2,037 suffixes, 8,930 implicits)
 - Complete skill gem data from Path of Building
 - Support gem effects and interactions
 - Base items and unique items
@@ -274,7 +293,7 @@ Data is loaded from `data/` directory on startup.
 poe2-mcp/
 ├── launch.py              # Entry point
 ├── src/
-│   ├── mcp_server.py      # Main MCP server (26 tools registered)
+│   ├── mcp_server.py      # Main MCP server (32 tools registered)
 │   ├── api/               # External API clients
 │   │   ├── poe_ninja_api.py
 │   │   ├── character_fetcher.py
@@ -286,17 +305,24 @@ poe2-mcp/
 │   │   ├── ehp_calculator.py
 │   │   ├── spirit_calculator.py
 │   │   └── stun_calculator.py
+│   ├── data/              # Data providers
+│   │   ├── mod_data_provider.py
+│   │   └── fresh_data_provider.py
 │   ├── optimizer/         # Optimization engines
 │   │   ├── gear_optimizer.py
 │   │   └── gem_synergy_calculator.py
 │   ├── parsers/           # Data parsers
-│   │   └── passive_tree_resolver.py
+│   │   ├── passive_tree_resolver.py
+│   │   └── specifications/  # Datc64 format specifications
+│   ├── knowledge/         # Game mechanics knowledge base
+│   │   └── poe2_mechanics.py
 │   └── database/          # SQLite database
 │       ├── models.py
 │       └── manager.py
 ├── data/                  # Game data files
 │   ├── psg_passive_nodes.json
-│   └── poe2_support_gems_database.json
+│   ├── poe2_support_gems_database.json
+│   └── poe2_mods_extracted.json
 └── tests/                 # Test suite
 ```
 
@@ -317,10 +343,12 @@ python src/mcp_server.py
 ```
 
 ### Key Files
-- `src/mcp_server.py` - MCP server with 26 registered tools (45 handlers total)
+- `src/mcp_server.py` - MCP server with 32 registered tools
+- `src/data/mod_data_provider.py` - Item mod data access layer
 - `src/calculator/ehp_calculator.py` - EHP calculations
 - `src/optimizer/gem_synergy_calculator.py` - Support gem logic
 - `data/psg_passive_nodes.json` - Passive tree database
+- `data/poe2_mods_extracted.json` - Item modifier database (14,269 mods)
 
 ---
 

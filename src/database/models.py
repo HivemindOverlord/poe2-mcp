@@ -161,6 +161,26 @@ class SavedBuild(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ItemMod(Base):
+    """Item modifiers (affixes) from mods.datc64"""
+    __tablename__ = "item_mods"
+
+    id = Column(Integer, primary_key=True)
+    mod_id = Column(String, nullable=False, unique=True, index=True)  # e.g., "Strength1", "IncreasedLife1"
+    generation_type = Column(Integer, nullable=False, index=True)  # 1=prefix, 2=suffix, 3=implicit, 5=corrupted
+    generation_type_name = Column(String)  # "PREFIX", "SUFFIX", "IMPLICIT", "CORRUPTED"
+    domain_flag = Column(Integer)  # Domain flag from .datc64
+    level_requirement = Column(Integer, index=True)  # Minimum item level required
+    mod_group = Column(String, index=True)  # For exclusivity checking (derived from mod_id base)
+    tier = Column(Integer)  # Quality tier (derived from numeric suffix in mod_id)
+    min_value = Column(Integer)  # Minimum roll value
+    max_value = Column(Integer)  # Maximum roll value
+    stats = Column(JSON)  # Array of stat modifications with slot/index/value
+    strings = Column(JSON)  # String data including display names
+    row_index = Column(Integer)  # Original row index in .datc64 file
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class GameDataVersion(Base):
     """Track game data version"""
     __tablename__ = "game_data_version"
