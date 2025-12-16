@@ -2,87 +2,116 @@
 Mods.datc64 Specification
 
 Binary format specification for the PoE2 mods table.
-Auto-generated from reverse engineering analysis on 2025-12-15.
+CORRECTED based on Path of Building spec.lua (authoritative source).
 
 Row Size: 661 bytes
 Row Count: 14,269
-Coverage: 92.4% mapped (611/661 bytes)
+
+Field layout verified against PoB's Data/spec.lua on 2025-12-16.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from enum import IntEnum
 import struct
 
 
 class GenerationType(IntEnum):
-    """Mod generation type enum (offset 511)."""
-    PREFIX = 1      # 18% - Craftable prefix mods
-    SUFFIX = 2      # 67% - Craftable suffix mods
-    IMPLICIT = 3    # 12% - Implicit mods (synthesis, delve, base)
-    CORRUPTED = 5   # 3% - Corruption outcome mods
+    """Mod generation type enum (offset 106, 4 bytes)."""
+    PREFIX = 1      # Craftable prefix mods
+    SUFFIX = 2      # Craftable suffix mods
+    IMPLICIT = 3    # Implicit mods (synthesis, delve, base)
+    CORRUPTED = 5   # Corruption outcome mods
 
 
 class DomainFlag(IntEnum):
-    """Mod domain/type flag (offset 15)."""
-    DEFAULT = 0     # 77.5%
-    SPECIAL = 1     # 19.5%
-    UNIQUE = 41     # 3%
+    """Mod domain/type flag (offset 94, 4 bytes)."""
+    DEFAULT = 0
+    SPECIAL = 1
+    UNIQUE = 41
 
 
 # Mod row constants
 MOD_ROW_SIZE = 661
 MOD_ROW_COUNT = 14269
 
-# String pointer offsets (8 bytes each, points to UTF-16LE strings)
-STRING_POINTER_OFFSETS = [0, 92, 108, 420, 448, 516, 624, 644, 652]
+# =============================================================================
+# FIELD LAYOUT (from PoB spec.lua)
+# =============================================================================
+# Field 0:  Id (String, 8 bytes)           -> offset 0
+# Field 1:  Hash (UInt16, 2 bytes)         -> offset 8
+# Field 2:  Type (Key, 16 bytes)           -> offset 10
+# Field 3:  Level (Int, 4 bytes)           -> offset 26
+# Field 4:  Stat1 (Key, 16 bytes)          -> offset 30   <- STAT KEY
+# Field 5:  Stat2 (Key, 16 bytes)          -> offset 46   <- STAT KEY
+# Field 6:  Stat3 (Key, 16 bytes)          -> offset 62   <- STAT KEY
+# Field 7:  Stat4 (Key, 16 bytes)          -> offset 78   <- STAT KEY
+# Field 8:  Domain (Enum, 4 bytes)         -> offset 94
+# Field 9:  Name (String, 8 bytes)         -> offset 98
+# Field 10: GenerationType (Enum, 4 bytes) -> offset 106
+# Field 11: Family (List, 16 bytes)        -> offset 110
+# Field 12: Stat1Value (Interval, 8 bytes) -> offset 126  <- STAT VALUE (min+max)
+# Field 13: Stat2Value (Interval, 8 bytes) -> offset 134  <- STAT VALUE
+# Field 14: Stat3Value (Interval, 8 bytes) -> offset 142  <- STAT VALUE
+# Field 15: Stat4Value (Interval, 8 bytes) -> offset 150  <- STAT VALUE
+# ... (fields 16-23 are lists/other data)
+# Field 24: Stat5Value (Interval, 8 bytes) -> offset varies (later in record)
+# Field 25: Stat5 (Key, 16 bytes)          -> offset varies
+# Field 31: Stat6Value (Interval, 8 bytes) -> offset varies
+# Field 32: Stat6 (Key, 16 bytes)          -> offset varies
+# =============================================================================
 
-# CORRECTED Field offsets (verified against actual data 2025-12-15)
-# String pointer at offset 0 (8 bytes) - mod ID
-# Level requirement at offset 26 (4 bytes) - actually UINT16 seems sufficient
-# Generation type at offset 106 (4 bytes)
+# Key field offsets (16-byte Key references to Stats table)
+# A Key in .datc64 format is 16 bytes: 8-byte row index + 8-byte table reference
+# Empty keys are marked with 0xFEFEFEFEFEFEFEFE patterns
+STAT_KEY_OFFSETS = [30, 46, 62, 78]  # Stat1-4
 
-# Stat slot offsets: These need re-verification
-# Each slot is: 1-byte stat index + 4-byte stat value
-STAT_SLOT_OFFSETS = [
-    (102, 103),   # Slot 0 - UNVERIFIED
-    (122, 123),   # Slot 1 - UNVERIFIED
-    (170, 171),   # Slot 2 - UNVERIFIED
-    (202, 203),   # Slot 3 - UNVERIFIED
-    (218, 219),   # Slot 4 - UNVERIFIED
-    (234, 235),   # Slot 5 - UNVERIFIED
-    (258, 259),   # Slot 6 - UNVERIFIED
-    (274, 275),   # Slot 7 - UNVERIFIED
-    (314, 315),   # Slot 8 - UNVERIFIED
-    (330, 331),   # Slot 9 - UNVERIFIED
-    (346, 347),   # Slot 10 - UNVERIFIED
-    (378, 379),   # Slot 11 - UNVERIFIED
-]
+# Value field offsets (8-byte Interval: INT32 min + INT32 max)
+STAT_VALUE_OFFSETS = [126, 134, 142, 150]  # Stat1Value-4Value
 
-# Constant value offsets and their expected values
-CONSTANT_FIELDS = {
-    186: 74,          # Unknown constant
-    242: 74,          # Unknown constant
-    362: 74,          # Unknown constant
-    410: 100,         # Max level or percentage base
-    431: 74,          # Unknown constant
-    439: 2,           # Enum value (format version?)
-    507: 6,           # Stat count or table reference
+# Core field offsets
+FIELD_OFFSETS = {
+    'id_ptr': 0,           # String pointer (8 bytes)
+    'hash': 8,             # UInt16 (2 bytes)
+    'type_key': 10,        # Key reference (16 bytes)
+    'level': 26,           # Int (4 bytes) - level requirement
+    'stat1_key': 30,       # Key to Stats table (16 bytes)
+    'stat2_key': 46,       # Key to Stats table (16 bytes)
+    'stat3_key': 62,       # Key to Stats table (16 bytes)
+    'stat4_key': 78,       # Key to Stats table (16 bytes)
+    'domain': 94,          # Enum (4 bytes)
+    'name_ptr': 98,        # String pointer (8 bytes)
+    'generation_type': 106, # Enum (4 bytes)
+    'family_list': 110,    # List (16 bytes: 8-byte count + 8-byte offset)
+    'stat1_value': 126,    # Interval (8 bytes: min INT32 + max INT32)
+    'stat2_value': 134,    # Interval (8 bytes)
+    'stat3_value': 142,    # Interval (8 bytes)
+    'stat4_value': 150,    # Interval (8 bytes)
 }
 
-# Empty string pointer sentinel value
-EMPTY_STRING_SENTINEL = 12884901888  # Offset 652
+# Null key marker (used when stat slot is empty)
+NULL_KEY_MARKER = 0xFEFEFEFEFEFEFEFE
 
 
 @dataclass
-class StatSlot:
-    """A single stat modification slot."""
-    stat_index: int  # Reference to stats.datc64 (0-255)
-    stat_value: int  # Associated value (typically 0-41)
+class StatEntry:
+    """A single stat modification with key reference and value range."""
+    stat_key: int          # Row index in stats.datc64 (0 = empty, else 1-based index)
+    stat_key_high: int     # High 8 bytes of Key (usually table reference or padding)
+    min_value: int         # Minimum roll value (INT32)
+    max_value: int         # Maximum roll value (INT32)
 
     @property
     def is_empty(self) -> bool:
-        return self.stat_index == 0 and self.stat_value == 0
+        """Check if this stat slot is empty (no stat assigned)."""
+        return self.stat_key == 0 or self.stat_key == NULL_KEY_MARKER
+
+    @property
+    def stat_index(self) -> int:
+        """Get the stat row index (for cross-referencing with stats.datc64)."""
+        if self.is_empty:
+            return 0
+        return self.stat_key
 
 
 @dataclass
@@ -90,44 +119,21 @@ class ModRecord:
     """Parsed mod record from mods.datc64."""
     row_index: int
 
-    # String pointers (resolved to actual strings externally)
-    mod_id_ptr: int           # Offset 0
-    string_ptr_92: int        # Offset 92
-    string_ptr_108: int       # Offset 108
-    string_ptr_420: int       # Offset 420
-    string_ptr_448: int       # Offset 448
-    string_ptr_516: int       # Offset 516
-    string_ptr_624: int       # Offset 624
-    string_ptr_644: int       # Offset 644
-    string_ptr_652: int       # Offset 652 (typically empty sentinel)
+    # Core fields
+    mod_id_ptr: int           # Offset 0: String pointer to mod ID
+    hash_value: int           # Offset 8: UInt16 hash
+    type_key: int             # Offset 10: Key to ModType table
+    level_requirement: int    # Offset 26: Minimum item level required
+    domain: int               # Offset 94: Domain enum
+    name_ptr: int             # Offset 98: String pointer to display name
+    generation_type: int      # Offset 106: PREFIX/SUFFIX/IMPLICIT/CORRUPTED
 
-    # Header fields
-    header_byte_12: int       # Unknown identifier 1
-    header_byte_13: int       # Unknown identifier 2
-    header_byte_14: int       # Unknown identifier 3
-    domain_flag: int          # Offset 15: 0, 1, or 41
-    level_requirement: int    # Offset 30: 1-82
-    related_field: int        # Offset 35: correlates with domain_flag
-
-    # Stat slots (12 total)
-    stat_slots: List[StatSlot] = field(default_factory=list)
-
-    # Min/Max values
-    min_value: int = 0        # Offset 130
-    max_value: int = 0        # Offset 134
-
-    # Generation type
-    generation_type: int = 2  # Offset 511: 1, 2, 3, or 5
-
-    # Trailing fields (highly variable)
-    end_byte_616: int = 0
-    end_byte_617: int = 0
-    end_byte_618: int = 0
-    end_uint_619: int = 0
+    # Stat entries (up to 4 stats, Stat5/6 require additional parsing)
+    stats: List[StatEntry] = field(default_factory=list)
 
     # Resolved strings (filled in after parsing)
     mod_id: str = ""
-    strings: Dict[int, str] = field(default_factory=dict)
+    display_name: str = ""
 
     @property
     def is_prefix(self) -> bool:
@@ -146,9 +152,48 @@ class ModRecord:
         return self.generation_type == GenerationType.CORRUPTED
 
     @property
-    def active_stats(self) -> List[StatSlot]:
-        """Returns only non-empty stat slots."""
-        return [slot for slot in self.stat_slots if not slot.is_empty]
+    def generation_type_name(self) -> str:
+        """Human-readable generation type."""
+        try:
+            return GenerationType(self.generation_type).name
+        except ValueError:
+            return f"UNKNOWN({self.generation_type})"
+
+    @property
+    def active_stats(self) -> List[StatEntry]:
+        """Returns only non-empty stat entries."""
+        return [stat for stat in self.stats if not stat.is_empty]
+
+    @property
+    def stat_count(self) -> int:
+        """Number of active stats on this mod."""
+        return len(self.active_stats)
+
+
+def read_key(data: bytes, offset: int) -> Tuple[int, int]:
+    """
+    Read a 16-byte Key field.
+
+    Returns:
+        Tuple of (row_index, high_bytes)
+        - row_index: First 8 bytes as unsigned long (row reference)
+        - high_bytes: Second 8 bytes (usually table ref or padding)
+    """
+    low = struct.unpack('<Q', data[offset:offset+8])[0]
+    high = struct.unpack('<Q', data[offset+8:offset+16])[0]
+    return (low, high)
+
+
+def read_interval(data: bytes, offset: int) -> Tuple[int, int]:
+    """
+    Read an 8-byte Interval field (min/max pair).
+
+    Returns:
+        Tuple of (min_value, max_value) as signed INT32
+    """
+    min_val = struct.unpack('<i', data[offset:offset+4])[0]
+    max_val = struct.unpack('<i', data[offset+4:offset+8])[0]
+    return (min_val, max_val)
 
 
 def parse_mod_row(data: bytes, row_index: int = 0) -> ModRecord:
@@ -165,92 +210,101 @@ def parse_mod_row(data: bytes, row_index: int = 0) -> ModRecord:
     if len(data) != MOD_ROW_SIZE:
         raise ValueError(f"Expected {MOD_ROW_SIZE} bytes, got {len(data)}")
 
-    # Parse string pointers
+    # Parse core fields
     mod_id_ptr = struct.unpack('<Q', data[0:8])[0]
-    string_ptr_92 = struct.unpack('<Q', data[92:100])[0]
-    string_ptr_108 = struct.unpack('<Q', data[108:116])[0]
-    string_ptr_420 = struct.unpack('<Q', data[420:428])[0]
-    string_ptr_448 = struct.unpack('<Q', data[448:456])[0]
-    string_ptr_516 = struct.unpack('<Q', data[516:524])[0]
-    string_ptr_624 = struct.unpack('<Q', data[624:632])[0]
-    string_ptr_644 = struct.unpack('<Q', data[644:652])[0]
-    string_ptr_652 = struct.unpack('<Q', data[652:660])[0]
+    hash_value = struct.unpack('<H', data[8:10])[0]
+    type_key, _ = read_key(data, 10)
+    level_requirement = struct.unpack('<i', data[26:30])[0]
+    domain = struct.unpack('<i', data[94:98])[0]
+    name_ptr = struct.unpack('<Q', data[98:106])[0]
+    generation_type = struct.unpack('<i', data[106:110])[0]
 
-    # Parse header fields (CORRECTED offsets)
-    header_byte_12 = struct.unpack('<B', data[12:13])[0]
-    header_byte_13 = struct.unpack('<B', data[13:14])[0]
-    header_byte_14 = struct.unpack('<B', data[14:15])[0]
-    domain_flag = struct.unpack('<I', data[15:19])[0]
-    # CORRECTED: Level requirement at offset 26 (UINT16)
-    level_requirement = struct.unpack('<H', data[26:28])[0]
-    related_field = struct.unpack('<I', data[35:39])[0]
+    # Parse stat entries (4 slots)
+    stats = []
+    for i in range(4):
+        key_offset = STAT_KEY_OFFSETS[i]
+        value_offset = STAT_VALUE_OFFSETS[i]
 
-    # Parse stat slots
-    stat_slots = []
-    for idx_off, val_off in STAT_SLOT_OFFSETS:
-        stat_idx = struct.unpack('<B', data[idx_off:idx_off+1])[0]
-        stat_val = struct.unpack('<I', data[val_off:val_off+4])[0]
-        stat_slots.append(StatSlot(stat_index=stat_idx, stat_value=stat_val))
+        stat_key, stat_key_high = read_key(data, key_offset)
+        min_val, max_val = read_interval(data, value_offset)
 
-    # Parse min/max
-    min_value = struct.unpack('<I', data[130:134])[0]
-    max_value = struct.unpack('<I', data[134:138])[0]
-
-    # Parse generation type (CORRECTED: offset 106, not 511)
-    generation_type = struct.unpack('<I', data[106:110])[0]
-
-    # Parse trailing fields
-    end_byte_616 = struct.unpack('<B', data[616:617])[0]
-    end_byte_617 = struct.unpack('<B', data[617:618])[0]
-    end_byte_618 = struct.unpack('<B', data[618:619])[0]
-    end_uint_619 = struct.unpack('<I', data[619:623])[0]
+        stats.append(StatEntry(
+            stat_key=stat_key,
+            stat_key_high=stat_key_high,
+            min_value=min_val,
+            max_value=max_val
+        ))
 
     return ModRecord(
         row_index=row_index,
         mod_id_ptr=mod_id_ptr,
-        string_ptr_92=string_ptr_92,
-        string_ptr_108=string_ptr_108,
-        string_ptr_420=string_ptr_420,
-        string_ptr_448=string_ptr_448,
-        string_ptr_516=string_ptr_516,
-        string_ptr_624=string_ptr_624,
-        string_ptr_644=string_ptr_644,
-        string_ptr_652=string_ptr_652,
-        header_byte_12=header_byte_12,
-        header_byte_13=header_byte_13,
-        header_byte_14=header_byte_14,
-        domain_flag=domain_flag,
+        hash_value=hash_value,
+        type_key=type_key,
         level_requirement=level_requirement,
-        related_field=related_field,
-        stat_slots=stat_slots,
-        min_value=min_value,
-        max_value=max_value,
+        domain=domain,
+        name_ptr=name_ptr,
         generation_type=generation_type,
-        end_byte_616=end_byte_616,
-        end_byte_617=end_byte_617,
-        end_byte_618=end_byte_618,
-        end_uint_619=end_uint_619,
+        stats=stats,
     )
 
 
-def validate_constants(data: bytes) -> Dict[int, bool]:
+def extract_mod_family(mod_id: str) -> Tuple[str, int]:
     """
-    Validate that constant fields have expected values.
+    Extract mod family name and tier from mod ID.
 
-    Args:
-        data: 661 bytes of raw mod data
+    Example: "Strength5" -> ("Strength", 5)
+             "LocalIncreasedPhysicalDamagePercent" -> ("LocalIncreasedPhysicalDamagePercent", 0)
 
     Returns:
-        Dictionary mapping offset to validation result (True if matches)
+        Tuple of (family_name, tier_number)
     """
-    results = {}
-    for offset, expected in CONSTANT_FIELDS.items():
-        actual = struct.unpack('<I', data[offset:offset+4])[0]
-        results[offset] = (actual == expected)
-    return results
+    import re
+    match = re.match(r'^(.+?)(\d+)$', mod_id)
+    if match:
+        return (match.group(1), int(match.group(2)))
+    return (mod_id, 0)
 
 
-def validate_empty_string_sentinel(data: bytes) -> bool:
-    """Check if offset 652 contains the empty string sentinel."""
-    actual = struct.unpack('<Q', data[652:660])[0]
-    return actual == EMPTY_STRING_SENTINEL
+# =============================================================================
+# VALIDATION UTILITIES
+# =============================================================================
+
+def validate_stat_key(stat_key: int) -> bool:
+    """
+    Validate that a stat key is within valid range.
+
+    Stats table has 24,155 entries (indices 0-24154).
+    """
+    if stat_key == 0 or stat_key == NULL_KEY_MARKER:
+        return True  # Empty slot is valid
+    return 0 < stat_key <= 24155
+
+
+def validate_generation_type(gen_type: int) -> bool:
+    """Validate generation type enum value."""
+    return gen_type in [1, 2, 3, 5]
+
+
+def validate_mod_record(record: ModRecord) -> List[str]:
+    """
+    Validate a parsed mod record.
+
+    Returns:
+        List of validation error messages (empty if valid)
+    """
+    errors = []
+
+    # Check generation type
+    if not validate_generation_type(record.generation_type):
+        errors.append(f"Invalid generation_type: {record.generation_type}")
+
+    # Check level requirement (should be 1-100)
+    if not (0 <= record.level_requirement <= 100):
+        errors.append(f"Invalid level_requirement: {record.level_requirement}")
+
+    # Check stat keys
+    for i, stat in enumerate(record.stats):
+        if not validate_stat_key(stat.stat_key):
+            errors.append(f"Invalid stat{i+1}_key: {stat.stat_key}")
+
+    return errors

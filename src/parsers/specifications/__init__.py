@@ -7,6 +7,7 @@ authoritative data source.
 
 Available Specifications:
 - mods_spec: Item/passive modifier definitions (mods.datc64)
+             CORRECTED 2025-12-16 based on PoB spec.lua
 """
 
 from .mods_spec import (
@@ -17,19 +18,23 @@ from .mods_spec import (
     # Constants
     MOD_ROW_SIZE,
     MOD_ROW_COUNT,
-    STRING_POINTER_OFFSETS,
-    STAT_SLOT_OFFSETS,
-    CONSTANT_FIELDS,
-    EMPTY_STRING_SENTINEL,
+    STAT_KEY_OFFSETS,
+    STAT_VALUE_OFFSETS,
+    FIELD_OFFSETS,
+    NULL_KEY_MARKER,
 
     # Data classes
-    StatSlot,
+    StatEntry,
     ModRecord,
 
     # Functions
     parse_mod_row,
-    validate_constants,
-    validate_empty_string_sentinel,
+    read_key,
+    read_interval,
+    extract_mod_family,
+    validate_stat_key,
+    validate_generation_type,
+    validate_mod_record,
 )
 
 __all__ = [
@@ -40,17 +45,21 @@ __all__ = [
     # Constants
     'MOD_ROW_SIZE',
     'MOD_ROW_COUNT',
-    'STRING_POINTER_OFFSETS',
-    'STAT_SLOT_OFFSETS',
-    'CONSTANT_FIELDS',
-    'EMPTY_STRING_SENTINEL',
+    'STAT_KEY_OFFSETS',
+    'STAT_VALUE_OFFSETS',
+    'FIELD_OFFSETS',
+    'NULL_KEY_MARKER',
 
     # Data classes
-    'StatSlot',
+    'StatEntry',
     'ModRecord',
 
     # Functions
     'parse_mod_row',
-    'validate_constants',
-    'validate_empty_string_sentinel',
+    'read_key',
+    'read_interval',
+    'extract_mod_family',
+    'validate_stat_key',
+    'validate_generation_type',
+    'validate_mod_record',
 ]

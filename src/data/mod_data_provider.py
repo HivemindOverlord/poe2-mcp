@@ -55,12 +55,12 @@ class ModDataProvider:
     _instance = None
     _initialized = False
 
-    # Generation type constants
+    # Generation type constants (from PoB spec.lua)
     GENERATION_TYPES = {
         1: "PREFIX",
         2: "SUFFIX",
         3: "IMPLICIT",
-        9: "CORRUPTED"
+        5: "CORRUPTED"
     }
 
     def __new__(cls):
@@ -86,9 +86,9 @@ class ModDataProvider:
         self._mod_families: Dict[str, List[Dict]] = {}  # Group mods by base name
         self._metadata: Dict[str, Any] = {}
 
-        # Set data path
+        # Set data path - use corrected extraction with proper stat data
         if data_path is None:
-            data_path = DATA_DIR / 'poe2_mods_extracted.json'
+            data_path = DATA_DIR / 'poe2_mods_corrected.json'
         self.data_path = data_path
 
         # Load data
@@ -249,13 +249,13 @@ class ModDataProvider:
         limit: int = 100
     ) -> List[Dict]:
         """
-        Search mods by keyword in mod_id.
+        Search mods by keyword in mod_id AND stat_id fields.
 
-        Note: String fields contain internal cross-references (not human-readable stat text),
-        so we only search the mod_id which contains the mod name/type.
+        With the corrected extraction, we now have proper stat_id fields that can be searched.
+        Searches both mod_id (e.g., "Strength1") and stat_id (e.g., "additional_strength").
 
         Args:
-            stat_keyword: Keyword to search for (e.g., "strength", "lightning", "resist")
+            stat_keyword: Keyword to search for (e.g., "strength", "lightning", "resist", "life")
             case_sensitive: Whether to use case-sensitive matching
             limit: Maximum number of results to return
 
@@ -266,9 +266,24 @@ class ModDataProvider:
         search_term = stat_keyword if case_sensitive else stat_keyword.lower()
 
         for mod_id, mod in self._mods_by_id.items():
-            # Search in mod_id only (string fields contain cross-references, not stat text)
+            found = False
+
+            # Search in mod_id
             search_id = mod_id if case_sensitive else mod_id.lower()
             if search_term in search_id:
+                found = True
+
+            # Search in stat_id fields (from corrected extraction)
+            if not found:
+                stats = mod.get('stats', [])
+                for stat in stats:
+                    stat_id = stat.get('stat_id', '')
+                    search_stat = stat_id if case_sensitive else stat_id.lower()
+                    if search_term in search_stat:
+                        found = True
+                        break
+
+            if found:
                 results.append(mod)
                 if len(results) >= limit:
                     break
@@ -540,8 +555,12 @@ if __name__ == "__main__":
     strength_tiers = provider.get_mod_tiers("Strength")
     print(f"  Found {len(strength_tiers)} tiers:")
     for tier in strength_tiers[:5]:
-        print(f"    {tier['mod_id']}: Level {tier['level_requirement']}, "
-              f"Min={tier.get('min_value', 0)}, Max={tier.get('max_value', 0)}")
+        stats = tier.get('stats', [])
+        stat_info = ""
+        if stats:
+            s = stats[0]
+            stat_info = f", Stat: {s.get('stat_id', 'unknown')} [{s.get('min_value', 0)}-{s.get('max_value', 0)}]"
+        print(f"    {tier['mod_id']}: Level {tier['level_requirement']}{stat_info}")
     if len(strength_tiers) > 5:
         print(f"    ... and {len(strength_tiers) - 5} more")
     print()
