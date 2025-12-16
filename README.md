@@ -1,485 +1,346 @@
 # Path of Exile 2 Build Optimizer MCP
 
-A comprehensive Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 34 MCP tools for AI-powered build analysis, gear optimization, passive tree recommendations, and build scoring through Claude Desktop.
+A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 20 MCP tools for AI-powered build analysis, passive tree analysis, support gem validation, and Path of Building integration.
 
-## Overview
+## What is This?
 
-This project provides an MCP server that integrates with Claude Desktop to offer intelligent character analysis and optimization through natural language queries. It fetches data from poe.ninja, official PoE API, and maintains a local game database with skill gems, passive trees, and item data.
+This is an **MCP server** - a backend service that gives AI assistants (like Claude, ChatGPT, Cursor, etc.) the ability to analyze your Path of Exile 2 characters and provide optimization recommendations.
 
-## Key Features
+**What it does:**
+- Fetches your character data from poe.ninja
+- Analyzes defensive stats, skills, gear, and passive tree
+- Validates support gem combinations (prevents invalid recommendations)
+- Inspects spell and support gem data
+- Imports/exports Path of Building codes
+- Compares your build to top ladder players
+- Explains PoE2 game mechanics
 
-### 34 MCP Tools Available
-
-**Character Analysis**
-- `analyze_character` - Comprehensive character analysis with defensive stats, skills, gear
-- `import_poe_ninja_url` - Import characters directly from poe.ninja profile URLs
-- `nl_query` - Natural language queries about your build
-- `detect_weaknesses` - Identify build vulnerabilities and issues
-- `compare_to_top_players` - Compare your build to ladder leaders
-
-**Calculators**
-- `calculate_dps` - Damage per second calculations
-- `calculate_ehp` - Effective HP with all defensive layers
-- `analyze_spirit` - Spirit resource management (PoE2 system)
-- `analyze_stun` - Stun threshold mechanics
-- `analyze_damage_scaling` - Damage scaling efficiency
-
-**Optimization**
-- `optimize_gear` - Budget-aware gear upgrade recommendations
-- `optimize_passives` - Passive tree pathing and node selection
-- `optimize_skills` - Gem setup optimization
-- `find_best_supports` - Support gem recommendations
-- `optimize_metrics` - Overall build optimization
-
-**Comparison**
-- `compare_builds` - Compare two builds
-- `compare_items` - Compare item stats
-- `evaluate_upgrade` - Evaluate potential upgrades
-
-**Validation (New in PR #16)**
-- `validate_support_combination` - Check if supports work together
-- `inspect_support_gem` - View complete support gem data
-- `inspect_spell_gem` - View complete spell gem data
-- `list_all_supports` - Enumerate available support gems
-- `list_all_spells` - Enumerate available spell gems
-
-**Debugging**
-- `trace_support_selection` - Debug support gem selection logic
-- `trace_dps_calculation` - Step-by-step DPS calculation breakdown
-- `validate_build_constraints` - Validate build against game rules
-
-**Trade & PoB**
-- `search_items` - Search item database
-- `search_trade_items` - Search official trade site (requires auth)
-- `import_pob` - Import Path of Building codes
-- `export_pob` - Export to PoB format
-
-**Knowledge**
-- `explain_mechanic` - Explain PoE2 game mechanics
-- `check_content_readiness` - Check boss/content viability
-- `health_check` - Server status
-- `clear_cache` - Clear cached data
-
-### Local Game Database
-- 4,975+ passive tree nodes with connections
-- 335+ ascendancy nodes (99% coverage)
-- Complete skill gem database from PoB2
-- Support gem effects and interactions
-- Base items and unique items
-
-### Multi-Source Character Fetching
-1. poe.ninja API (primary)
-2. poe.ninja SSE/model API (fallback)
-3. Official PoE ladder API (fallback)
-4. Direct HTML scraping (last resort)
+**What you need:**
+- An AI assistant that supports MCP (Claude Desktop, ChatGPT Desktop, Cursor, Windsurf, etc.)
+- Python 3.9+ installed
+- Your PoE2 character on poe.ninja (public profile)
 
 ## Quick Start
 
-### Prerequisites
-- Python 3.9+
-- Git
-
-### Installation
+### 1. Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/HivemindOverlord/poe2-mcp.git
 cd poe2-mcp
-
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Launch the MCP server (handles database initialization)
-python launch.py
 ```
 
-### Claude Desktop Integration
+### 2. Connect to Your AI Assistant
 
-Add to your Claude Desktop configuration (`%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+Choose your platform below:
 
+---
+
+## Claude Desktop Integration
+
+### Option A: Manual Configuration (Recommended for Development)
+
+Edit your Claude Desktop config file:
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+Add this server (replace the path with your actual installation path):
+
+**Windows:**
 ```json
 {
   "mcpServers": {
     "poe2-optimizer": {
       "command": "python",
-      "args": ["C:/path/to/poe2-mcp/launch.py"],
+      "args": ["C:\\Users\\YourName\\poe2-mcp\\launch.py"],
       "env": {}
     }
   }
 }
 ```
 
-### Running the Server Standalone
-
-```bash
-# Recommended: Use launch script (handles setup)
-python launch.py
-
-# Or run directly
-python src/mcp_server.py
-```
-
-## Trade API Authentication
-
-The MCP server can search the official Path of Exile trade site to recommend gear upgrades. This requires authentication to prevent bot abuse.
-
-### Automated Setup (Recommended - 2 Minutes)
-
-```bash
-# Install Playwright (one-time setup)
-pip install playwright
-playwright install chromium
-
-# Run the authentication helper
-python scripts/setup_trade_auth.py
-```
-
-**What happens:**
-1. Browser opens to pathofexile.com/trade
-2. You log in with your account (supports 2FA)
-3. Script automatically detects login and extracts your session cookie
-4. Cookie is saved to `.env` file
-5. Done! Trade search now works
-
-**See `TRADE_AUTH_SETUP_GUIDE.md` for:**
-- Detailed step-by-step guide
-- Troubleshooting common issues
-- Security information
-- Cookie expiration details
-
-### Manual Setup (Fallback)
-
-If the automated method doesn't work:
-
-1. Visit https://www.pathofexile.com/trade in your browser
-2. Log in to your account
-3. Press F12 to open DevTools
-4. Go to Application → Cookies → pathofexile.com
-5. Find the `POESESSID` cookie
-6. Copy its value (32-character string)
-7. Add to your `.env` file: `POESESSID=your_cookie_value_here`
-
-## Usage
-
-### Via Web Interface
-
-1. Navigate to `http://localhost:3000`
-2. Enter your account name and character name
-3. Click "Analyze Character"
-4. Review recommendations and optimization suggestions
-
-### Via MCP Protocol
-
-```python
-from mcp_client import PoE2MCPClient
-
-async with PoE2MCPClient() as client:
-    # Analyze character
-    analysis = await client.analyze_character(
-        account="YourAccount",
-        character="YourCharacter"
-    )
-
-    # Get natural language recommendations
-    response = await client.query(
-        "How can I improve my boss damage while staying tanky?"
-    )
-
-    print(response)
-```
-
-### Via Command Line
-
-```bash
-# Quick character analysis
-python cli.py analyze --account YourAccount --character YourCharacter
-
-# Natural language query
-python cli.py query "What gear upgrades should I prioritize?"
-
-# Build comparison
-python cli.py compare build1.json build2.json
-
-# Export to Path of Building
-python cli.py export --account YourAccount --character YourCharacter --output build.pob
-```
-
-## Architecture
-
-### Core Components
-
-```
-src/
-├── mcp_server.py           # Main MCP server
-├── api/
-│   ├── poe_api.py          # Official PoE API client
-│   ├── poe2db_scraper.py   # poe2db.tw data scraper
-│   ├── rate_limiter.py     # API rate limiting
-│   └── cache_manager.py    # Multi-tier caching
-├── database/
-│   ├── models.py           # SQLAlchemy models
-│   ├── manager.py          # Database manager
-│   └── migrations/         # Alembic migrations
-├── calculator/
-│   ├── damage_calc.py      # DPS calculations
-│   ├── defense_calc.py     # Defense calculations
-│   ├── modifier_calc.py    # Modifier calculations
-│   └── build_scorer.py     # Build quality scoring
-├── optimizer/
-│   ├── gear_optimizer.py   # Gear optimization
-│   ├── passive_optimizer.py # Passive tree optimization
-│   ├── skill_optimizer.py  # Skill setup optimization
-│   └── trade_advisor.py    # Trade recommendations
-├── ai/
-│   ├── query_handler.py    # Natural language processing
-│   ├── recommendation_engine.py # AI recommendations
-│   └── context_manager.py  # Conversation context
-└── pob/
-    ├── importer.py         # PoB import
-    ├── exporter.py         # PoB export
-    └── xml_parser.py       # PoB XML handling
-```
-
-### Web Interface
-
-```
-web/
-├── src/
-│   ├── components/
-│   │   ├── CharacterImporter.tsx
-│   │   ├── PassiveTree.tsx
-│   │   ├── GearRecommendations.tsx
-│   │   ├── BuildComparison.tsx
-│   │   └── NLQueryInterface.tsx
-│   ├── api/
-│   │   └── client.ts       # API client
-│   ├── state/
-│   │   └── store.ts        # State management
-│   └── utils/
-│       └── calculations.ts  # Client-side calcs
-├── public/
-│   └── assets/             # Static assets
-└── package.json
-```
-
-## Database Schema
-
-### Core Tables
-
-- **items**: All item bases and types
-- **modifiers**: Item modifiers and their values
-- **passive_nodes**: Passive tree nodes
-- **passive_connections**: Tree node connections
-- **skills**: Skill gems data
-- **supports**: Support gem data
-- **uniques**: Unique item data
-- **ascendancies**: Ascendancy classes
-- **crafting**: Crafting bench recipes
-
-### User Tables
-
-- **saved_builds**: User-saved builds
-- **build_snapshots**: Historical build versions
-- **optimization_history**: Past optimizations
-
-## API Integration
-
-### Official PoE API
-
-- Character data retrieval
-- Account information
-- Ladder rankings (with rate limiting)
-- Stash tab data (optional)
-
-### Rate Limiting Strategy
-
-```python
-# Configurable rate limits
-RATE_LIMITS = {
-    'official_api': {
-        'requests_per_minute': 10,
-        'burst': 3,
-        'backoff': 'exponential'
-    },
-    'poe2db': {
-        'requests_per_minute': 30,
-        'cache_duration': 3600  # 1 hour
+**macOS/Linux:**
+```json
+{
+  "mcpServers": {
+    "poe2-optimizer": {
+      "command": "python3",
+      "args": ["/Users/YourName/poe2-mcp/launch.py"],
+      "env": {}
     }
+  }
 }
 ```
 
-### Caching Strategy
+Restart Claude Desktop. The server will appear in your MCP tools.
 
-1. **L1 Cache**: In-memory (5 minutes)
-2. **L2 Cache**: Redis (1 hour)
-3. **L3 Cache**: SQLite (persistent)
+### Option B: Create a .mcpb Bundle (For Distribution)
 
-## AI Integration
+MCP Bundles (.mcpb) allow one-click installation. This is **experimental for Python projects** because dependencies must be bundled.
 
-### Natural Language Queries
+```bash
+# Install the bundle CLI
+npm install -g @anthropic-ai/mcpb
 
-```python
-# Example queries
-queries = [
-    "How can I increase my lightning damage?",
-    "What's the best chest armor for my budget?",
-    "Should I respec for more defense?",
-    "Which passive nodes give the most DPS?",
-    "How do I transition to CI?",
-    "What uniques work well with my build?"
-]
+# In the poe2-mcp directory
+mcpb init    # Creates manifest.json (set server.type = "python")
+mcpb pack    # Creates poe2-optimizer.mcpb
 ```
 
-### Context-Aware Responses
+**Important for Python bundles:**
+- You must bundle all dependencies in `server/lib/` or include a `venv/`
+- Set `PYTHONPATH` in manifest's `mcp_config.env`
+- Bundle size will be large (~100MB+ with dependencies)
 
-The AI maintains context about:
-- Current character state
-- Previous questions
-- Build goals
-- Budget constraints
-- Playstyle preferences
+**Bundle structure:**
+```
+poe2-optimizer.mcpb (ZIP)
+├── manifest.json       # Bundle metadata (server.type = "python")
+├── server/
+│   ├── launch.py       # Entry point
+│   ├── src/            # Source code
+│   ├── data/           # Game database
+│   └── lib/            # Bundled Python packages
+└── icon.png (optional)
+```
+
+See [mcpb documentation](https://github.com/modelcontextprotocol/mcpb) for manifest.json format.
+
+> **Recommendation:** For development, use manual configuration (Option A). Only create .mcpb bundles for distributing to end users who don't have Python installed.
+
+---
+
+## Other AI Platforms
+
+MCP is an open standard supported by multiple AI platforms:
+
+### OpenAI ChatGPT Desktop
+ChatGPT desktop app supports MCP servers. Configuration varies by version - check OpenAI's documentation for current setup instructions.
+
+### Cursor AI
+Cursor supports MCP via SSE protocol. Add to your Cursor settings:
+```json
+{
+  "mcp": {
+    "servers": {
+      "poe2-optimizer": {
+        "command": "python",
+        "args": ["/path/to/poe2-mcp/launch.py"]
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+Windsurf has a built-in MCP Plugin Store. You can either:
+- Search for "poe2" in the plugin store (if published)
+- Manually add the server path in settings
+
+### Claude Code (CLI)
+```bash
+# In your project directory
+claude mcp add poe2-optimizer python /path/to/poe2-mcp/launch.py
+```
+
+### Other Compatible Clients
+- Zed Editor
+- Replit
+- Codeium
+- Sourcegraph
+- Microsoft Semantic Kernel
+- Salesforce Agentforce
+
+Check each platform's documentation for MCP server configuration.
+
+---
+
+## Available Tools (20 Registered)
+
+Once connected, you can ask your AI assistant to use these tools:
+
+### Character Analysis
+| Tool | Description |
+|------|-------------|
+| `analyze_character` | Full character analysis (defenses, skills, gear, passives) |
+| `import_poe_ninja_url` | Import character from poe.ninja URL directly |
+| `compare_to_top_players` | Compare your build to ladder leaders |
+| `analyze_passive_tree` | Analyze allocated passive nodes |
+
+### Validation & Inspection
+| Tool | Description |
+|------|-------------|
+| `validate_support_combination` | Check if support gems work together |
+| `validate_build_constraints` | Validate build against game rules |
+| `inspect_support_gem` | View complete support gem data |
+| `inspect_spell_gem` | View complete spell gem data |
+| `list_all_supports` | List all available support gems |
+| `list_all_spells` | List all available spell gems |
+
+### Path of Building
+| Tool | Description |
+|------|-------------|
+| `import_pob` | Import Path of Building code |
+| `export_pob` | Export build to PoB format |
+| `get_pob_code` | Get PoB code for a character |
+
+### Trade & Items
+| Tool | Description |
+|------|-------------|
+| `search_items` | Search local item database |
+| `search_trade_items` | Search official trade site (requires auth) |
+| `setup_trade_auth` | Set up trade site authentication |
+
+### Knowledge & Utility
+| Tool | Description |
+|------|-------------|
+| `explain_mechanic` | Explain PoE2 game mechanics |
+| `get_formula` | Get calculation formulas |
+| `health_check` | Check server status |
+| `clear_cache` | Clear cached data |
+
+> **Note:** Additional tools (DPS calculator, EHP calculator, optimizers) have handlers implemented but are not yet registered. These may be enabled in future updates.
+
+---
+
+## Example Usage
+
+Once configured, just talk to your AI naturally:
+
+> "Analyze my character TomawarTheFourth from account Tomawar"
+
+> "Import this poe.ninja URL: https://poe.ninja/poe2/builds/char/..."
+
+> "Can I use Faster Projectiles and Slower Projectiles together?" (uses `validate_support_combination`)
+
+> "Show me all support gems that work with projectiles" (uses `list_all_supports`)
+
+> "Compare my build to top Witchhunter players"
+
+> "Explain how armor works in PoE2"
+
+The AI will use the appropriate tools automatically.
+
+---
+
+## Trade API Authentication (Optional)
+
+For `search_trade_items` to work, you need to authenticate with pathofexile.com:
+
+```bash
+pip install playwright
+playwright install chromium
+python scripts/setup_trade_auth.py
+```
+
+This opens a browser for you to log in, then saves your session cookie.
+
+---
+
+## Local Game Database
+
+The server includes a local database with:
+- 4,975+ passive tree nodes
+- 335+ ascendancy nodes (99% coverage)
+- Complete skill gem data from Path of Building
+- Support gem effects and interactions
+- Base items and unique items
+
+Data is loaded from `data/` directory on startup.
+
+---
+
+## Architecture
+
+```
+poe2-mcp/
+├── launch.py              # Entry point
+├── src/
+│   ├── mcp_server.py      # Main MCP server (20 tools registered)
+│   ├── api/               # External API clients
+│   │   ├── poe_ninja_api.py
+│   │   ├── character_fetcher.py
+│   │   └── rate_limiter.py
+│   ├── analyzer/          # Analysis components
+│   │   ├── character_analyzer.py
+│   │   └── weakness_detector.py
+│   ├── calculator/        # Numeric calculations
+│   │   ├── ehp_calculator.py
+│   │   ├── spirit_calculator.py
+│   │   └── stun_calculator.py
+│   ├── optimizer/         # Optimization engines
+│   │   ├── gear_optimizer.py
+│   │   └── gem_synergy_calculator.py
+│   ├── parsers/           # Data parsers
+│   │   └── passive_tree_resolver.py
+│   └── database/          # SQLite database
+│       ├── models.py
+│       └── manager.py
+├── data/                  # Game data files
+│   ├── psg_passive_nodes.json
+│   └── poe2_support_gems_database.json
+└── tests/                 # Test suite
+```
+
+---
 
 ## Development
 
 ### Running Tests
-
 ```bash
-# Run all tests
-pytest
-
-# Run specific test suite
-pytest tests/test_calculator.py
-
-# Run with coverage
-pytest --cov=src tests/
+pytest tests/ -v
 ```
 
-### Code Quality
-
+### Running the Server Directly
 ```bash
-# Format code
-black src/ tests/
-
-# Lint
-flake8 src/ tests/
-
-# Type checking
-mypy src/
+python launch.py
+# or
+python src/mcp_server.py
 ```
 
-### Database Migrations
+### Key Files
+- `src/mcp_server.py` - MCP server with 20 registered tools (39 handlers total)
+- `src/calculator/ehp_calculator.py` - EHP calculations
+- `src/optimizer/gem_synergy_calculator.py` - Support gem logic
+- `data/psg_passive_nodes.json` - Passive tree database
 
-```bash
-# Create migration
-alembic revision --autogenerate -m "description"
+---
 
-# Apply migrations
-alembic upgrade head
+## Troubleshooting
 
-# Rollback
-alembic downgrade -1
-```
+### "Server not found" in Claude Desktop
+- Check the path in config is absolute (not relative)
+- Ensure Python is in your PATH
+- Try running `python launch.py` manually to see errors
 
-## Configuration
+### "No character found"
+- Your character must be on poe.ninja (public ladder)
+- Character name is case-sensitive
+- Try the full poe.ninja URL with `import_poe_ninja_url`
 
-Configuration is managed via environment variables and `config.yaml`:
+### Tools return empty results
+- Database may need initialization: `python launch.py` handles this
+- Check `data/` directory exists with JSON files
 
-```yaml
-# config.yaml
-server:
-  host: 127.0.0.1
-  port: 8080
-  workers: 4
+---
 
-database:
-  url: sqlite:///data/poe2_optimizer.db
-  pool_size: 10
+## Credits
 
-api:
-  poe_api_rate_limit: 10
-  poe2db_rate_limit: 30
-  enable_caching: true
+Data sources:
+- [poe.ninja](https://poe.ninja) - Character data and builds
+- [Path of Building (PoE2)](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2) - Skill data
+- [Path of Grinding](https://pathofgrinding.com) - Passive tree data
 
-ai:
-  provider: anthropic  # or openai
-  model: claude-sonnet-4-20250514
-  max_tokens: 4096
-  temperature: 0.7
+MCP Protocol:
+- [Model Context Protocol](https://modelcontextprotocol.io)
+- [mcpb Bundle Format](https://github.com/modelcontextprotocol/mcpb)
 
-web:
-  port: 3000
-  enable_build_sharing: true
-  max_saved_builds_per_user: 50
-
-features:
-  enable_trade_integration: true
-  enable_pob_export: true
-  enable_ai_insights: true
-```
-
-## Security & Privacy
-
-- **No Credential Storage**: Uses OAuth flow for PoE account access
-- **Local-First**: All character data cached locally
-- **Optional Cloud Sync**: Encrypted cloud backup (opt-in)
-- **Rate Limit Enforcement**: Prevents API abuse
-- **Data Encryption**: All saved builds encrypted at rest
-
-## Performance
-
-- **Sub-second Analysis**: Most character analyses complete in <500ms
-- **Parallel Calculations**: Multi-threaded build calculations
-- **Intelligent Caching**: Reduces API calls by 90%+
-- **WebSocket Updates**: Real-time updates without polling
-- **CDN Assets**: Static assets served via CDN
-
-## Contributing
-
-This is a personal project, but contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## Roadmap
-
-### Completed
-- [x] MCP server foundation with 34 tools
-- [x] Character analysis from poe.ninja
-- [x] Local game database (passives, skills, items)
-- [x] API integration with multi-tier fallback
-- [x] EHP, Spirit, Stun calculators
-- [x] DPS calculations
-- [x] Gear/passive/skill optimization
-- [x] Path of Building import/export
-- [x] Trade site integration (optional)
-- [x] Validation tools for AI recommendations
-- [x] poe.ninja URL import
-
-### In Progress
-- [ ] Web interface MVP
-- [ ] Complete ascendancy data from game files
-- [ ] Support gem incompatibility database
-
-### Future
-- [ ] Build sharing
-- [ ] Meta trend analysis
-- [ ] Mobile companion app
+---
 
 ## License
 
 Private project for personal use.
 
-## Credits
-
-Built with data from:
-- [poe.ninja](https://poe.ninja) - Character data, builds, and economy data
-- [Path of Building (PoE2 Fork)](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2) - Skill gems and passive tree data
-- [Path of Grinding](https://pathofgrinding.com) - Passive tree node database
-- Path of Exile 2 by Grinding Gear Games
-
 ---
 
-**Built for the PoE2 community** | [Report Issues](https://github.com/HivemindOverlord/poe2-mcp/issues)
+**[Report Issues](https://github.com/HivemindOverlord/poe2-mcp/issues)**

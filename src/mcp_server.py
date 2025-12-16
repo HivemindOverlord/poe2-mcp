@@ -3064,7 +3064,7 @@ Consider:
             # Extract and filter supports
             all_supports = []
             for support_id, support_data in support_gems.items():
-                if not isinstance(support_data, dict) or 'name' not in support_data:
+                if not isinstance(support_data, dict) or 'display_name' not in support_data:
                     continue
 
                 spirit_cost = support_data.get('spirit_cost', 0) or 0
@@ -3094,7 +3094,7 @@ Consider:
                     effect_summary = ", ".join(key_effects)
 
                 all_supports.append({
-                    'name': support_data['name'],
+                    'name': support_data['display_name'],
                     'tags': support_data.get('tags', []),
                     'tier': support_data.get('tier', '?'),
                     'spirit_cost': spirit_cost,
