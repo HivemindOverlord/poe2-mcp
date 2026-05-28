@@ -61,8 +61,10 @@ async def main():
     print("=" * 60)
     print("\nNext steps:")
     print("  1. Edit .env and add your API keys (optional)")
-    print("  2. Run: python launch.py")
+    print("  2. Run: python src/mcp_server.py")
     print("  3. Or add to Claude Desktop MCP configuration")
+    print("     Example config entry point: src/mcp_server.py")
+    print("     (If installed via pip, use the full site-packages path)")
     print("\nFor detailed instructions, see QUICKSTART.md")
 
     return True
