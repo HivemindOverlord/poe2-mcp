@@ -1,0 +1,32 @@
+{
+  "dataset": "mods",
+  "filename": "mods.json",
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "extracted_at": "2026-05-30T13:23:13Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "source_file": "Bundles2/data/balance/mods.datc64",
+  "source_bytes": 13626410,
+  "source_row_count": 16788,
+  "source_row_size": 677,
+  "extractor": "scripts/extract_mods_datc64_v2.py",
+  "record_count": 16788,
+  "skipped": 0,
+  "sha256": "501686a0bdd31d76c81b2cb9b38aa80f660038813e9080bbd2f1ec0846ea7e38",
+  "bytes": 18542186,
+  "generation_type_counts": {
+    "PREFIX": 2762,
+    "SUFFIX": 2568,
+    "IMPLICIT": 10363,
+    "CORRUPTED": 120,
+    "UNKNOWN_BUCKETS": 975
+  },
+  "schema_notes": [
+    "Each record has row_index, mod_id, display_name, level_requirement, domain, generation_type, generation_type_name, hash, type_key, stats[], active_stat_count.",
+    "stats[] is always 4 entries (Stat1-4 slots); is_empty=true for unused slots.",
+    "Patch 0.5 added 16 trailing bytes per row (661 -> 677); the documented field layout (0..150) is unchanged.",
+    "9 UNKNOWN generation_type values appear (4, 6, 7, 8, 9, 11, 13, 18, 20) - these are pre-existing spec gaps (Bestiary, Essence, Blight, Bloodlines, Talisman, Eclipse Map, Affliction, Torment) inferred from mod_id patterns, not yet enumerated in src/parsers/specifications/mods_spec.py GenerationType."
+  ],
+  "data_policy": "Extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data."
+}

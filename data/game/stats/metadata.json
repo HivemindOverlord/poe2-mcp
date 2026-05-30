@@ -1,0 +1,33 @@
+{
+  "dataset": "stats",
+  "filename": "stats.json",
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "extracted_at": "2026-05-30T16:30:00Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "source_file": "Bundles2/data/balance/stats.datc64",
+  "source_bytes": 5216422,
+  "source_row_count": 26943,
+  "source_row_size": 106,
+  "extractor": "scripts/extract_stats_v2.py",
+  "record_count": 26943,
+  "empty_stat_ids": 0,
+  "sha256": "33d21b55ccbef26a161c4043f43a950ca63eb78ed9aa40e9608c58c1a1ef67a1",
+  "bytes": 1977442,
+  "schema_notes": [
+    "Top-level keys: metadata, stats.",
+    "Each stats[] entry is {row_index: int, stat_id: str}.",
+    "stat_id is the canonical engine-side identifier (e.g., 'level', 'main_hand_weapon_type', 'base_cold_damage_+%', 'current_endurance_charges').",
+    "row_index is the 0-based row offset in stats.datc64 - this is what Stat1..4 keys in mods.datc64 reference, what per-node stat refs in passiveskills.datc64 reference, and what grantedeffectstatsets entries reference.",
+    "Use this dataset to resolve stat_key -> stat_id when displaying mod/passive/gem effects to users.",
+    "JSON is compact-formatted (no pretty-print) to keep the file under 2 MB; load with json.loads() and access programmatically rather than reading visually."
+  ],
+  "downstream_usage": [
+    "src/data/game_data.py::load_stats() returns this as a Dict[int, str] via {entry['row_index']: entry['stat_id'] for entry in payload['stats']}.",
+    "Mods data (data/game/mods/mods.json): each stats[].stat_key is a row_index in this table.",
+    "Passive tree data (data/game/passive_tree/tree.json): stat references on nodes use these row indices.",
+    "Support gems data (data/game/support_gems/support_gems.json): stat effects already resolved via the same lookup at extraction time."
+  ],
+  "data_policy": "Extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data."
+}

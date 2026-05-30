@@ -7,6 +7,41 @@ Format based on Path of Building changelog style, adapted for MCP tooling.
 
 ---
 
+## Version 1.0.1 (2026-05-30) - Patch 0.5 "Return of the Ancients" Compatibility
+
+Compatibility updates for PoE2 Patch 0.5 (released 2026-05-29). Code-level fixes that work without re-extracted game data. Local passive tree and item mod data remain stale pending `.datc64` re-extraction; see Known Issues below.
+
+--- API ---
+* Add Runes of Aldur league (+ HC/SSF/HCSSF variants) to `LEAGUE_MAPPINGS` (#59). Slugs confirmed via `/poe2/api/data/index-state`: `runesofaldur`, `runesofaldurhc`, `runesofaldurssf`, `runesofaldurhcssf`
+* Update default league from stale "Abyss" to "Runes of Aldur" on `get_character` and `_scrape_character_page` (#59)
+* Auto-discover league slug from index-state when `LEAGUE_MAPPINGS` is stale, so future leagues work before the static map is updated (#62)
+
+--- Calculators ---
+* Stub `runic_ward` field on `DefensiveStats` for PoE2 0.5 Verisium Runeforging defense layer (#59). Not yet layered into mitigation; requires local extraction
+
+--- Knowledge ---
+* Add `Martial Artist` (Monk) and `Spirit Walker` (Huntress) to `ASCENDANCY_TO_CLASS` (#59). Class mapping only; node data pending re-extraction
+* Commit `src/parsers/ascendancy_resolver.py` as a tracked module (#59). Was previously imported by `mcp_server.py` but untracked, so fresh checkouts would fail to import
+
+--- Bug Fixes ---
+* Fix pip console entry-point `poe2-mcp` invoking async `main()` without `asyncio.run()` (#60). Closes #56 (@MagicJoseph)
+
+--- Documentation ---
+* Correct README tool count from 32 to 39 and document the live Path of Building bridge (`pob_*` tools) (#58)
+
+--- Infrastructure ---
+* Bump vite 7.3.1 to 7.3.3 in /web (#50, dependabot)
+* Bump postcss 8.5.6 to 8.5.14 in /web (#51, dependabot)
+
+--- Known Issues (extraction-dependent, not in this release) ---
+* CRITICAL: poe.ninja builds-list / ladder SPA migration broke `compare_to_top_players` and the HTML-scrape fallback (#61). Per-character JSON API still works but returns 404 for characters not present in the snapshot version (excludes freshly-rolled characters)
+* Local passive tree pre-0.5: 16.21% miss rate measured vs poe.ninja's `PassiveTree-0.5` asset (4,480 nodes; local 4,094). Pending `.datc64` re-extraction
+* Ascendancy node data stale for 6 reworked ascendancies + 2 new ones; mapping in place, node data pending re-extraction
+* Item mod DB missing Runic Ward / Runeforging mods; pending re-extraction
+* `runic_ward` field exists on `DefensiveStats` but is not layered into `calculate_ehp`; pending mechanics extraction
+
+---
+
 ## Version 1.0.0 (2025-12-16) - First Major Release
 
 The first stable release of the PoE2 Build Optimizer MCP server. Provides 32 MCP tools for AI-powered character analysis and build optimization.

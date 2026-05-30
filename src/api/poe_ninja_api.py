@@ -243,15 +243,32 @@ class PoeNinjaAPI:
             # Step 2: Find the snapshot version for our league
             league_slug = self._get_league_slug(league)
             snapshot = None
+            snapshots = index_state.get("snapshotVersions", [])
 
-            for snap in index_state.get("snapshotVersions", []):
+            # Primary: match by slug (works when LEAGUE_MAPPINGS is current)
+            for snap in snapshots:
                 if snap.get("url") == league_slug:
                     snapshot = snap
                     break
 
+            # Auto-discovery fallback: match by league NAME (case-insensitive) against
+            # snap.name. Lets new leagues work before LEAGUE_MAPPINGS is updated for
+            # the next patch, so we don't break on the next league launch.
+            if not snapshot:
+                normalized = league.lower().strip()
+                for snap in snapshots:
+                    if snap.get("name", "").lower().strip() == normalized:
+                        snapshot = snap
+                        logger.info(
+                            f"📡 Auto-discovered slug '{snap.get('url')}' for league "
+                            f"'{league}' via index-state name match "
+                            f"(LEAGUE_MAPPINGS may be stale — consider adding)"
+                        )
+                        break
+
             if not snapshot:
                 logger.warning(f"⚠️ No snapshot found for league '{league}' (slug: '{league_slug}')")
-                logger.warning(f"   Available leagues: {[s.get('url') for s in index_state.get('snapshotVersions', [])]}")
+                logger.warning(f"   Available leagues: {[s.get('url') for s in snapshots]}")
                 return await self._scrape_character_page(account, character, league)
 
             version = snapshot.get("version")

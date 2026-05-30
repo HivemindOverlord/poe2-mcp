@@ -810,6 +810,54 @@ CHANGES from PoE1:
 """
         )
 
+        self.mechanics['runic_ward'] = MechanicExplanation(
+            name="Runic Ward",
+            category=MechanicCategory.DEFENSE,
+            short_description="New defense pool added in Patch 0.5 via Verisium Runeforging on armours (PRELIMINARY — exact mechanics pending local extraction)",
+            detailed_explanation="""
+Runic Ward is a new defensive layer introduced in Path of Exile 2 Patch 0.5
+"Return of the Ancients" (2026-05-29). It is added to armour pieces through
+the new Verisium Runeforging system.
+
+PRELIMINARY ENTRY: Exact mechanics — recharge behavior, bypass interactions,
+stacking rules across multiple Runeforged pieces, and the cap — have NOT yet
+been extracted from the patched game files. This entry exists so a query for
+"runic ward" returns a clear "what it is + what we don't yet know" rather
+than an unhelpful "unknown mechanic" response. Update once .datc64
+re-extraction completes.
+""",
+            how_it_works="""
+PENDING EXTRACTION. Update this section once Runic Ward mechanics are
+extracted from local .datc64 files. Specifically need to confirm:
+- Where Runic Ward sits in the PoE2 damage layer order
+  (Evasion -> Block -> Armour -> Resistances -> Life/ES)
+- Whether it recharges, and on what trigger/delay/rate
+- Whether any damage types bypass it (analogous to bleed/poison vs ES)
+- Stacking rules across multiple Runeforged armour pieces
+- Maximum / cap behavior
+- Interactions with damage-taken-as-* conversions
+""",
+            examples=[
+                "Add Runic Ward to chest armour via Verisium Runeforging (PoE2 0.5 crafting)",
+                "Currently NOT layered into EHP calculator output - survivability may be UNDERESTIMATED for builds using Runeforged armour",
+            ],
+            common_questions={
+                "What is Runic Ward?": "A new defense pool added in PoE2 Patch 0.5 via Verisium Runeforging on armour pieces. Distinct from Energy Shield, Armour, and Evasion.",
+                "How does it interact with EHP?": "PRELIMINARY - the runic_ward field exists on DefensiveStats but is not yet layered into calculate_ehp. EHP for builds using Runeforged armour will be underestimated until mechanics extraction lands.",
+                "Where does it come from?": "Verisium Runeforging - a new crafting system added in Patch 0.5 'Return of the Ancients'.",
+                "Does it stack with Energy Shield?": "PENDING EXTRACTION - relationship to ES and other defense pools not yet confirmed from game files.",
+            },
+            related_mechanics=['energy_shield', 'armor', 'life', 'block'],
+            important_notes=[
+                "PRELIMINARY entry - exact mechanics pending local .datc64 re-extraction post-0.5",
+                "DefensiveStats.runic_ward stub exists but is not layered into calculate_ehp",
+                "Builds using Runeforged armour will have their EHP UNDERESTIMATED in current calculations",
+                "Added in Patch 0.5 'Return of the Ancients' (2026-05-29)",
+                "Do NOT publish numeric Runic Ward stats until extracted from local game data per project data policy",
+            ],
+            changed_from_poe1="N/A - entirely new mechanic introduced in PoE2 Patch 0.5"
+        )
+
         self.mechanics['block'] = MechanicExplanation(
             name="Block",
             category=MechanicCategory.DEFENSE,

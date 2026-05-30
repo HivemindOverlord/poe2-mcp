@@ -32,8 +32,26 @@ class DomainFlag(IntEnum):
 
 
 # Mod row constants
-MOD_ROW_SIZE = 661
-MOD_ROW_COUNT = 14269
+#
+# IMPORTANT (Patch 0.5 "Return of the Ancients", 2026-05-29):
+# The actual row size in 0.5's mods.datc64 is 677 bytes, NOT 661. GGG appended
+# 16 bytes of new fields at offsets >= 651. The KNOWN field layout (0..150) is
+# preserved — all existing parsers continue to work — so MOD_ROW_SIZE stays at
+# 661 as "minimum bytes required to parse the documented fields." Extractors
+# should derive the true row size from the .datc64 header instead of hardcoding
+# (see scripts/extract_mods_datc64_v2.py for the pattern).
+#
+# Row counts (informational, derived from header at extraction time):
+#   - Nov 2025 / pre-0.5: 14,269 rows, 661 bytes/row → 9,432,201 bytes table
+#   - May 2026 / 0.5+:    16,788 rows, 677 bytes/row → 11,365,476 bytes table
+#   (mods.datc64 file size: 11.97 MB pre-0.5 → 13.63 MB in 0.5)
+MOD_ROW_SIZE = 661          # Minimum bytes required to parse documented fields
+MOD_ROW_COUNT = 14269       # Historical baseline; ACTUAL count comes from .datc64 header
+
+# 0.5 reference values (informational only — DO NOT hardcode these in parsers;
+# extractors should always derive count + row size from the file header).
+MOD_ROW_SIZE_0_5 = 677
+MOD_ROW_COUNT_0_5 = 16788
 
 # =============================================================================
 # FIELD LAYOUT (from PoB spec.lua)
@@ -207,8 +225,12 @@ def parse_mod_row(data: bytes, row_index: int = 0) -> ModRecord:
     Returns:
         ModRecord with parsed fields
     """
-    if len(data) != MOD_ROW_SIZE:
-        raise ValueError(f"Expected {MOD_ROW_SIZE} bytes, got {len(data)}")
+    # Accept >= MOD_ROW_SIZE rather than strict equality. Patch 0.5 grew the
+    # row to 677 bytes by appending 16 new (yet-unidentified) fields after
+    # offset 651; the documented field layout (0..150) is unchanged, so anything
+    # at least MOD_ROW_SIZE bytes long can be parsed using the existing offsets.
+    if len(data) < MOD_ROW_SIZE:
+        raise ValueError(f"Expected >= {MOD_ROW_SIZE} bytes, got {len(data)}")
 
     # Parse core fields
     mod_id_ptr = struct.unpack('<Q', data[0:8])[0]

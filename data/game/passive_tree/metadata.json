@@ -1,0 +1,31 @@
+{
+  "dataset": "passive_tree",
+  "filename": "tree.json",
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "extracted_at": "2026-05-30T13:46:00Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "source_files": [
+    "Bundles2/data/balance/passiveskills.datc64",
+    "Bundles2/data/balance/passivetreeexpansionjewels.datc64",
+    "Bundles2/data/balance/masteryeffects.datc64"
+  ],
+  "extractor": "scripts/extract_complete_passive_tree.py",
+  "record_count": 9605,
+  "keystones": 82,
+  "notables": 2151,
+  "ascendancy_classes_iterated": 37,
+  "mastery_effects": 332,
+  "sha256": "01884bd55889a86237606fe787674a8a49e8c2b531f0a3a1f8b6e77944573071",
+  "bytes": 4989323,
+  "schema_notes": [
+    "Top-level keys: metadata, ascendancy_classes, nodes (dict keyed by node ID string), mastery_effects.",
+    "PoE2 0.5 grew the tree by ~32% (3.78 MB -> 4.99 MB; pre-0.5 had ~4094 resolvable nodes, 0.5 has 9605)."
+  ],
+  "known_caveats": [
+    "Ascendancy nodes extraction returned 0 - the extractor's ascendancy-detection logic did not fire against 0.5 data. The 6 reworked ascendancies (Acolyte of Chayula, Blood Mage, Chronomancer, Gemling Legionnaire, Pathfinder, Witchhunter) and 2 new ones (Martial Artist, Spirit Walker) are NOT yet broken out into per-ascendancy node sets in this extract. Pending follow-up fix.",
+    "Stat enrichment uses pre-0.5 reference files (psg_passive_nodes.json, merged_passive_tree.json, passive_tree_positions.json) - structural data is fresh 0.5 but some stat text may be stale."
+  ],
+  "data_policy": "Extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data."
+}

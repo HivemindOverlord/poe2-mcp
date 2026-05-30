@@ -1,0 +1,27 @@
+{
+  "dataset": "support_gems",
+  "filename": "support_gems.json",
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "extracted_at": "2026-05-30T14:13:00Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "source_files": [
+    "Bundles2/data/balance/supportgems.datc64",
+    "Bundles2/data/balance/grantedeffects.datc64",
+    "Bundles2/data/balance/grantedeffectsperlevel.datc64",
+    "Bundles2/data/balance/grantedeffectstatsets.datc64",
+    "Bundles2/data/balance/stats.datc64"
+  ],
+  "extractor": "scripts/extract_support_gem_effects.py",
+  "record_count": 680,
+  "stat_definitions_loaded": 26943,
+  "sha256": "3c8de91929429f2710ccc6d91a4dba0f29b8c94b80fb8cc36c89cd17b61a86f3",
+  "bytes": 215960,
+  "schema_notes": [
+    "Top-level keys: metadata, support_gems.",
+    "Each support gem includes id, display name, and resolved stat effects from the grantedeffects+perlevel+statsets tables.",
+    "Spot-check (first 10): Ancestral Warrior Totem Support, Totem Spell Totem Support, Totem Ballista Support, Ferocious Roar Support, Exploit Weakness Support, Devastate Support, Cast On Shock/Freeze/Ignite/Elemental Ailment Support - all readable, no truncation."
+  ],
+  "data_policy": "Extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data."
+}

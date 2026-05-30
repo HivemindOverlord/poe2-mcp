@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "data_revision": 3,
+  "released_as": "data-v0.5.0-r3",
+  "extracted_at": "2026-05-30T16:30:00Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "datasets": {
+    "mods": {
+      "path": "data/game/mods/",
+      "files": ["mods.json", "metadata.json"],
+      "record_count": 16788
+    },
+    "passive_tree": {
+      "path": "data/game/passive_tree/",
+      "files": ["tree.json", "metadata.json"],
+      "record_count": 9605
+    },
+    "support_gems": {
+      "path": "data/game/support_gems/",
+      "files": ["support_gems.json", "metadata.json"],
+      "record_count": 680
+    },
+    "ascendancies": {
+      "path": "data/game/ascendancies/",
+      "files": ["ascendancies.json", "metadata.json"],
+      "record_count": 37,
+      "note": "ids are reliable; display_name is best-effort heuristic (see metadata.json caveats)"
+    },
+    "stats": {
+      "path": "data/game/stats/",
+      "files": ["stats.json", "metadata.json"],
+      "record_count": 26943,
+      "note": "{row_index: stat_id} mapping; used to resolve stat_key refs in mods/passives/gems"
+    }
+  },
+  "datasets_pending_0_5_reextract": {
+    "skill_gems": {
+      "blocker": "extractor sources from PoB2 which hasn't shipped 0.5 tree.json upstream yet (verified 2026-05-30); will sync once PoB2 community lands the 0.5 skill data",
+      "current_pre_0_5_location": "data/pob_active_skills.json (tracked, Dec 2025)"
+    }
+  },
+  "data_policy": "All data here is extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data is bundled. See data/game/README.md for the full policy."
+}

@@ -292,6 +292,30 @@ The server includes a local database with:
 
 Data is loaded from `data/` directory on startup.
 
+### Centralized Game-Data Distribution (new in 1.0.2)
+
+You no longer need to extract `.datc64` files from your own PoE2 install. The MCP automatically downloads the maintained game-data bundle from this repo's GitHub Releases on first run and after each patch (resolves [#53](https://github.com/HivemindOverlord/poe2-mcp/issues/53)).
+
+**How it works:**
+1. `launch.py` calls `src/data/data_distributor.ensure_data_current()` during startup
+2. It compares `data/version.json` (local) against the latest release tagged `data-v*`
+3. If newer data is available, it downloads `poe2-data.zip` and unzips into `data/`
+4. The MCP starts with current data
+
+**Opt out** (run your own local extraction instead):
+```bash
+export POE2_MCP_NO_DATA_FETCH=1   # macOS/Linux
+$env:POE2_MCP_NO_DATA_FETCH=1     # PowerShell
+```
+Then extract via `scripts/extract_poe2_data.py` against your own licensed PoE2 install.
+
+**Manual refresh:**
+```bash
+python -m src.data.data_distributor
+```
+
+**Data policy:** The bundle is extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction scripts. No third-party wiki / scraped data is bundled. See `CLAUDE.md` "Data Source Policy" for details.
+
 ---
 
 ## Architecture

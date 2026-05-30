@@ -1,0 +1,25 @@
+{
+  "dataset": "ascendancies",
+  "filename": "ascendancies.json",
+  "patch_version": "0.5",
+  "patch_name": "Return of the Ancients",
+  "patch_released": "2026-05-29",
+  "extracted_at": "2026-05-30T14:18:00Z",
+  "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
+  "source_file": "Bundles2/data/balance/ascendancy.datc64",
+  "extractor": "scripts/extract_ascendancies_v2.py",
+  "record_count": 37,
+  "sha256": "8d7e42f1071d882cfca361a42d70918edcefbd37c7761270eeb712f81143391b",
+  "bytes": 8593,
+  "schema_notes": [
+    "Each entry has row_index, id, display_name, display_name_probed_offset, is_unused.",
+    "id is RELIABLE - it's the canonical internal name (e.g., 'Marauder1', 'Witch3', 'Witch3b' for variant Liches).",
+    "Row order reveals base class grouping: 0-2 Marauder, 3-5 Warrior (Titan/Warbringer/Smith of Kitava), 6-8 Ranger (Deadeye/Pathfinder/...), 9-11 Huntress (Amazon/Ritualist/Spirit Walker - the last is NEW in 0.5), 12-15 Witch (Infernalist/Blood Mage/Lich/Abyssal Lich), 16-18 Sorceress (Stormweaver/Chronomancer/Disciple of Varashta), 19+ Mercenary/Druid/Monk (Invoker/Acolyte of Chayula/Martial Artist - the last is NEW in 0.5).",
+    "Patch 0.5 NEW: Martial Artist (Monk family), Spirit Walker (Huntress family)."
+  ],
+  "known_caveats": [
+    "display_name field is BEST-EFFORT - the extractor's longest-string heuristic picks flavor text or art-asset paths rather than the proper display name. The id field is the load-bearing identifier; downstream code should map id->canonical name via src/parsers/ascendancy_resolver.py ASCENDANCY_TO_CLASS dict.",
+    "Resolving display_name properly requires either: (a) a PoB-style spec.lua for ascendancy.datc64 field layout, or (b) cross-referencing with the language-specific ascendancy.datc64 files (data/extracted/Data/data/balance/english/ascendancy.datc64 if it exists)."
+  ],
+  "data_policy": "Extracted exclusively from the maintainer's licensed PoE2 install via the in-repo extraction pipeline. No third-party wiki / scraped data."
+}

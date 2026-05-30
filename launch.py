@@ -207,6 +207,31 @@ async def start_mcp_server():
         traceback.print_exc()
 
 
+def check_data_freshness():
+    """Pull the latest game-data bundle from this repo's GitHub Releases.
+
+    Resolves #53: pip-installed users get usable data without a manual
+    extraction step. Honors POE2_MCP_NO_DATA_FETCH=1 for users running
+    their own local extraction.
+
+    Failure here is non-fatal — the server still starts with whatever data
+    is already on disk (possibly stale). Errors are surfaced as warnings.
+    """
+    try:
+        from src.data.data_distributor import ensure_data_current
+    except Exception as e:
+        print_warning(f"data_distributor unavailable ({e}); skipping freshness check")
+        return
+    try:
+        ok, msg = ensure_data_current()
+        if ok:
+            print_success(f"Game data: {msg}")
+        else:
+            print_warning(f"Game data: {msg} (continuing with local data)")
+    except Exception as e:
+        print_warning(f"Data freshness check raised {type(e).__name__}: {e}; continuing")
+
+
 async def main():
     """Main launcher function"""
     show_welcome()
@@ -223,6 +248,10 @@ async def main():
 
     setup_directories()
     check_env_file()
+
+    # Game data freshness check (downloads bundle from GitHub Releases if needed)
+    print_header("Game Data")
+    check_data_freshness()
 
     # Initialize database
     print_header("Database Setup")

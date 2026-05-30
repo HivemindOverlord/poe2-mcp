@@ -1679,9 +1679,28 @@ Current league: **{league}**
             )
 
             if not comparison.get("success"):
+                base_msg = comparison.get("message", "Comparison failed")
+                # CRITICAL #4 context: poe.ninja migrated its builds-list / ladder pages
+                # to a client-side rendered Astro SPA in/around Patch 0.5. The endpoints
+                # this tool depends on for ladder enumeration are 404 / SPA shells with no
+                # embedded data, so empty/failed comparisons in PoE2 0.5 are very likely
+                # this issue rather than a user-side configuration error. Surface that
+                # explicitly so users don't chase phantom bugs. Tracked at issue #61.
+                spa_notice = (
+                    "\n\n---\n"
+                    "**Heads-up (Patch 0.5 \"Return of the Ancients\"):** As of 2026-05-29, "
+                    "poe.ninja migrated its builds-list / ladder pages to a client-side rendered "
+                    "SPA. The endpoints this tool relies on for ladder enumeration return 404 / "
+                    "empty SPA shells, so empty or failed top-player comparisons in PoE2 0.5 are "
+                    "very likely this issue, **not** a problem with your character or account "
+                    "settings. Tracked at "
+                    "https://github.com/HivemindOverlord/poe2-mcp/issues/61.\n\n"
+                    "The per-character `analyze_character` path is unaffected and still works for "
+                    "characters present in the current poe.ninja snapshot."
+                )
                 return [types.TextContent(
                     type="text",
-                    text=comparison.get("message", "Comparison failed")
+                    text=base_msg + spa_notice
                 )]
 
             # Format response
