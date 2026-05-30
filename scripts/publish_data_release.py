@@ -48,26 +48,33 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 
 # Canonical files to include in the bundle. Add new ones here as the
-# extraction pipeline grows. Keep this list TIGHT — only files the MCP
-# actually consumes at runtime. Scratch / research / backup files stay out.
+# extraction pipeline grows. Keep this list TIGHT — only files freshly
+# extracted from local .datc64 game files. Scratch / research / backup /
+# manually-curated files stay out. Sanity-check timestamps before publishing:
+# every included file should have an mtime from the current patch's
+# extraction run.
+#
+# Current state (Patch 0.5 "Return of the Ancients", 2026-05-30):
+# only Mods is currently 0.5-fresh. Sub-extractors for passive tree,
+# support gems, ascendancy, stats are pending re-run against 0.5 data
+# (their spec imports need updating — see Known Issues in the data
+# release notes). They'll roll in to data-v0.5.0-N as they come online.
 CANONICAL_FILES = [
-    # Item modifiers
+    # Item modifiers (16,788 mods in 0.5 vs 14,269 in 0.4)
     "poe2_mods_extracted.json",
-    # Support gems
-    "poe2_support_gems_database.json",
-    "complete_models/support_gems.json",
-    # Passive tree
-    "psg_passive_nodes.json",
-    "complete_models/passive_tree_complete.json",
-    "merged_passive_tree.json",
-    # Ascendancy
-    "complete_models/all_ascendancies.json",
-    # PoB-sourced skill data
-    "pob_active_skills.json",
-    # Other extracted reference data
-    "abyss_spawn_weights.json",
-    "extracted_mod_stats.json",
-    "extracted_passive_stats.json",
+    # TODO: Re-enable once their sub-extractors are 0.5-compatible:
+    # "poe2_support_gems_database.json",        # pending fresh extract
+    # "psg_passive_nodes.json",                 # pending fresh extract
+    # "complete_models/passive_tree_complete.json",  # pending fresh extract
+    # "complete_models/all_ascendancies.json",  # pending fresh extract
+    # "pob_active_skills.json",                 # sourced from PoB2 — needs PoB2 0.5 sync
+    # "abyss_spawn_weights.json",               # pending fresh extract
+    # "extracted_mod_stats.json",               # pending fresh extract
+    # "extracted_passive_stats.json",           # pending fresh extract
+    # NOTE: complete_models/support_gems.json is manually-curated, not
+    # extractor output — intentionally NEVER bundled here.
+    # NOTE: merged_passive_tree.json is a derived/merged artifact — bundle
+    # the source pieces, let the MCP merge at runtime.
 ]
 
 
@@ -185,10 +192,12 @@ def main() -> int:
     print(f"Including {len(found)} files")
 
     version_payload = build_version_json(found, release_tag, args.patch)
-    # Write version.json to data/ as well, so a fresh checkout knows what it has
-    (DATA_DIR / "version.json").write_text(json.dumps(version_payload, indent=2))
-    print(f"Wrote data/version.json")
-
+    # version.json is embedded in the bundle only — NOT written to data/ locally.
+    # Rationale: a fresh `pip install poe2-mcp` should have no version.json so
+    # the distributor sees "no local data" and downloads the latest bundle on
+    # first run (which then drops version.json in place via the unzip step).
+    # If you want a local version.json for manual extraction workflows, unzip
+    # the bundle yourself or set POE2_MCP_NO_DATA_FETCH=1.
     bundle_path = BASE_DIR / f"poe2-data.zip"
     build_bundle(found, bundle_path, version_payload)
     size_mb = bundle_path.stat().st_size / (1024 * 1024)
