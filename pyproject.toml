@@ -92,7 +92,7 @@ Issues = "https://github.com/HivemindOverlord/poe2-mcp/issues"
 Changelog = "https://github.com/HivemindOverlord/poe2-mcp/blob/main/CHANGELOG.md"
 
 [project.scripts]
-poe2-mcp = "src.mcp_server:main"
+poe2-mcp = "src.mcp_server:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]

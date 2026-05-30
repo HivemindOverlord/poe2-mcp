@@ -5684,6 +5684,16 @@ async def main():
         raise
 
 
+def cli() -> None:
+    """Synchronous wrapper around the async main() for the pip console entry-point.
+
+    Without this, the `poe2-mcp` script generated from pyproject.toml's
+    [project.scripts] would call main() directly, receive a coroutine, never
+    await it, and exit immediately with a RuntimeWarning. See issue #56.
+    """
+    asyncio.run(main())
+
+
 if __name__ == "__main__":
     debug_log("=== __main__ entry point ===")
     try:

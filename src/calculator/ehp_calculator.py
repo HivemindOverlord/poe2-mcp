@@ -60,6 +60,7 @@ class DefensiveStats:
     Attributes:
         life: Total life pool
         energy_shield: Total energy shield pool
+        runic_ward: Runic Ward pool (PoE2 0.5 - Verisium Runeforging). NOT yet layered into EHP.
         armor: Armor rating (for physical damage reduction)
         evasion: Evasion rating (for hit avoidance)
         block_chance: Block chance % (capped at 50% in PoE2)
@@ -71,6 +72,7 @@ class DefensiveStats:
     """
     life: float
     energy_shield: float = 0.0
+    runic_ward: float = 0.0  # TODO: 0.5 - requires local extraction; not yet layered into EHP calc
     armor: float = 0.0
     evasion: float = 0.0
     block_chance: float = 0.0

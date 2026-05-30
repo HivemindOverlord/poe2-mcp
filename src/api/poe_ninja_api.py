@@ -66,7 +66,17 @@ class PoeNinjaAPI:
 
     # League name to URL slug mapping
     LEAGUE_MAPPINGS = {
-        # Vaal League variants (Fate of the Vaal - current league)
+        # Runes of Aldur variants (current league - Patch 0.5 "Return of the Ancients")
+        # Slugs confirmed via /poe2/api/data/index-state on 2026-05-29
+        "Runes of Aldur": "runesofaldur",
+        "RoA": "runesofaldur",
+        "Runes of Aldur Hardcore": "runesofaldurhc",
+        "Runes of Aldur HC": "runesofaldurhc",
+        "Runes of Aldur SSF": "runesofaldurssf",
+        "Runes of Aldur HC SSF": "runesofaldurhcssf",
+        "Runes of Aldur Hardcore SSF": "runesofaldurhcssf",
+
+        # Vaal League variants (Fate of the Vaal - previous league)
         "Fate of the Vaal": "vaal",
         "FotV": "vaal",
         "Vaal": "vaal",
@@ -143,14 +153,14 @@ class PoeNinjaAPI:
         # Default: convert to lowercase and replace spaces with hyphens
         return league.lower().replace(" ", "-")
 
-    async def get_character(self, account: str, character: str, league: str = "Abyss") -> Optional[Dict[str, Any]]:
+    async def get_character(self, account: str, character: str, league: str = "Runes of Aldur") -> Optional[Dict[str, Any]]:
         """
         Fetch character from poe.ninja using their hidden API
 
         Args:
             account: Path of Exile account name
             character: Character name
-            league: League name (default: "Abyss")
+            league: League name (default: "Runes of Aldur")
 
         Returns:
             Character data dictionary or None if not found
@@ -528,14 +538,14 @@ class PoeNinjaAPI:
 
         return normalized
 
-    async def _scrape_character_page(self, account: str, character: str, league: str = "Abyss") -> Optional[Dict[str, Any]]:
+    async def _scrape_character_page(self, account: str, character: str, league: str = "Runes of Aldur") -> Optional[Dict[str, Any]]:
         """
         Scrape character data from poe.ninja profile page
 
         Args:
             account: Account name
             character: Character name
-            league: League name (default: "Abyss")
+            league: League name (default: "Runes of Aldur")
 
         Returns:
             Parsed character data

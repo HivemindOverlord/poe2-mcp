@@ -8,7 +8,7 @@
 >
 > This is an independent, fan-made community project built out of love for Path of Exile 2. It is **not affiliated with, endorsed by, or officially connected to Grinding Gear Games** in any way. Path of Exile is a trademark of Grinding Gear Games. All game data and assets remain the property of their respective owners.
 
-A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 32 MCP tools for AI-powered build analysis, passive tree analysis, item mod validation, support gem validation, and Path of Building integration.
+A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 39 MCP tools for AI-powered build analysis, passive tree analysis, item mod validation, support gem validation, and Path of Building integration (including a live bridge to a running PoB instance).
 
 ## What is This?
 
@@ -147,7 +147,7 @@ Check each platform's documentation for MCP server configuration.
 
 ---
 
-## Available Tools (32 Registered)
+## Available Tools (39 Registered)
 
 Once connected, you can ask your AI assistant to use these tools:
 
@@ -176,6 +176,7 @@ Once connected, you can ask your AI assistant to use these tools:
 | `inspect_keystone` | Get complete keystone details by name |
 | `list_all_notables` | List all notable passives with stats |
 | `inspect_passive_node` | Get details for any passive node |
+| `get_ascendancy_info` | Get nodes and details for an ascendancy class |
 
 ### Base Item Data
 | Tool | Description |
@@ -193,12 +194,26 @@ Once connected, you can ask your AI assistant to use these tools:
 | `validate_item_mods` | Check if mods can legally exist together on an item |
 | `get_available_mods` | List all mods available for a generation type |
 
-### Path of Building
+### Path of Building (file-based)
 | Tool | Description |
 |------|-------------|
 | `import_pob` | Import Path of Building code |
 | `export_pob` | Export build to PoB format |
 | `get_pob_code` | Get PoB code for a character |
+
+### Path of Building (live bridge)
+Requires the MCP Bridge addon installed in PoB (see `pob_addon/`). Talks to a running PoB instance over a local TCP socket (127.0.0.1:49085).
+
+| Tool | Description |
+|------|-------------|
+| `pob_connect` | Connect to a running PoB instance |
+| `pob_disconnect` | Disconnect from PoB |
+| `pob_status` | Check whether PoB is reachable |
+| `pob_push_build` | Send a build into PoB for visualization |
+| `pob_pull_calcs` | Read DPS/EHP/resistances from PoB's calc engine |
+| `pob_pull_build` | Pull the current build from PoB |
+| `pob_set_skill` | Add/modify a skill setup in PoB |
+| `pob_get_passive_tree` | Query allocated passive nodes from PoB |
 
 ### Trade & Items
 | Tool | Description |
@@ -285,7 +300,7 @@ Data is loaded from `data/` directory on startup.
 poe2-mcp/
 ├── launch.py              # Entry point
 ├── src/
-│   ├── mcp_server.py      # Main MCP server (32 tools registered)
+│   ├── mcp_server.py      # Main MCP server (39 tools registered)
 │   ├── api/               # External API clients
 │   │   ├── poe_ninja_api.py
 │   │   ├── character_fetcher.py
@@ -337,7 +352,7 @@ python launch.py
 ```
 
 ### Key Files
-- `src/mcp_server.py` - MCP server with 32 registered tools
+- `src/mcp_server.py` - MCP server with 39 registered tools
 - `src/data/mod_data_provider.py` - Item mod data access layer
 - `src/calculator/ehp_calculator.py` - EHP calculations
 - `src/optimizer/gem_synergy_calculator.py` - Support gem logic
