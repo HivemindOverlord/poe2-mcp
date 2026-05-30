@@ -2,11 +2,12 @@
   "metadata": {
     "source": "data\\extracted\\data\\balance\\ascendancy.datc64",
     "source_bytes": 15255,
-    "extracted_at": "2026-05-30T14:16:02.422108+00:00",
+    "extracted_at": "2026-05-30T19:46:22.686130+00:00",
     "row_count": 37,
     "row_size": 165,
-    "active_count": 37,
-    "total_count": 37,
+    "record_count": 37,
+    "active_count": 23,
+    "unused_count": 14,
     "extractor": "scripts/extract_ascendancies_v2.py",
     "patch": "PoE2 0.5 (Return of the Ancients)"
   },
@@ -14,260 +15,223 @@
     {
       "row_index": 0,
       "id": "Marauder1",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TitanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Bait Fisher",
+      "is_unused": true
     },
     {
       "row_index": 1,
       "id": "Marauder2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TitanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Handliner",
+      "is_unused": true
     },
     {
       "row_index": 2,
       "id": "Marauder3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TitanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Rodman",
+      "is_unused": true
     },
     {
       "row_index": 3,
       "id": "Warrior1",
-      "display_name": "Incredible might has always laid buried within you. Now is the time to rise.",
-      "display_name_probed_offset": 52,
+      "display_name": "Titan",
       "is_unused": false
     },
     {
       "row_index": 4,
       "id": "Warrior2",
-      "display_name": "Your home has been threatened. A good man must be roused to war.",
-      "display_name_probed_offset": 52,
+      "display_name": "Warbringer",
       "is_unused": false
     },
     {
       "row_index": 5,
       "id": "Warrior3",
-      "display_name": "You hunger for power, and by force of arms, you will take it.",
-      "display_name_probed_offset": 52,
+      "display_name": "Smith of Kitava",
       "is_unused": false
     },
     {
       "row_index": 6,
       "id": "Ranger1",
-      "display_name": "A woman can change the world with a single well-placed arrow.",
-      "display_name_probed_offset": 52,
+      "display_name": "Deadeye",
       "is_unused": false
     },
     {
       "row_index": 7,
       "id": "Ranger2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/ArcaneArcherAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Piscator",
+      "is_unused": true
     },
     {
       "row_index": 8,
       "id": "Ranger3",
-      "display_name": "There are venoms and virtues aplenty in the wilds, if you know where to look.",
-      "display_name_probed_offset": 52,
+      "display_name": "Pathfinder",
       "is_unused": false
     },
     {
       "row_index": 9,
       "id": "Huntress1",
-      "display_name": "You became a weapon of war so that others could live in peace.",
-      "display_name_probed_offset": 52,
+      "display_name": "Amazon",
       "is_unused": false
     },
     {
       "row_index": 10,
       "id": "Huntress2",
-      "display_name": "You were chosen by the Sacred Wisps to enact the Spirit's will.",
-      "display_name_probed_offset": 52,
+      "display_name": "Spirit Walker",
       "is_unused": false
     },
     {
       "row_index": 11,
       "id": "Huntress3",
-      "display_name": "Corruption cost you your home, but taught you so much more...",
-      "display_name_probed_offset": 52,
+      "display_name": "Ritualist",
       "is_unused": false
     },
     {
       "row_index": 12,
       "id": "Witch1",
-      "display_name": "You seek power at any cost... and there is no price too high to pay.",
-      "display_name_probed_offset": 52,
+      "display_name": "Infernalist",
       "is_unused": false
     },
     {
       "row_index": 13,
       "id": "Witch2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/BloodMageAscendancy.dds",
-      "display_name_probed_offset": 68,
+      "display_name": "Blood Mage",
       "is_unused": false
     },
     {
       "row_index": 14,
       "id": "Witch3",
-      "display_name": "Death is your domain, your flesh merely a material to be mastered.",
-      "display_name_probed_offset": 52,
+      "display_name": "Lich",
       "is_unused": false
     },
     {
       "row_index": 15,
       "id": "Witch3b",
-      "display_name": "Art/2DArt/BaseClassIllustrations/LichAbyssalAscendancy.dds",
-      "display_name_probed_offset": 68,
+      "display_name": "Abyssal Lich",
       "is_unused": false
     },
     {
       "row_index": 16,
       "id": "Sorceress1",
-      "display_name": "The rumble of thunder heralds your approach. Woe to those that draw your ire.",
-      "display_name_probed_offset": 52,
+      "display_name": "Stormweaver",
       "is_unused": false
     },
     {
       "row_index": 17,
       "id": "Sorceress2",
-      "display_name": "The tapestry of time is yours to weave; an element you alone may master.",
-      "display_name_probed_offset": 52,
+      "display_name": "Chronomancer",
       "is_unused": false
     },
     {
       "row_index": 18,
       "id": "Sorceress3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/DiscipleoftheDjinnAscendancy.dds",
-      "display_name_probed_offset": 68,
+      "display_name": "Disciple of Varashta",
       "is_unused": false
     },
     {
       "row_index": 19,
       "id": "Duelist1",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TacticianAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Giller",
+      "is_unused": true
     },
     {
       "row_index": 20,
       "id": "Duelist2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TacticianAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Filleter",
+      "is_unused": true
     },
     {
       "row_index": 21,
       "id": "Duelist3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/TacticianAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Waterman",
+      "is_unused": true
     },
     {
       "row_index": 22,
       "id": "Mercenary1",
-      "display_name": "Countless wars have left you with skills somewhat resembling a decent officer...",
-      "display_name_probed_offset": 52,
+      "display_name": "Tactician",
       "is_unused": false
     },
     {
       "row_index": 23,
       "id": "Mercenary2",
-      "display_name": "There's something very wrong with this world... and you're going to fix it.",
-      "display_name_probed_offset": 52,
+      "display_name": "Witchhunter",
       "is_unused": false
     },
     {
       "row_index": 24,
       "id": "Mercenary3",
-      "display_name": "The more you embrace virtue gems, the more power they offer...",
-      "display_name_probed_offset": 52,
+      "display_name": "Gemling Legionnaire",
       "is_unused": false
     },
     {
       "row_index": 25,
       "id": "Templar1",
-      "display_name": "Art/2DArt/BaseClassIllustrations/InquisitorAscendency.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Seaman",
+      "is_unused": true
     },
     {
       "row_index": 26,
       "id": "Templar2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/ShamanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Trawler",
+      "is_unused": true
     },
     {
       "row_index": 27,
       "id": "Templar3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/ShamanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Boatman",
+      "is_unused": true
     },
     {
       "row_index": 28,
       "id": "Druid1",
-      "display_name": "There are many paths to achieve your goals... and you see them all.",
-      "display_name_probed_offset": 52,
+      "display_name": "Oracle",
       "is_unused": false
     },
     {
       "row_index": 29,
       "id": "Druid2",
-      "display_name": "Wraeclast has suffered for too long.\r\nYou are vengeance incarnate.",
-      "display_name_probed_offset": 52,
+      "display_name": "Shaman",
       "is_unused": false
     },
     {
       "row_index": 30,
       "id": "Druid3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/ShamanAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Wildfowler",
+      "is_unused": true
     },
     {
       "row_index": 31,
       "id": "Shadow1",
-      "display_name": "Art/2DArt/BaseClassIllustrations/AcolyteofChayulaAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Ice Fisher",
+      "is_unused": true
     },
     {
       "row_index": 32,
       "id": "Shadow2",
-      "display_name": "Art/2DArt/BaseClassIllustrations/AcolyteofChayulaAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Longliner",
+      "is_unused": true
     },
     {
       "row_index": 33,
       "id": "Shadow3",
-      "display_name": "Art/2DArt/BaseClassIllustrations/AcolyteofChayulaAscendancy.dds",
-      "display_name_probed_offset": 68,
-      "is_unused": false
+      "display_name": "[DNT-UNUSED] Dredger",
+      "is_unused": true
     },
     {
       "row_index": 34,
       "id": "Monk1",
-      "display_name": "They made you a human weapon... but that strength has set you free.",
-      "display_name_probed_offset": 52,
+      "display_name": "Martial Artist",
       "is_unused": false
     },
     {
       "row_index": 35,
       "id": "Monk2",
-      "display_name": "True strength lies within. One must only focus... and believe.",
-      "display_name_probed_offset": 52,
+      "display_name": "Invoker",
       "is_unused": false
     },
     {
       "row_index": 36,
       "id": "Monk3",
-      "display_name": "The truth of your faith threatens to break your very soul... but in that struggle lies power beyond belief.",
-      "display_name_probed_offset": 52,
+      "display_name": "Acolyte of Chayula",
       "is_unused": false
     }
   ]

@@ -3,9 +3,9 @@
   "patch_version": "0.5",
   "patch_name": "Return of the Ancients",
   "patch_released": "2026-05-29",
-  "data_revision": 3,
-  "released_as": "data-v0.5.0-r3",
-  "extracted_at": "2026-05-30T16:30:00Z",
+  "data_revision": 4,
+  "released_as": "data-v0.5.0-r4",
+  "extracted_at": "2026-05-30T19:00:00Z",
   "extracted_by": "HivemindMinion (Claude Code) from HivemindOverlord's licensed PoE2 install",
   "datasets": {
     "mods": {
@@ -27,7 +27,8 @@
       "path": "data/game/ascendancies/",
       "files": ["ascendancies.json", "metadata.json"],
       "record_count": 37,
-      "note": "ids are reliable; display_name is best-effort heuristic (see metadata.json caveats)"
+      "active_count": 23,
+      "note": "display_name now canonical (offset 44); 14 DNT-UNUSED placeholders filtered via is_unused flag. Includes NEW 0.5 ascendancies Spirit Walker (Huntress2) and Martial Artist (Monk1)."
     },
     "stats": {
       "path": "data/game/stats/",
