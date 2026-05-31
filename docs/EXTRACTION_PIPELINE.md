@@ -85,15 +85,22 @@ The shipped per-dataset extractors (all gitignored under `scripts/extract_*.py`)
 | `stats` | `extract_stats_v2.py` | `data/extracted/data/stats.datc64` | `data/game/stats/stats.json` + `metadata.json` |
 | `passive_tree` | (existing pipeline pre-0.5) | various passive_skill_tree blobs | `data/game/passive_tree/tree.json` + `metadata.json` |
 | `support_gems` | (existing pipeline pre-0.5) | gem blobs | `data/game/support_gems/support_gems.json` + `metadata.json` |
-| `skill_gems` | (pending port) | PoB2 upstream Lua data | `data/game/skill_gems/` (not yet shipped) |
+| `skill_gems` | `extract_skill_gems_v2.py` | PoB2 `origin/dev` `src/Data/Gems.lua` + `src/Data/Skills/*.lua` | `data/game/skill_gems/skill_gems.json` + `metadata.json` |
+| `stat_descriptions` | `extract_stat_descriptions.py` | `data/extracted/Data/statdescriptions/*.csd` (18 files, UTF-16-LE) | `data/game/stat_descriptions/index.json` + `metadata.json` + 18 per-source JSON files |
 
-Each extractor:
+Most extractors follow the same shape:
 
-1. Reads the raw `.datc64` (header → rows → magic → data section, see `docs/DATC64_FORMAT.md`).
-2. Uses the spec in `src/parsers/specifications/<dataset>_spec.py` to interpret fixed-width row fields.
-3. Resolves variable-length data (UTF-16 strings, lists) from the data section using table-section pointers.
-4. Writes structured JSON.
-5. Writes `metadata.json` with: `dataset`, `filename`, `patch_version`, `extracted_at` (UTC ISO 8601), `source_file`, `source_bytes`, `source_row_count`, `source_row_size`, `extractor`, `record_count`, `sha256` of the output, plus dataset-specific `schema_notes`.
+1. Read the raw `.datc64` (header → rows → magic → data section, see `docs/DATC64_FORMAT.md`).
+2. Use the spec in `src/parsers/specifications/<dataset>_spec.py` to interpret fixed-width row fields.
+3. Resolve variable-length data (UTF-16 strings, lists) from the data section using table-section pointers.
+4. Write structured JSON.
+5. Write `metadata.json` with: `dataset`, `filename`, `patch_version`, `extracted_at` (UTC ISO 8601), `source_file`, `source_bytes`, `source_row_count`, `source_row_size`, `extractor`, `record_count`, `sha256` of the output, plus dataset-specific `schema_notes`.
+
+**Two exceptions** that follow different patterns because their sources aren't `.datc64`:
+
+- **`skill_gems`** sources from the PoB2 community repo's Lua data, not the game directly. The extractor uses `git -C <pob_repo> show origin/dev:src/Data/...` to read the canonical Lua text without touching the local PoB checkout, then regex-parses Gems.lua entries and Skills/*.lua effect tables, joining via `grantedEffectId`. v1 schema is the joined gem-metadata-plus-granted-effect view; full Lua `statMap` / `constantStats` / `qualityStats` are deferred to v2 (need a structural Lua parser). See `docs/SKILL_GEMS_PORT_AUDIT.md` for the scout that informed the design.
+
+- **`stat_descriptions`** sources from `.csd` files (Compiled Stat Description format — UTF-16-LE plain text using PoB's parser-compatible grammar that GGG ships alongside the .datc64 tables). The extractor walks the 18 root-level `.csd` files, parses each `description ... lang "..."` block, captures English variants verbatim (range conditions + display handlers like `divide_by_ten_1dp_if_required` preserved as a list — consumers apply if interpreting numbers), and outputs one JSON per source file plus an index. 16,533 descriptions, ~9 MB output. v1 ships English only; other 8 languages tracked in `languages_available` field but not extracted (size). This is the dataset `explain_mechanic` reads from since PR #101 — replacing hand-authored wiki interpretation with the game's own canonical text.
 
 After all per-dataset extractors run, **regenerate `data/game/version.json`** with the new `data_revision`, `released_as` tag, `extracted_at`, and per-dataset `record_count` summary.
 
