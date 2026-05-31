@@ -345,10 +345,37 @@ Gap G (int+str TypeError) was never actually validated — the resolver fails ea
 | D | `validate_support_combination` doesn't surface damage-type conflicts | MED | Handler | OPEN (backlog item 6) |
 | E | `inspect_spell_gem` data source pre-0.5 stale | MED | Data | ✅ FIXED (PR #91 ships skill_gems v1, PR #94 wires handlers) |
 | F | `search_mods_by_stat` returns 0 for "life regeneration" | HIGH | Handler | ✅ FIXED in PR #73 |
-| G | `list_all_keystones` runtime error (int + str) | HIGH | Handler | RECLASSIFIED — masked by Gap H, may not exist |
-| **H** | **Passive-tree resolver init failure breaks ≥5 handlers** | **CRITICAL** | **Resolver init** | **NEW — deferred until PR #94 lands, then rewire to data/game/passive_tree/tree.json** |
+| G | `list_all_keystones` runtime error (int + str) | HIGH | Handler | RECLASSIFIED — masked by Gap H (which itself was a test artifact); status unknown until re-tested with proper init |
+| H | Passive-tree resolver init failure | ~~CRITICAL~~ → **NOT A BUG** | ~~Resolver init~~ → **Test methodology error** | **RETRACTED 2026-05-31 fire 28** — see retraction note below |
 
 ---
+
+## Retraction — Gap H was a test-methodology error, not a production bug (fire 28, 2026-05-31)
+
+**Re-tested after PR #101 merged.** Verified the resolver loads cleanly in production:
+
+```
+$ python -c "import asyncio, sys; sys.path.insert(0,'.')
+from src.mcp_server import PoE2BuildOptimizerMCP
+async def go():
+    mcp = PoE2BuildOptimizerMCP()
+    await mcp.initialize()                # <-- the missing piece in batch-3 smoke test
+asyncio.run(go())"
+
+[...]
+INFO - Loaded 4975 passive nodes
+INFO - Passive tree resolver initialized (4975 nodes)
+INFO - PoE2 Build Optimizer MCP Server initialized successfully
+```
+
+**Root cause of the false alarm:** my batch-3 smoke test invoked `mcp = PoE2BuildOptimizerMCP()` and called handlers directly — but the resolver lives in the **async `initialize()` method**, not `__init__`. Without `await mcp.initialize()`, the resolver attribute stays `None`, every passive-tree handler short-circuits to "resolver not initialized", and I incorrectly concluded the production code was broken.
+
+In production (Claude Desktop / `poe2-mcp` console script / `python launch.py`), the stdio server calls `await initialize()` after construction, so the resolver is ready before any handler runs.
+
+**Lesson — eval-batch smoke test methodology rule going forward:**
+> Any handler exercised via in-process smoke test MUST be preceded by `await mcp.initialize()`. Skipping it tests the wrong code path and produces false "broken" claims. This affects roughly anything that depends on `self.db_manager`, `self.cache_manager`, `self.rate_limiter`, `self.passive_tree_resolver`, `self.mechanics_kb`, `self.pob_*`, or any AI component — i.e. most non-trivial handlers.
+
+**Real status of Gap G + H stat:** unknown. The int+str TypeError (Gap G) was reported pre-batch-3; whether it's real or also a test-environment artifact won't be known until someone re-runs against a properly-initialized server. Re-test belongs in batch 4 with the methodology fix above applied.
 
 ## Continuation queue (20 questions remaining)
 
