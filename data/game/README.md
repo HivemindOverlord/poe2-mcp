@@ -23,7 +23,13 @@ data/game/
 ├── stats/
 │   ├── stats.json                # 26,943 canonical stat IDs (row_index → stat_id)
 │   └── metadata.json
-└── skill_gems/                   # (pending — extractor port in progress)
+├── skill_gems/
+│   ├── skill_gems.json           # 872 gems joined from PoB2's Gems.lua + Skills/*.lua (v1)
+│   └── metadata.json
+└── stat_descriptions/
+    ├── index.json                # file inventory + per-file counts
+    ├── metadata.json
+    └── <name>_stat_descriptions.json (x18)   # 16,533 canonical game-shipped stat templates
 ```
 
 Each dataset folder has at minimum a data JSON and a `metadata.json` describing what's inside, when it was extracted, and a SHA-256 for integrity. The `record_count` and per-dataset notes in the global `version.json` are the authoritative summary; the layout block above is informational.
@@ -63,7 +69,7 @@ The previous GitHub Releases zip distribution model (`src/data/data_distributor.
 
 See `version.json` `datasets` (delivered) and `datasets_pending_0_5_reextract` (blockers + interim file locations).
 
-As of `data-v0.5.0-r5` (2026-05-31):
+As of `data-v0.5.0-r8` (2026-05-31), `datasets_pending_0_5_reextract` is empty — every dataset has shipped:
 
 | Dataset | 0.5-fresh? | Notes |
 |---|---|---|
@@ -72,5 +78,6 @@ As of `data-v0.5.0-r5` (2026-05-31):
 | `ascendancies` | YES | 37 records, includes new Patch 0.5 Spirit Walker (Huntress) + Martial Artist (Monk) |
 | `support_gems` | YES | 680 records |
 | `stats` | YES | 26,943 canonical stat IDs |
-| `skill_gems` | PENDING | PoB2 community shipped 0.5 `Gems.lua` + `tree.lua` upstream on 2026-05-29 (patch day); extractor port from `scripts/extract_complete_pob_skills.py` is the remaining work. Interim source: `data/pob_active_skills.json` (Dec 2025, pre-0.5). |
+| `skill_gems` | YES | 872 gems extracted from PoB2 `origin/dev @ 9c2bf0316` (Gems.lua + Skills/*.lua joined view, since PR #91). v1 schema; full Lua `statMap` / `constantStats` / `qualityStats` deferred to v2. |
+| `stat_descriptions` | YES | 16,533 canonical game-shipped stat templates across 18 source `.csd` files (since PR #98). English-only in v1; other 8 languages deferred. This is the authoritative source `explain_mechanic` reads from (PR #101). |
 
