@@ -7,6 +7,51 @@ Format based on Path of Building changelog style, adapted for MCP tooling.
 
 ---
 
+## Version 1.0.4 (2026-05-31) - stat_descriptions ships; explain_mechanic stops fabricating
+
+Trust-recovery release. Driven by HivemindOverlord's 2026-05-31 Claude Desktop session feedback: "explain_mechanic confidently stated 'crits do NOT guarantee ignite' ... contradicting a wiki line. I can't adjudicate ... outputs read like authoritative documentation but may be hand-authored interpretation." Root cause: `src/knowledge/poe2_mechanics.py` was wiki-derived hand-authored content masquerading as extracted data — the single largest data-policy hypocrisy in the repo.
+
+Fix path: extract the game's own canonical stat description text from `.csd` files, ship it as a tracked dataset, rewire `explain_mechanic` to use it as primary source with the hand-authored module demoted to a clearly-labeled fallback.
+
+--- Game Data ---
+* Ship `data/game/stat_descriptions/` (#98). 16,533 canonical game-shipped stat descriptions extracted from 18 `.csd` files (UTF-16-LE, PoB-compatible Compiled Stat Description grammar). Headline counts: `stat_descriptions.csd` 10,716 / `skill_stat_descriptions.csd` 1,899 / `atlas_stat_descriptions.csd` 1,354 / `gem_stat_descriptions.csd` 1,334 / `passive_skill_stat_descriptions.csd` 208 / others <200 each. v1: English-only templates (other 8 languages tracked in `languages_available` field, deferred to v2). Per-record schema preserves variant range conditions + display handlers (`divide_by_ten_1dp_if_required`, `negate`, etc.) verbatim. `version.json` bumped to `data-v0.5.0-r8`.
+* Add `src/data/game_data.py` helpers for the new dataset (#99): `find_stat_description(stat_id)` for exact-match lookup with source provenance tagging, `search_stat_descriptions(query, fields=("stat_id","template"))` for substring recovery (the "did you mean" layer). Module-level caching avoids re-reading the 9 MB payload per request. Also filled in missing `SKILL_GEMS_JSON` / `SKILL_GEMS_META` path constants.
+* Refresh `data/game/README.md` for the new dataset + skill_gems-now-shipped state (#103). `datasets_pending_0_5_reextract` is empty.
+
+--- MCP Tools ---
+* Rewire `explain_mechanic` to two-tier lookup (#101). **Tier 1**: canonical `data/game/stat_descriptions/` text with source file + line + .csd provenance — game-shipped strings, not interpretation. **Tier 2**: hand-authored `src/knowledge/poe2_mechanics.py` summaries, now returned with EXPLICIT disclaimer ("community interpretation of wiki sources, not extracted game text. Cross-reference against the in-game tooltip for balance-sensitive numbers"). Auto-attaches Tier 1 cross-refs when a Tier 2 query also matches stat_ids. Substring queries return "did you mean" stat_id suggestions instead of bare not-founds.
+* Make `mechanic_name` parameter OPTIONAL (#101). Fixes the dead-end-by-design contradiction in the previous handler ("Use this tool without arguments to see available mechanics" — but the param was required). Calling with no arguments now returns a two-tier overview with sample query shapes.
+* Defensive fix: `_handle_explain_mechanic` no longer crashes with `AttributeError: 'NoneType' object has no attribute 'get_mechanic'` when `self.mechanics_kb` fails to initialize (#101). Falls through gracefully to Tier 1b substring search.
+
+--- Testing ---
+* `tests/test_stat_descriptions.py` (#100). 21 tests covering the new dataset + helpers — file shape, manifest drift checks (metadata.json count == data list length, version.json count matches, sum-of-per-file == index totals), per-record schema, `find_stat_description` proven against the proliferation entry the user couldn't find, `search_stat_descriptions` recovery layer locked in.
+
+--- Documentation ---
+* `docs/AI_ASSISTANT_GUIDE.md` updated for the new behavior (#102). New §6 workflow section showing all three `explain_mechanic` query shapes (exact stat_id / mechanic name / substring), plus a "when to trust which tier" guidance block telling LLM clients explicitly: Tier 1 is canonical; Tier 2 is community interpretation; if Tier 2 contradicts the in-game tooltip, trust the tooltip and file a bug.
+
+--- Proven end-to-end fix for the user-reported gap ---
+The proliferation/spread/Wildfire content gap from the Claude Desktop session is closed at the data layer (the canonical strings were in the game blob the whole time):
+```
+support_ignite_proliferation_radius
+  -> "[Ignite|Ignites] inflicted by Supported Skills [AilmentSpread|Spread]
+      to other enemies that stay within {0} metre for 1 second"
+support_elemental_proliferation_damage_+%_final
+  -> "Supported Skills deal {0}% more Damage"
+support_ignite_prolif_ignite_effect_+%_final
+  -> "{0}% more Magnitude of Ignite inflicted with Supported Skills"
+```
+
+--- Known Issues (carried over from 1.0.3) ---
+* CRITICAL #4: poe.ninja builds-list / ladder SPA migration broke `compare_to_top_players` and HTML-scrape fallback (#61).
+* **NEW — Gap H (CRITICAL)** surfaced by MCP eval batch 3 (#97): a single resolver-init bug breaks ≥5 passive-tree handlers (`list_all_keystones`, `list_all_notables`, and others). Error: "Passive tree resolver not initialized. PSG database may be missing." Same fix pattern as PR #94 / #101 — point resolver at `data/game/passive_tree/tree.json` instead of the missing `.psg` blob. Next handler-side PR.
+
+--- Pending P2 / P3 / P5 follow-ups (from same user feedback) ---
+* **P2**: fuzzy-match + did-you-mean for `inspect_keystone` / `inspect_support_gem` / `inspect_spell_gem` (the `search_*` recovery pattern from PR #101 generalized to other lookup handlers).
+* **P3**: data-source / version-verified banner on every numeric response across handlers.
+* **P5**: server-side `calculate_character_dps(character_data)` MCP handler so "optimization" means more than "we hand you the formula and you compute."
+
+---
+
 ## Version 1.0.3 (2026-05-31) - skill_gems shipped + zero-coverage gap sweep
 
 Follow-up to 1.0.2 the same day. Closes the last 0.5-pending dataset (`skill_gems`), adds the operator/AI-facing docs that were missing across the repo, and lands ~200 new tests filling zero-coverage gaps on load-bearing pure-function modules.
