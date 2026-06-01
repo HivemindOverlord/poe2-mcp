@@ -180,7 +180,7 @@ Check each platform's documentation for MCP server configuration.
 
 ---
 
-## Available Tools (39 Registered)
+## Available Tools (40 Registered)
 
 Once connected, you can ask your AI assistant to use these tools:
 
@@ -252,14 +252,15 @@ Requires the MCP Bridge addon installed in PoB (see `pob_addon/`). Talks to a ru
 | Tool | Description |
 |------|-------------|
 | `search_items` | Search local item database |
-| `search_trade_items` | Search official trade site (requires auth) |
-| `setup_trade_auth` | Set up trade site authentication |
+
+> **Note:** `search_trade_items` and `setup_trade_auth` are intentionally not registered — GGG has gated trade-API OAuth against AI tooling. Won't be enabled until that policy changes.
 
 ### Knowledge & Utility
 | Tool | Description |
 |------|-------------|
-| `explain_mechanic` | Explain PoE2 game mechanics |
-| `get_formula` | Get calculation formulas |
+| `explain_mechanic` | Look up a mechanic, stat_id, or substring. Two-tier: canonical `data/game/stat_descriptions/` first (game-shipped text), hand-authored `poe2_mechanics.py` fallback with explicit "community interpretation" disclaimer (PR #101). |
+| `get_formula` | Get calculation formulas (reference; caller does the math) |
+| `check_tree_freshness` | Self-diagnostic: compares local `data/game/version.json` against poe.ninja's current `PassiveTree` tag (PR #76) |
 | `health_check` | Check server status |
 | `clear_cache` | Clear cached data |
 
@@ -357,7 +358,7 @@ python -m src.data.data_distributor
 poe2-mcp/
 ├── launch.py              # Entry point
 ├── src/
-│   ├── mcp_server.py      # Main MCP server (39 tools registered)
+│   ├── mcp_server.py      # Main MCP server (40 tools registered)
 │   ├── api/               # External API clients
 │   │   ├── poe_ninja_api.py
 │   │   ├── character_fetcher.py
