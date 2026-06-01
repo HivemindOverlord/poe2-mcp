@@ -8,7 +8,7 @@
 >
 > This is an independent, fan-made community project built out of love for Path of Exile 2. It is **not affiliated with, endorsed by, or officially connected to Grinding Gear Games** in any way. Path of Exile is a trademark of Grinding Gear Games. All game data and assets remain the property of their respective owners.
 
-A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 39 MCP tools for AI-powered build analysis, passive tree analysis, item mod validation, support gem validation, and Path of Building integration (including a live bridge to a running PoB instance).
+A Model Context Protocol (MCP) server for Path of Exile 2 character analysis and optimization. Provides 40 MCP tools for AI-powered build analysis, passive tree analysis, item mod validation, support gem validation, and Path of Building integration (including a live bridge to a running PoB instance).
 
 ## What is This?
 
