@@ -648,7 +648,11 @@ class PoE2BuildOptimizerMCP:
                 ),
                 types.Tool(
                     name="inspect_spell_gem",
-                    description="Get complete data for a spell gem including tags, base damage, cast time, mana/spirit cost.",
+                    description=(
+                        "Get complete data for a spell gem including tags, base damage, "
+                        "cast time, mana/spirit cost. Requires one of: spell_name, name, "
+                        "gem_name (aliases — handler accepts any)."
+                    ),
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -659,11 +663,6 @@ class PoE2BuildOptimizerMCP:
                             "name": {"type": "string", "description": "Alias for spell_name"},
                             "gem_name": {"type": "string", "description": "Alias for spell_name"},
                         },
-                        "oneOf": [
-                            {"required": ["spell_name"]},
-                            {"required": ["name"]},
-                            {"required": ["gem_name"]},
-                        ],
                     },
                 ),
                 types.Tool(
@@ -1126,7 +1125,9 @@ class PoE2BuildOptimizerMCP:
                         "invalid. Semantic conflicts (Added Fire Damage on a cold-only "
                         "spell, Minion Damage on a non-minion skill) are surfaced as "
                         "WARNINGS — the AI can still recommend the combo but knows "
-                        "it's wasted unless there's conversion."
+                        "it's wasted unless there's conversion. Requires one of: "
+                        "support_gems, support_gem_names, names (aliases — handler "
+                        "accepts any)."
                     ),
                     inputSchema={
                         "type": "object",
@@ -1158,11 +1159,6 @@ class PoE2BuildOptimizerMCP:
                                 ),
                             },
                         },
-                        "oneOf": [
-                            {"required": ["support_gems"]},
-                            {"required": ["support_gem_names"]},
-                            {"required": ["names"]},
-                        ],
                     },
                 ),
                 types.Tool(
@@ -1290,7 +1286,11 @@ class PoE2BuildOptimizerMCP:
                 ),
                 types.Tool(
                     name="inspect_keystone",
-                    description="Get complete details for a specific keystone by name, including all stats and effects.",
+                    description=(
+                        "Get complete details for a specific keystone by name, including "
+                        "all stats and effects. Requires one of: keystone_name, name "
+                        "(aliases — handler accepts either)."
+                    ),
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -1300,7 +1300,6 @@ class PoE2BuildOptimizerMCP:
                             },
                             "name": {"type": "string", "description": "Alias for keystone_name"},
                         },
-                        "oneOf": [{"required": ["keystone_name"]}, {"required": ["name"]}],
                     },
                 ),
                 types.Tool(
