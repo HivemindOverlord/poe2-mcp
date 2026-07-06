@@ -42,6 +42,41 @@ If you do submit a PR, we're more likely to consider it if:
 4. **Test Thoroughly**: All tests must pass (`pytest`)
 5. **Update Docs**: Update README, CLAUDE.md, or other docs as needed
 
+### Commit Signing (Required to Merge)
+
+  The `main` branch requires **verified signatures** on every commit. An unsigned
+  commit cannot be merged — no matter how good the change — because branch
+  protection hard-blocks it (this is what happened to #199). Sign your commits
+  *before* opening the PR to avoid a rewrite later.
+
+  **Option A — SSH signing (simplest if you already push over SSH):**
+  git config --global gpg.format ssh
+  git config --global user.signingkey ~/.ssh/id_ed25519.pub
+  git config --global commit.gpgsign true
+  Then add the same key as a Signing Key at
+  https://github.com/settings/keys (a signing key is separate from an auth key —
+  add it in both roles, or add a second entry of type "Signing Key").
+
+  **Option B — GPG signing:**
+  gpg --full-generate-key                      # RSA 4096, tied to your GitHub email
+  gpg --list-secret-keys --keyid-format=long   # copy the key id
+  git config --global user.signingkey <KEY_ID>
+  git config --global commit.gpgsign true
+  gpg --armor --export <KEY_ID>                # paste output at github.com/settings/keys
+
+  Verify before pushing: git log --show-signature -1 should show Good
+  signature, and the commit should show a green Verified badge on GitHub.
+
+  Already committed unsigned? Re-sign in place:
+  git commit --amend -S --no-edit && git push --force-with-lease
+  # multiple commits:
+  git rebase --exec 'git commit --amend -S --no-edit' -i <base>
+
+  **Linear History**
+  main uses linear history — keep your branch rebased on main
+  (git pull --rebase origin main) rather than merging main into it. PRs land
+  via squash/rebase, not merge commits.
+
 ### Submitting a Pull Request
 
 If you've discussed your change and received approval:
