@@ -727,10 +727,13 @@ function MCPCommands.set_main_skill_group(params)
     if not idx or idx < 1 or idx > #activeBuild.skillsTab.socketGroupList then
         return nil, "Invalid socket group index"
     end
-    activeBuild.mainSocketGroup = idx
-    activeBuild.buildFlag = true
-    triggerUpdate()
-    return { success = true, main_socket_group = idx }
+    -- Mutate on the deferred queue, never inside the poll/OnFrame prologue.
+    -- Doing it inline strands PoB's incremental build coroutine (0-CPU freeze).
+    MCPBridge.defer(function()
+        activeBuild.mainSocketGroup = idx
+        activeBuild.buildFlag = true
+    end)
+    return { success = true, main_socket_group = idx, applied = "deferred" }
 end
 
 -- Set the character level (and disable auto-level) to control the passive budget
@@ -945,11 +948,14 @@ function MCPCommands.set_custom_mods(params)
     end
 
     local mods = params.mods or ""
-    activeBuild.configTab.input.customMods = mods
-    activeBuild.configTab:BuildModList()
-    triggerUpdate()
+    -- BuildModList is a PoB rebuild helper: defer it out of the poll prologue.
+    MCPBridge.defer(function()
+        activeBuild.configTab.input.customMods = mods
+        activeBuild.configTab:BuildModList()
+        activeBuild.buildFlag = true
+    end)
 
-    return { success = true }
+    return { success = true, applied = "deferred" }
 end
 
 -- Get custom modifiers
@@ -1146,22 +1152,29 @@ function MCPCommands.set_group_gems(params)
             enableGlobal2 = true,
         })
     end
+    -- Apply on the deferred queue: ProcessSocketGroup is a PoB rebuild helper and
+    -- must not be called from the poll prologue (see bridge.lua header).
     group.gemList = newGems
-    b.skillsTab:ProcessSocketGroup(group)
-    b.buildFlag = true
-    triggerUpdate()
+    MCPBridge.defer(function()
+        b.skillsTab:ProcessSocketGroup(group)
+        b.buildFlag = true
+    end)
 
-    -- Report what actually resolved (so the caller can detect bad gem names)
-    local resolved = {}
+    -- Resolution happens inside the deferred ProcessSocketGroup, i.e. after this
+    -- reply is already on the wire, so we cannot report gemData validity here --
+    -- doing so would always read nil and look like every gem failed. Callers should
+    -- confirm with get_skills (or just read the recalculated stats) on a later frame.
+    local requested = {}
     for _, gem in ipairs(group.gemList) do
-        table.insert(resolved, {
-            name = gem.nameSpec,
-            level = gem.level,
-            quality = gem.quality,
-            valid = gem.gemData ~= nil or gem.grantedEffect ~= nil
-        })
+        table.insert(requested, { name = gem.nameSpec, level = gem.level, quality = gem.quality })
     end
-    return { success = true, index = params.index, gems = resolved }
+    return {
+        success = true,
+        index = params.index,
+        applied = "deferred",
+        gems = requested,
+        note = "names resolve on apply; verify with get_skills next frame",
+    }
 end
 
 -- Set a configTab input by key (e.g. corpse life / enemy settings for Detonate
@@ -1169,11 +1182,13 @@ end
 function MCPCommands.set_config_input(params)
     local b = getActiveBuild()
     if not b or not b.configTab then return nil, "No build/configTab" end
-    b.configTab.input[params.key] = params.value
-    b.configTab:BuildModList()
-    b.buildFlag = true
-    triggerUpdate()
-    return { success = true, key = params.key, value = params.value }
+    local k, v = params.key, params.value
+    MCPBridge.defer(function()
+        b.configTab.input[k] = v
+        b.configTab:BuildModList()
+        b.buildFlag = true
+    end)
+    return { success = true, key = k, value = v, applied = "deferred" }
 end
 
 -------------------------------------------------------------------------------
@@ -1242,7 +1257,9 @@ function MCPCommands.get_output(params)
                  "WithDotDPS","TotalDotDPS","TotalDot","BleedDPS","IgniteDPS","PoisonDPS",
                  "Life","EnergyShield","Mana" }
     end
-    for _, k in ipairs(keys) do result[k] = out[k] end
+    -- mainOutput values can be tables holding functions/cycles; dkjson hangs on
+    -- those and wedges the bridge. The module's own rule: sanitise raw output.
+    for _, k in ipairs(keys) do result[k] = jsonSafe(out[k], 0, {}) end
     return result
 end
 

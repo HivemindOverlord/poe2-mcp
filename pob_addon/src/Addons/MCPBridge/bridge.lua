@@ -1,182 +1,278 @@
 -- MCP Bridge for Path of Building (PoE2)
--- TCP Socket Server for external tool communication
 -- https://github.com/HivemindOverlord/poe2-mcp
 --
--- This module creates a non-blocking TCP server that allows external tools
--- (like the poe2-mcp AI assistant) to query and control Path of Building.
+-- v2.0.0 -- transport rewritten for current PoB (verified against 0.23.1).
+--
+-- WHY THIS WAS REWRITTEN
+-- The 1.1.0 transport did accept + receive + send inline inside one frame, using a
+-- blocking-with-timeout socket, and ignored the return value of client:send(). On
+-- current PoB that stalls the render loop outright: a large reply (get_full_calcs
+-- returns ~800 keys) exceeds the socket buffer, send() partial-writes, the unsent
+-- remainder is dropped, and the peer waits forever for a terminator that never
+-- arrives -- leaving sockets in CloseWait and the frame loop wedged at ~0% CPU.
+--
+-- This version never blocks. Sockets are strictly non-blocking and each connection
+-- is a small state machine advanced one slice per frame:
+--     accept -> READING (accumulate until newline) -> dispatch -> WRITING (drain
+--     partial sends across frames) -> close
+-- so no single frame can ever wait on a peer.
+--
+-- PoB 0.23.1 integration notes (read from Modules/Build.lua):
+--   * buildMode:OnFrame handles self.buildFlag SYNCHRONOUSLY -- it calls
+--     calcsTab:BuildOutput() then RefreshStatList() in the same frame. There is no
+--     build coroutine, so setting buildFlag is safe; what is NOT safe is calling
+--     PoB rebuild helpers (e.g. configTab:BuildModList()) directly from our hook,
+--     which runs before main:OnFrame. Mutations are therefore queued and applied
+--     after PoB's own OnFrame has completed (see runDeferred).
 
 local scriptPath = GetScriptPath()
 local addonPath = scriptPath .. "/Addons/MCPBridge"
 
--- Load dependencies
 local socket = require("socket")
 local dkjson = require("dkjson")
 
--- Load config and commands
 dofile(addonPath .. "/config.lua")
 dofile(addonPath .. "/commands.lua")
 
--- Get config (loaded by config.lua)
 local config = MCPConfig
 
--- Bridge state
 local MCPBridge = {
     server = nil,
     running = false,
     lastError = nil,
     startTime = nil,
-    requestCount = 0
+    requestCount = 0,
+    clients = {},          -- active connection state machines
+    pendingActions = {},   -- queued mutations, drained after PoB's OnFrame
+    inPoll = false,
+    inDeferred = false,
 }
 
--- Initialize the TCP server
-function MCPBridge.start()
-    if MCPBridge.running then
-        ConPrintf("[MCPBridge] Already running on port %d", config.PORT)
-        return true
-    end
+-- Bounded per-frame work so a big reply can never monopolise the render loop.
+local MAX_ACCEPTS_PER_FRAME = 4
+local MAX_CLIENTS = 16
+local WRITE_CHUNK = 32768
+local CLIENT_TIMEOUT_SEC = 30
 
-    -- Try to bind to the configured port
+-------------------------------------------------------------------------------
+-- Logging: ConPrintf only reaches PoB's in-app console, which is useless for
+-- diagnosing a wedge from outside. Mirror to a file next to the addon.
+-------------------------------------------------------------------------------
+local logPath = addonPath .. "/mcpbridge.log"
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, fmt, ...)
+    if not ok then msg = tostring(fmt) end
+    ConPrintf("[MCPBridge] %s", msg)
+    if config.LOG_TO_FILE then
+        local f = io.open(logPath, "a")
+        if f then
+            f:write(os.date("%H:%M:%S "), msg, "\n")
+            f:close()
+        end
+    end
+end
+MCPBridge.log = log
+
+-------------------------------------------------------------------------------
+-- Deferred mutation queue
+-------------------------------------------------------------------------------
+function MCPBridge.defer(fn)
+    table.insert(MCPBridge.pendingActions, fn)
+end
+
+function MCPBridge.runDeferred()
+    if MCPBridge.inDeferred or #MCPBridge.pendingActions == 0 then return end
+    MCPBridge.inDeferred = true
+    local queue = MCPBridge.pendingActions
+    MCPBridge.pendingActions = {}
+    for _, fn in ipairs(queue) do
+        local ok, err = pcall(fn)
+        if not ok then log("deferred action error: %s", tostring(err)) end
+    end
+    MCPBridge.inDeferred = false
+end
+
+-------------------------------------------------------------------------------
+-- Server lifecycle
+-------------------------------------------------------------------------------
+function MCPBridge.start()
+    if MCPBridge.running then return true end
+
     local server, err = socket.bind(config.HOST, config.PORT)
     if not server then
-        -- Try alternate ports if main port is busy
         for offset = 1, 3 do
             server, err = socket.bind(config.HOST, config.PORT + offset)
             if server then
-                ConPrintf("[MCPBridge] Port %d busy, using %d", config.PORT, config.PORT + offset)
+                log("port %d busy, using %d", config.PORT, config.PORT + offset)
                 config.PORT = config.PORT + offset
                 break
             end
         end
     end
-
     if not server then
         MCPBridge.lastError = err
-        ConPrintf("[MCPBridge] Failed to start server: %s", err)
+        log("failed to bind: %s", tostring(err))
         return false
     end
 
-    -- Set non-blocking mode
-    server:settimeout(config.TIMEOUT)
-
+    server:settimeout(0)  -- strictly non-blocking accept
     MCPBridge.server = server
     MCPBridge.running = true
     MCPBridge.startTime = os.time()
+    log("listening on %s:%d (v%s)", config.HOST, config.PORT, config.VERSION)
+    return true
+end
 
-    local host, port = server:getsockname()
-    ConPrintf("[MCPBridge] Server started on %s:%d", host, port)
+function MCPBridge.stop()
+    for _, c in ipairs(MCPBridge.clients) do
+        pcall(function() c.sock:close() end)
+    end
+    MCPBridge.clients = {}
+    if MCPBridge.server then
+        pcall(function() MCPBridge.server:close() end)
+        MCPBridge.server = nil
+    end
+    MCPBridge.running = false
+    log("stopped")
+end
+
+-------------------------------------------------------------------------------
+-- Request dispatch (pure: takes a request line, returns a response string)
+-------------------------------------------------------------------------------
+local function encodeError(id, code, message)
+    local ok, s = pcall(dkjson.encode, {
+        jsonrpc = "2.0", id = id,
+        error = { code = code, message = tostring(message) },
+    })
+    if not ok or type(s) ~= "string" then
+        return '{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"encode failed"}}'
+    end
+    return s
+end
+
+local function dispatch(line)
+    local okDecode, command = pcall(dkjson.decode, line)
+    if not okDecode or type(command) ~= "table" then
+        return encodeError(nil, -32700, "Parse error: invalid JSON")
+    end
+    if not command.method then
+        return encodeError(command.id, -32600, "Invalid request: missing method")
+    end
+
+    MCPBridge.requestCount = MCPBridge.requestCount + 1
+    if config.LOG_COMMANDS then
+        log("-> %s (id=%s)", tostring(command.method), tostring(command.id))
+    end
+
+    local handler = MCPCommands[command.method]
+    if not handler then
+        return encodeError(command.id, -32601, "Method not found: " .. tostring(command.method))
+    end
+
+    local ok, result, errMsg = pcall(handler, command.params or {})
+    if not ok then
+        log("!! handler %s threw: %s", tostring(command.method), tostring(result))
+        return encodeError(command.id, -32603, "Internal error: " .. tostring(result))
+    end
+    if errMsg then
+        return encodeError(command.id, -32000, errMsg)
+    end
+
+    -- Encoding is the other historic wedge point: dkjson throws or spins on
+    -- functions/cycles. Guard it, and never emit a half-serialised body.
+    local okEnc, encoded = pcall(dkjson.encode, { jsonrpc = "2.0", id = command.id, result = result })
+    if not okEnc or type(encoded) ~= "string" then
+        log("!! encode failed for %s: %s", tostring(command.method), tostring(encoded))
+        return encodeError(command.id, -32603, "Result encoding failed (non-serialisable value)")
+    end
+    return encoded
+end
+
+-------------------------------------------------------------------------------
+-- Per-frame connection pump
+-------------------------------------------------------------------------------
+local function advanceClient(c, now)
+    if now - c.started > CLIENT_TIMEOUT_SEC then
+        log("client timed out in state %s", c.state)
+        return false
+    end
+
+    if c.state == "READING" then
+        -- Non-blocking read; "timeout" simply means nothing yet, try next frame.
+        local chunk, err, partial = c.sock:receive(4096)
+        local data = chunk or partial
+        if data and #data > 0 then
+            c.inbuf = c.inbuf .. data
+        end
+        if err == "closed" then return false end
+
+        local nl = c.inbuf:find("\n", 1, true)
+        if nl then
+            local line = c.inbuf:sub(1, nl - 1):gsub("\r$", "")
+            c.outbuf = dispatch(line) .. "\n"
+            c.sent = 0
+            c.state = "WRITING"
+        elseif #c.inbuf > 1048576 then
+            c.outbuf = encodeError(nil, -32600, "Request too large") .. "\n"
+            c.sent = 0
+            c.state = "WRITING"
+        end
+    end
+
+    if c.state == "WRITING" then
+        -- send() returns the index of the last byte written; on a partial write it
+        -- reports how far it got in the 3rd return. Resume from there next frame.
+        local stop = math.min(c.sent + WRITE_CHUNK, #c.outbuf)
+        local sent, err, lastSent = c.sock:send(c.outbuf, c.sent + 1, stop)
+        if sent then
+            c.sent = sent
+        elseif err == "timeout" and lastSent then
+            c.sent = lastSent
+        elseif err == "closed" then
+            return false
+        end
+        if c.sent >= #c.outbuf then
+            return false  -- complete; close cleanly
+        end
+    end
 
     return true
 end
 
--- Stop the server
-function MCPBridge.stop()
-    if MCPBridge.server then
-        MCPBridge.server:close()
-        MCPBridge.server = nil
-    end
-    MCPBridge.running = false
-    ConPrintf("[MCPBridge] Server stopped")
-end
-
--- Send JSON-RPC response. Encode is wrapped in pcall so a non-serialisable
--- result becomes a clean JSON-RPC error instead of a silently-closed/empty
--- socket (which the client otherwise reports as a misleading connection error).
-local function sendResponse(client, id, result)
-    local ok, response = pcall(dkjson.encode, {
-        jsonrpc = "2.0",
-        id = id,
-        result = result
-    })
-    if not ok or type(response) ~= "string" then
-        response = dkjson.encode({
-            jsonrpc = "2.0",
-            id = id,
-            error = { code = -32603, message = "Result not serialisable: " .. tostring(response) }
-        }) or '{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"serialization failed"}}'
-    end
-    client:send(response .. "\n")
-end
-
--- Send JSON-RPC error (also pcall-guarded for safety).
-local function sendError(client, id, code, message)
-    local ok, response = pcall(dkjson.encode, {
-        jsonrpc = "2.0",
-        id = id,
-        error = { code = code, message = tostring(message) }
-    })
-    if not ok or type(response) ~= "string" then
-        response = '{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"error encode failed"}}'
-    end
-    client:send(response .. "\n")
-end
-
--- Handle incoming client connection
-local function handleClient(client)
-    client:settimeout(config.READ_TIMEOUT)
-
-    -- Read the request line
-    local request, err = client:receive("*l")
-    if err then
-        if err ~= "timeout" then
-            ConPrintf("[MCPBridge] Receive error: %s", err)
-        end
-        return
-    end
-
-    -- Parse JSON-RPC request
-    local success, command = pcall(dkjson.decode, request)
-    if not success or not command then
-        sendError(client, nil, -32700, "Parse error: Invalid JSON")
-        return
-    end
-
-    if not command.method then
-        sendError(client, command.id, -32600, "Invalid request: missing method")
-        return
-    end
-
-    MCPBridge.requestCount = MCPBridge.requestCount + 1
-
-    if config.LOG_COMMANDS then
-        ConPrintf("[MCPBridge] Command: %s (id=%s)", command.method, tostring(command.id))
-    end
-
-    -- Look up and execute command handler
-    local handler = MCPCommands[command.method]
-    if handler then
-        local ok, result, errMsg = pcall(handler, command.params or {})
-        if ok then
-            if errMsg then
-                sendError(client, command.id, -32000, errMsg)
-            else
-                sendResponse(client, command.id, result)
-            end
-        else
-            sendError(client, command.id, -32603, "Internal error: " .. tostring(result))
-        end
-    else
-        sendError(client, command.id, -32601, "Method not found: " .. command.method)
-    end
-end
-
--- Poll for connections (called from main loop)
 function MCPBridge.poll()
-    if not MCPBridge.running or not MCPBridge.server then
-        return
+    if not MCPBridge.running or not MCPBridge.server then return end
+    -- A rebuild can pump frames; never re-enter.
+    if MCPBridge.inPoll or MCPBridge.inDeferred then return end
+    MCPBridge.inPoll = true
+
+    local now = os.time()
+
+    for _ = 1, MAX_ACCEPTS_PER_FRAME do
+        if #MCPBridge.clients >= MAX_CLIENTS then break end
+        local client = MCPBridge.server:accept()
+        if not client then break end
+        client:settimeout(0)  -- strictly non-blocking
+        table.insert(MCPBridge.clients, {
+            sock = client, state = "READING", inbuf = "", outbuf = "", sent = 0, started = now,
+        })
     end
 
-    -- Accept new connection (non-blocking)
-    local client, err = MCPBridge.server:accept()
-    if client then
-        local ok, handleErr = pcall(handleClient, client)
+    for i = #MCPBridge.clients, 1, -1 do
+        local c = MCPBridge.clients[i]
+        local ok, keep = pcall(advanceClient, c, now)
         if not ok then
-            ConPrintf("[MCPBridge] Handler error: %s", tostring(handleErr))
+            log("!! client pump error: %s", tostring(keep))
+            keep = false
         end
-        client:close()
+        if not keep then
+            pcall(function() c.sock:close() end)
+            table.remove(MCPBridge.clients, i)
+        end
     end
+
+    MCPBridge.inPoll = false
 end
 
--- Get server status
 function MCPBridge.getStatus()
     return {
         running = MCPBridge.running,
@@ -184,60 +280,46 @@ function MCPBridge.getStatus()
         host = config.HOST,
         uptime = MCPBridge.startTime and (os.time() - MCPBridge.startTime) or 0,
         requests = MCPBridge.requestCount,
+        clients = #MCPBridge.clients,
         lastError = MCPBridge.lastError,
-        version = config.VERSION
+        version = config.VERSION,
     }
 end
 
--- Hook into PoB's main loop
--- We need to inject our poll() call into the frame update cycle.
+-------------------------------------------------------------------------------
+-- Frame hook
+-------------------------------------------------------------------------------
 local originalOnFrame = launch.OnFrame
 launch.OnFrame = function(self)
-    -- Poll FIRST, wrapped in pcall: this keeps the bridge responsive even if
-    -- PoB's own OnFrame later errors or hangs (e.g. the minion tree-import
-    -- crash), and a faulty command can never take down PoB's frame loop.
-    if config.ENABLED then
-        pcall(MCPBridge.poll)
-    end
+    if config.ENABLED then pcall(MCPBridge.poll) end
 
-    -- Then run PoB's real OnFrame (draw + its own recalcs).
-    if originalOnFrame then
-        originalOnFrame(self)
-    end
+    if originalOnFrame then originalOnFrame(self) end
+
+    -- Apply queued mutations only after PoB's own frame is done, so its tabs are
+    -- in a consistent state and buildFlag schedules a clean rebuild next frame.
+    if config.ENABLED then pcall(MCPBridge.runDeferred) end
 end
 
--- Hook into PoB's exit handler
 local originalOnExit = launch.OnExit
 launch.OnExit = function(self)
-    -- Stop MCP bridge
-    MCPBridge.stop()
-
-    -- Call original OnExit
-    if originalOnExit then
-        originalOnExit(self)
-    end
+    pcall(MCPBridge.stop)
+    if originalOnExit then originalOnExit(self) end
 end
 
--- Auto-start if configured
 if config.AUTO_START and config.ENABLED then
-    -- Delay start slightly to ensure PoB is fully initialized
-    -- We'll start on first frame instead
     local startAttempted = false
-    local originalPoll = MCPBridge.poll
+    local realPoll = MCPBridge.poll
     MCPBridge.poll = function()
         if not startAttempted then
             startAttempted = true
             MCPBridge.start()
         end
         if MCPBridge.running then
-            -- Restore original poll and call it
-            MCPBridge.poll = originalPoll
-            MCPBridge.poll()
+            MCPBridge.poll = realPoll
+            return realPoll()
         end
     end
 end
 
--- Export for use by commands
 _G.MCPBridge = MCPBridge
-
-ConPrintf("[MCPBridge] Module loaded (v%s)", config.VERSION)
+log("module loaded (v%s, transport v2)", config.VERSION)

@@ -7,6 +7,32 @@
 CHANGELOG
 --------------------------------------------------------------------------------
 
+Version 2.0.0
+  - Fix: PoB could freeze (frame loop stalled at ~0% CPU, sockets stuck in
+    CloseWait) whenever a command returned a large result or mutated build state.
+    The transport did accept/receive/send inline within a single frame on a
+    blocking-with-timeout socket and ignored the return value of client:send(),
+    so any reply larger than the socket buffer was silently truncated and the
+    client waited forever for a terminator that never arrived.
+  - Change: transport rewritten around strictly non-blocking sockets. Each
+    connection is a state machine (READING -> dispatch -> WRITING) advanced one
+    slice per frame, draining partial sends across frames, with bounded work per
+    frame and a reentrancy guard so a rebuild that pumps frames cannot re-enter
+    the poll loop.
+  - Fix: PoB rebuild helpers (configTab:BuildModList, skillsTab:ProcessSocketGroup)
+    are no longer called from the OnFrame prologue. set_main_skill_group,
+    set_config_input, set_group_gems and set_custom_mods now queue their mutation
+    via MCPBridge.defer(), applied after PoB's own OnFrame completes.
+  - Fix: get_output passed raw mainOutput values straight to dkjson, skipping the
+    jsonSafe sanitiser the module requires for raw output; tables containing
+    functions or cycles could hang the encoder.
+  - Add: optional file logging (MCPConfig.LOG_TO_FILE, off by default) to
+    Addons/MCPBridge/mcpbridge.log, since ConPrintf only reaches PoB's in-app
+    console and is invisible when diagnosing a hang from an external client.
+  - Note: set_group_gems can no longer report per-gem gemData validity, because
+    resolution now happens after the reply is sent. It returns the requested gem
+    list plus a note; confirm with get_skills on a later frame.
+
 Version 1.1.0 (2025-01-28)
   - Fix: Core command infrastructure now properly handles live PoB globals
   - Fix: Replaced broken `mainObject` references with proper `launch.main`

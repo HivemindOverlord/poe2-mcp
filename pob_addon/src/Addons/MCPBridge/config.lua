@@ -18,9 +18,13 @@ MCPConfig.READ_TIMEOUT = 0.5  -- Seconds to wait for client data (kept short so 
 MCPConfig.ENABLED = true      -- Master enable/disable
 MCPConfig.LOG_COMMANDS = true -- Log received commands to console
 MCPConfig.AUTO_START = true   -- Start server automatically on PoB launch
+MCPConfig.LOG_TO_FILE = false -- Also mirror the log to Addons/MCPBridge/mcpbridge.log.
+                              -- Off by default; turn on when diagnosing, since ConPrintf
+                              -- only reaches PoB's in-app console and is invisible to an
+                              -- external client watching a hung bridge.
 
 -- Version info
-MCPConfig.VERSION = "1.1.0"
+MCPConfig.VERSION = "2.0.0"
 MCPConfig.MIN_POB_VERSION = "2.0.0"
 
 return MCPConfig
