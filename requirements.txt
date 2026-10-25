@@ -5,7 +5,7 @@
 # Install: pip install -r requirements.txt
 #
 # For minimal installation (basic MCP server only):
-#   pip install "mcp<2" fastapi uvicorn pydantic sqlalchemy aiosqlite httpx anthropic python-dotenv
+#   pip install "mcp<2" fastapi uvicorn pydantic "sqlalchemy[asyncio]" aiosqlite httpx anthropic python-dotenv
 # ===============================================================================
 
 # MCP Protocol (REQUIRED)
@@ -20,7 +20,7 @@ pydantic>=2.5.0
 pydantic-settings>=2.1.0
 
 # Database (REQUIRED)
-sqlalchemy>=2.0.0
+sqlalchemy[asyncio]>=2.0.0  # asyncio extra pulls greenlet (no longer default since 2.1)
 alembic>=1.12.0
 aiosqlite>=0.19.0
 
