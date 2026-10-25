@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.parsers import Datc64Parser, ColumnSpec, DataType
+from src.parsers import ColumnSpec, DataType, Datc64Parser
 
 
 def test_acts():

@@ -16,12 +16,13 @@ Requirements:
 """
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 try:
-    from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+    from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+    from playwright.async_api import async_playwright
 except ImportError:
     print("ERROR: Playwright not installed!")
     print("\nInstall with:")

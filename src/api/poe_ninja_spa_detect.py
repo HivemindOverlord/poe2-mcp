@@ -22,7 +22,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-
 # Markers that historically indicated embedded build data (pre-0.5 poe.ninja).
 LEGACY_DATA_MARKERS = (
     "window.__NUXT__",

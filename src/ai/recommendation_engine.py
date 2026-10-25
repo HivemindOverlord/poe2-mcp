@@ -1,7 +1,8 @@
 """AI-powered recommendation engine"""
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from anthropic import AsyncAnthropic
 
 try:

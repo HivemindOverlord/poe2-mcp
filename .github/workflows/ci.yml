@@ -53,11 +53,13 @@ jobs:
           find pob_addon -name '*.lua' -print0 | xargs -0 -I{} luac5.1 -p "{}"
           echo "All addon Lua files are syntactically valid."
 
-  # ---- Blocking: black formatting ----------------------------------------
-  # The codebase is black-clean (#197), so this is a gate. black is PINNED:
-  # its stable style changes between yearly majors (26.x reformats 25.x-clean
-  # code), so an unpinned install makes the gate nondeterministic. Bump this
-  # pin and reformat in the same PR when adopting a newer black.
+  # ---- Blocking: black formatting + isort import order -------------------
+  # The codebase is black-clean (#197) and isort-clean, so both are gates.
+  # Both are PINNED: black's stable style changes between yearly majors
+  # (26.x reformats 25.x-clean code) and isort's sorting can shift between
+  # releases, so an unpinned install makes the gate nondeterministic. Bump a
+  # pin and reformat in the same PR when adopting a newer version. isort runs
+  # with profile=black (pyproject) so the two never fight.
   format:
     runs-on: ubuntu-latest
     steps:
@@ -65,13 +67,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install "black==25.11.0"
+      - run: pip install "black==25.11.0" "isort==9.0.2"
       - name: black --check
         run: black --check src/ tests/ scripts/
+      - name: isort --check
+        run: isort --check-only --profile black src/ tests/ scripts/
 
-  # ---- Advisory: import order + types (non-blocking) ---------------------
-  # isort and mypy aren't fully clean yet; run them as signals. Promote each
-  # to blocking once worked down (isort first — it's close).
+  # ---- Advisory: types (non-blocking) ------------------------------------
+  # mypy isn't clean yet; run it as a signal. Promote to blocking once
+  # worked down.
   advisory:
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -83,8 +87,6 @@ jobs:
       - name: Install deps + tools
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt isort mypy
-      - name: isort --check (advisory)
-        run: isort --check-only --profile black src/ tests/ scripts/
+          pip install -r requirements.txt mypy
       - name: mypy (advisory)
         run: mypy src/pob/ src/mcp_server.py

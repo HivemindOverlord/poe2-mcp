@@ -4,7 +4,8 @@ Uses Claude AI to answer build-related questions
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from anthropic import AsyncAnthropic
 
 try:

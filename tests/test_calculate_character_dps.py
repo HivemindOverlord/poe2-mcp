@@ -36,9 +36,9 @@ if str(PROJECT_ROOT) not in sys.path:
 def test_calculator_baseline_fireball():
     """Fireball with no modifiers, target dummy. Math anchor."""
     from src.calculator.spell_dps_calculator import (
-        SpellDPSCalculator,
         CharacterModifiers,
         EnemyStats,
+        SpellDPSCalculator,
     )
 
     calc = SpellDPSCalculator()
@@ -55,9 +55,9 @@ def test_calculator_baseline_fireball():
 def test_calculator_more_multipliers_stack_multiplicatively():
     """Two +25% more multipliers must give ×1.5625, not ×1.5."""
     from src.calculator.spell_dps_calculator import (
-        SpellDPSCalculator,
         CharacterModifiers,
         EnemyStats,
+        SpellDPSCalculator,
     )
 
     calc = SpellDPSCalculator()
@@ -70,9 +70,9 @@ def test_calculator_more_multipliers_stack_multiplicatively():
 def test_calculator_resistance_reduces_damage():
     """75% fire res reduces fire damage by 75%."""
     from src.calculator.spell_dps_calculator import (
-        SpellDPSCalculator,
         CharacterModifiers,
         EnemyStats,
+        SpellDPSCalculator,
     )
 
     calc = SpellDPSCalculator()
@@ -86,9 +86,9 @@ def test_calculator_resistance_reduces_damage():
 def test_calculator_penetration_overcomes_resistance():
     """25 penetration vs 75 res = effective 50% res."""
     from src.calculator.spell_dps_calculator import (
-        SpellDPSCalculator,
         CharacterModifiers,
         EnemyStats,
+        SpellDPSCalculator,
     )
 
     calc = SpellDPSCalculator()

@@ -14,21 +14,21 @@ Author: Claude Code
 Version: 1.0.0
 """
 
-import unittest
 import logging
+import unittest
+
 from src.calculator.stun_calculator import (
-    StunCalculator,
-    DamageType,
     AttackType,
-    StunState,
-    StunModifiers,
-    LightStunResult,
-    HeavyStunResult,
-    HeavyStunMeter,
     CompleteStunResult,
+    DamageType,
+    HeavyStunMeter,
+    HeavyStunResult,
+    LightStunResult,
+    StunCalculator,
+    StunModifiers,
+    StunState,
     quick_stun_calculation,
 )
-
 
 # Suppress logging during tests
 logging.disable(logging.CRITICAL)

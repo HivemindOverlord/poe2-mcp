@@ -41,7 +41,6 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Tuple
 
-
 VARIANT_LINE_RE = re.compile(
     r"^\s*"
     r"(?P<range>\S+)"  # range token

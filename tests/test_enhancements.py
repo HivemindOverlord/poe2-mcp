@@ -10,10 +10,11 @@ Tests the new features added to the MCP server:
 """
 
 import asyncio
-import pytest
-import sys
 import io
+import sys
 from pathlib import Path
+
+import pytest
 
 # Fix Windows encoding for Unicode. reconfigure() keeps the same stream
 # object — rewrapping sys.stdout.buffer here used to close pytest's capture
@@ -28,12 +29,12 @@ if sys.platform == "win32":
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.api.poe_ninja_api import PoeNinjaAPI
-from src.api.character_fetcher import CharacterFetcher
 from src.api.cache_manager import CacheManager
+from src.api.character_fetcher import CharacterFetcher
+from src.api.poe_ninja_api import PoeNinjaAPI
 from src.api.rate_limiter import RateLimiter
-from src.optimizer.gear_optimizer import GearOptimizer
 from src.database.manager import DatabaseManager
+from src.optimizer.gear_optimizer import GearOptimizer
 
 
 class TestEnhancements:

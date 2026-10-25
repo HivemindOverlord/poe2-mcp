@@ -7,8 +7,8 @@ Use this after making changes to database models
 """
 
 import asyncio
-import sys
 import io
+import sys
 from pathlib import Path
 
 # Fix Windows encoding
@@ -19,8 +19,8 @@ if sys.platform == "win32":
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.database.manager import DatabaseManager
 from src.config import DATA_DIR
+from src.database.manager import DatabaseManager
 
 
 async def reinitialize_database():

@@ -20,7 +20,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.api.poe_ninja_api import league_slug_to_display, parse_poe_ninja_url
 
-
 # ---------------------------------------------------------------------------
 # URL shapes
 # ---------------------------------------------------------------------------

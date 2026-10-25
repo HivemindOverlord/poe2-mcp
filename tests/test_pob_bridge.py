@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from src.pob.client import PoBClient, PoBCommandError
 from src.pob import installer
+from src.pob.client import PoBClient, PoBCommandError
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ADDON_SOURCE = REPO_ROOT / "pob_addon" / "src" / "Addons"
