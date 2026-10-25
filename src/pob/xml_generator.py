@@ -5,11 +5,11 @@ Converts character data to PoB-compatible XML format.
 https://github.com/HivemindOverlord/poe2-mcp
 """
 
-import xml.etree.ElementTree as ET
 import base64
-import zlib
 import logging
-from typing import Dict, Any, List, Optional
+import xml.etree.ElementTree as ET
+import zlib
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

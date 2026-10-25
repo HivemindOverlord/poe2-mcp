@@ -33,7 +33,6 @@ from src.parsers.specifications.characters_spec import (
     CHARACTER_ROW_COUNT,
     CHARACTER_ROW_SIZE,
     CLASS_NAMES,
-    CharacterRecord,
     FIELD_OFFSETS,
     POE_NINJA_CLASS_TO_PSG_INDEX,
     POE_NINJA_CLASS_TO_STARTING_NODE,
@@ -41,12 +40,12 @@ from src.parsers.specifications.characters_spec import (
     PSG_STARTING_NODES,
     PSG_STARTING_NODES_COUNT,
     PSG_STARTING_NODES_OFFSET,
+    CharacterRecord,
     extract_attribute_type,
     get_class_to_starting_node_mapping,
     parse_character_row,
     read_psg_starting_nodes,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -19,10 +19,9 @@ Output:
 
 import json
 import math
-from pathlib import Path
-from typing import Dict, Tuple, List
 from collections import defaultdict
-
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 # Class starting positions (authoritative coordinates from psg_passive_nodes.json)
 # FIXED: Correct node-to-class mappings for PoE2

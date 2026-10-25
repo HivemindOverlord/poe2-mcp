@@ -7,7 +7,7 @@ MCP provides the formulas; Claude performs the calculations.
 VERIFIED FOR POE2 - January 2026
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # =============================================================================
 # FORMULA DEFINITIONS

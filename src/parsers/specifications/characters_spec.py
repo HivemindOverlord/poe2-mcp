@@ -16,10 +16,9 @@ Starting node IDs are NOT stored in this table - they come from passiveskillgrap
 header at offset 17 (6 entries, 8 bytes each as uint64 LE).
 """
 
-from dataclasses import dataclass
-from typing import List, Tuple, Optional
 import struct
-
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 # Character row constants
 CHARACTER_ROW_SIZE = 656

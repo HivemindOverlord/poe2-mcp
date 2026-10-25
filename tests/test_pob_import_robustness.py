@@ -26,7 +26,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.pob.importer import PoBImporter
 
-
 SAMPLE_XML = """<PathOfBuilding version="2">
   <Build level="92" className="Witch" ascendClassName="Lich" name="DoT Test Build"/>
   <Skills>

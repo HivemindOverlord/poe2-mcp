@@ -20,7 +20,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.api.client_log_reader import ClientLogReader
 from src.api.game_config_reader import GameConfigReader
 
-
 # Real log lines captured from the live client (prefix preserved).
 SAMPLE_LOG = """\
 2026/06/04 10:11:39 75020656 3ef23347 [INFO Client 29396] : TomawarTheSeventh (Infernalist) is now level 65

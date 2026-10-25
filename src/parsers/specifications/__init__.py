@@ -10,28 +10,24 @@ Available Specifications:
              CORRECTED 2025-12-16 based on PoB spec.lua
 """
 
-from .mods_spec import (
-    # Enums
-    GenerationType,
-    DomainFlag,
-    # Constants
-    MOD_ROW_SIZE,
+from .mods_spec import (  # Enums; Constants; Data classes; Functions
+    FIELD_OFFSETS,
     MOD_ROW_COUNT,
+    MOD_ROW_SIZE,
+    NULL_KEY_MARKER,
     STAT_KEY_OFFSETS,
     STAT_VALUE_OFFSETS,
-    FIELD_OFFSETS,
-    NULL_KEY_MARKER,
-    # Data classes
-    StatEntry,
+    DomainFlag,
+    GenerationType,
     ModRecord,
-    # Functions
-    parse_mod_row,
-    read_key,
-    read_interval,
+    StatEntry,
     extract_mod_family,
-    validate_stat_key,
+    parse_mod_row,
+    read_interval,
+    read_key,
     validate_generation_type,
     validate_mod_record,
+    validate_stat_key,
 )
 
 __all__ = [

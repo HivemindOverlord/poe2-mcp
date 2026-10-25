@@ -5,8 +5,8 @@ Based on reverse engineering and analysis of PyPoE's .dat parser.
 Adapted for PoE2's .datc64 format (64-bit variant).
 """
 
-import struct
 import logging
+import struct
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path

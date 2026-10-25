@@ -3,20 +3,21 @@ Database Manager for PoE2 Build Optimizer
 Handles database initialization, queries, and management
 """
 
+import json
 import logging
 import re
-import json
-from typing import List, Dict, Any, Optional
-from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from pydantic import BaseModel, Field, field_validator
+from typing import Any, Dict, List, Optional
 
-from .models import Base, Item, PassiveNode, SkillGem, SavedBuild, ItemMod
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from .models import Base, Item, ItemMod, PassiveNode, SavedBuild, SkillGem
 
 try:
-    from ..config import settings, DATA_DIR
+    from ..config import DATA_DIR, settings
 except ImportError:
-    from src.config import settings, DATA_DIR
+    from src.config import DATA_DIR, settings
 
 logger = logging.getLogger(__name__)
 

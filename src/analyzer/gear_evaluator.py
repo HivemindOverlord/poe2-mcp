@@ -18,19 +18,20 @@ Date: 2025-10-22
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-# Import calculator modules
-from ..calculator.defense_calculator import DefenseCalculator
-from ..calculator.ehp_calculator import EHPCalculator, DefensiveStats, ThreatProfile
 from ..calculator.damage_calculator import (
+    CriticalStrikeConfig,
     DamageCalculator,
     DamageRange,
     Modifier,
     ModifierType,
-    CriticalStrikeConfig,
 )
+
+# Import calculator modules
+from ..calculator.defense_calculator import DefenseCalculator
+from ..calculator.ehp_calculator import DefensiveStats, EHPCalculator, ThreatProfile
 
 logger = logging.getLogger(__name__)
 

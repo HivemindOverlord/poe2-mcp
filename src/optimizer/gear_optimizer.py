@@ -3,7 +3,8 @@ Gear optimization recommendations with intelligent analysis
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import select
 
 try:

@@ -5,8 +5,8 @@ Test official PoE ladder API
 """
 
 import asyncio
-import sys
 import io
+import sys
 from pathlib import Path
 
 # Fix Windows encoding. reconfigure() keeps the same stream object —
@@ -22,8 +22,8 @@ if sys.platform == "win32":
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.api.character_fetcher import CharacterFetcher
 from src.api.cache_manager import CacheManager
+from src.api.character_fetcher import CharacterFetcher
 from src.api.rate_limiter import RateLimiter
 
 

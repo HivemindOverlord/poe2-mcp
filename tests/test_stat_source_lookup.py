@@ -17,7 +17,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.data.stat_source_index import StatSourceIndex, get_stat_source_index
 
-
 # ---------------------------------------------------------------------------
 # StatSourceIndex unit tests
 # ---------------------------------------------------------------------------

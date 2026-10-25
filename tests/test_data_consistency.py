@@ -8,17 +8,19 @@ Tests verify:
 - Data integrity constraints
 """
 
-import pytest
-import pytest_asyncio
 import json
 import sys
 from pathlib import Path
 
+import pytest
+import pytest_asyncio
+
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from database.manager import DatabaseManager
 from sqlalchemy import text
+
+from database.manager import DatabaseManager
 
 
 @pytest_asyncio.fixture

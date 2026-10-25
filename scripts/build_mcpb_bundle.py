@@ -49,8 +49,8 @@ from pathlib import Path
 # Reuse the single canonical-file list so the bundle and the data release can
 # never disagree about what the runtime consumes.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from scripts.publish_data_release import CANONICAL_FILES  # noqa: E402
 from scripts.pack_mcpb import pack  # noqa: E402
+from scripts.publish_data_release import CANONICAL_FILES  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = REPO_ROOT / "src"

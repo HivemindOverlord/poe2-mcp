@@ -24,10 +24,8 @@ Per CLAUDE.md data policy, all sources trace back to extraction from a
 licensed PoE2 install. No third-party wiki / scraped data.
 """
 
+from . import data_distributor, game_data, update_manager
 from .fresh_data_provider import FreshDataProvider, get_fresh_data_provider
-from . import data_distributor
-from . import game_data
-from . import update_manager
 
 __all__ = [
     "FreshDataProvider",
