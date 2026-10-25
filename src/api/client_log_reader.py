@@ -23,8 +23,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-
+from typing import Any, Dict, List, Optional
 
 # Candidate install locations. Steam is the common case on this machine; the
 # standalone client and a couple of alternate Steam library roots are included

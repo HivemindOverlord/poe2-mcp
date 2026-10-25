@@ -9,10 +9,11 @@ These tests verify:
 """
 
 import pytest
+
 from src.calculator.tinymt32 import (
     TinyMT32,
-    generate_poe_seed,
     create_timeless_rng,
+    generate_poe_seed,
 )
 
 

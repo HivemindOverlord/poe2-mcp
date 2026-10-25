@@ -3,6 +3,7 @@ Tests for CharacterAnalyzer - particularly the poe.ninja format compatibility fi
 """
 
 import pytest
+
 from src.analyzer.character_analyzer import CharacterAnalyzer, GearRecommender
 
 

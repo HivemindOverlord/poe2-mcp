@@ -106,8 +106,8 @@ async def test_explain_mechanic_finds_per_skill_only_stat(mcp):
     # in the root index. (For test robustness, we just verify SOME per-skill
     # stat resolves cleanly — the handler should return Tier 1a-bis output.)
     from src.data.game_data import (
-        load_per_skill_stat_descriptions,
         find_stat_description,
+        load_per_skill_stat_descriptions,
     )
 
     bundle = load_per_skill_stat_descriptions()

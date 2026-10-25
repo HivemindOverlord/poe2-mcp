@@ -9,98 +9,98 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Add parent directory to path for imports when run directly
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
 import mcp.server.stdio
 import mcp.types as types
+from mcp.server import NotificationOptions, Server
+from mcp.server.models import InitializationOptions
 
 # Import with fallback for both direct and module execution
 try:
-    from .config import settings, DATA_DIR
-    from .database.manager import DatabaseManager
-    from .api.poe_api import PoEAPIClient
-    from .api.rate_limiter import RateLimiter
-    from .api.cache_manager import CacheManager
-    from .api.character_fetcher import CharacterFetcher
-    from .api.trade_api import TradeAPI
-    from .calculator.build_scorer import BuildScorer
-    from .optimizer.gear_optimizer import GearOptimizer
-    from .optimizer.passive_optimizer import PassiveOptimizer
-    from .optimizer.skill_optimizer import SkillOptimizer
-    from .analyzer.top_player_fetcher import TopPlayerFetcher
-    from .analyzer.character_comparator import CharacterComparator
-    from .analyzer.weakness_detector import WeaknessDetector
-    from .analyzer.gear_evaluator import GearEvaluator
-    from .calculator.ehp_calculator import EHPCalculator
-    from .calculator.spirit_calculator import SpiritCalculator
-    from .calculator.damage_calculator import DamageCalculator
     from .ai.query_handler import QueryHandler
     from .ai.recommendation_engine import RecommendationEngine
-    from .pob.importer import PoBImporter
-    from .pob.exporter import PoBExporter
-
-    # New enhancement features
-    from .optimizer.gem_synergy_calculator import GemSynergyCalculator
-    from .knowledge.poe2_mechanics import PoE2MechanicsKnowledgeBase
-    from .analyzer.gear_comparator import GearComparator
-    from .analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
+    from .analyzer.character_comparator import CharacterComparator
     from .analyzer.content_readiness_checker import ContentReadinessChecker
-
-    # Passive tree resolver for poe.ninja node ID resolution
-    from .parsers.passive_tree_resolver import PassiveTreeResolver
-
-    # Fresh data provider - Single Source of Truth
-    from .data.fresh_data_provider import get_fresh_data_provider
+    from .analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
+    from .analyzer.gear_comparator import GearComparator
+    from .analyzer.gear_evaluator import GearEvaluator
+    from .analyzer.top_player_fetcher import TopPlayerFetcher
+    from .analyzer.weakness_detector import WeaknessDetector
+    from .api.cache_manager import CacheManager
+    from .api.character_fetcher import CharacterFetcher
 
     # Local live-game readers (Client.txt log + client config INI)
     from .api.client_log_reader import ClientLogReader
     from .api.game_config_reader import GameConfigReader
-except ImportError:
-    # Fallback for direct execution
-    from src.config import settings, DATA_DIR
-    from src.database.manager import DatabaseManager
-    from src.api.poe_api import PoEAPIClient
-    from src.api.rate_limiter import RateLimiter
-    from src.api.cache_manager import CacheManager
-    from src.api.character_fetcher import CharacterFetcher
-    from src.api.trade_api import TradeAPI
-    from src.calculator.build_scorer import BuildScorer
-    from src.optimizer.gear_optimizer import GearOptimizer
-    from src.optimizer.passive_optimizer import PassiveOptimizer
-    from src.optimizer.skill_optimizer import SkillOptimizer
-    from src.analyzer.top_player_fetcher import TopPlayerFetcher
-    from src.analyzer.character_comparator import CharacterComparator
-    from src.analyzer.weakness_detector import WeaknessDetector
-    from src.analyzer.gear_evaluator import GearEvaluator
-    from src.calculator.ehp_calculator import EHPCalculator
-    from src.calculator.spirit_calculator import SpiritCalculator
-    from src.calculator.damage_calculator import DamageCalculator
-    from src.ai.query_handler import QueryHandler
-    from src.ai.recommendation_engine import RecommendationEngine
-    from src.pob.importer import PoBImporter
-    from src.pob.exporter import PoBExporter
-
-    # New enhancement features
-    from src.optimizer.gem_synergy_calculator import GemSynergyCalculator
-    from src.knowledge.poe2_mechanics import PoE2MechanicsKnowledgeBase
-    from src.analyzer.gear_comparator import GearComparator
-    from src.analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
-    from src.analyzer.content_readiness_checker import ContentReadinessChecker
-
-    # Passive tree resolver for poe.ninja node ID resolution
-    from src.parsers.passive_tree_resolver import PassiveTreeResolver
+    from .api.poe_api import PoEAPIClient
+    from .api.rate_limiter import RateLimiter
+    from .api.trade_api import TradeAPI
+    from .calculator.build_scorer import BuildScorer
+    from .calculator.damage_calculator import DamageCalculator
+    from .calculator.ehp_calculator import EHPCalculator
+    from .calculator.spirit_calculator import SpiritCalculator
+    from .config import DATA_DIR, settings
 
     # Fresh data provider - Single Source of Truth
-    from src.data.fresh_data_provider import get_fresh_data_provider
+    from .data.fresh_data_provider import get_fresh_data_provider
+    from .database.manager import DatabaseManager
+    from .knowledge.poe2_mechanics import PoE2MechanicsKnowledgeBase
+    from .optimizer.gear_optimizer import GearOptimizer
+
+    # New enhancement features
+    from .optimizer.gem_synergy_calculator import GemSynergyCalculator
+    from .optimizer.passive_optimizer import PassiveOptimizer
+    from .optimizer.skill_optimizer import SkillOptimizer
+
+    # Passive tree resolver for poe.ninja node ID resolution
+    from .parsers.passive_tree_resolver import PassiveTreeResolver
+    from .pob.exporter import PoBExporter
+    from .pob.importer import PoBImporter
+except ImportError:
+    # Fallback for direct execution
+    from src.ai.query_handler import QueryHandler
+    from src.ai.recommendation_engine import RecommendationEngine
+    from src.analyzer.character_comparator import CharacterComparator
+    from src.analyzer.content_readiness_checker import ContentReadinessChecker
+    from src.analyzer.damage_scaling_analyzer import DamageScalingAnalyzer
+    from src.analyzer.gear_comparator import GearComparator
+    from src.analyzer.gear_evaluator import GearEvaluator
+    from src.analyzer.top_player_fetcher import TopPlayerFetcher
+    from src.analyzer.weakness_detector import WeaknessDetector
+    from src.api.cache_manager import CacheManager
+    from src.api.character_fetcher import CharacterFetcher
 
     # Local live-game readers (Client.txt log + client config INI)
     from src.api.client_log_reader import ClientLogReader
     from src.api.game_config_reader import GameConfigReader
+    from src.api.poe_api import PoEAPIClient
+    from src.api.rate_limiter import RateLimiter
+    from src.api.trade_api import TradeAPI
+    from src.calculator.build_scorer import BuildScorer
+    from src.calculator.damage_calculator import DamageCalculator
+    from src.calculator.ehp_calculator import EHPCalculator
+    from src.calculator.spirit_calculator import SpiritCalculator
+    from src.config import DATA_DIR, settings
+
+    # Fresh data provider - Single Source of Truth
+    from src.data.fresh_data_provider import get_fresh_data_provider
+    from src.database.manager import DatabaseManager
+    from src.knowledge.poe2_mechanics import PoE2MechanicsKnowledgeBase
+    from src.optimizer.gear_optimizer import GearOptimizer
+
+    # New enhancement features
+    from src.optimizer.gem_synergy_calculator import GemSynergyCalculator
+    from src.optimizer.passive_optimizer import PassiveOptimizer
+    from src.optimizer.skill_optimizer import SkillOptimizer
+
+    # Passive tree resolver for poe.ninja node ID resolution
+    from src.parsers.passive_tree_resolver import PassiveTreeResolver
+    from src.pob.exporter import PoBExporter
+    from src.pob.importer import PoBImporter
 
 # Setup logging to both file and stderr (for Claude Desktop logs)
 import sys
@@ -133,51 +133,47 @@ except ImportError:
 # at module top.
 try:
     from .provenance import (
-        format_banner as format_provenance,
         CANONICAL,
         COMPUTED,
-        INTERPRETED,
         EXTERNAL,
+        INTERPRETED,
     )
+    from .provenance import format_banner as format_provenance
 except ImportError:
     from src.provenance import (
-        format_banner as format_provenance,
         CANONICAL,
         COMPUTED,
-        INTERPRETED,
         EXTERNAL,
+        INTERPRETED,
     )
+    from src.provenance import format_banner as format_provenance
 
 # Mod-data helpers (#118). Inline-stat_id-aware extraction from mods.json.
 try:
-    from .mod_data import (
-        iter_resolved_stats as _iter_resolved_stats,
-        load_stat_lookup as _load_stat_lookup,
-        mod_value_range as _mod_value_range,
-        canonical_mods_path as _canonical_mods_path,
-        legacy_mods_path as _legacy_mods_path,
-        load_spawn_tags as _load_spawn_tags,
-        available_spawn_tags as _available_spawn_tags,
-        normalize_item_class as _normalize_item_class,
-    )
+    from .mod_data import available_spawn_tags as _available_spawn_tags
+    from .mod_data import canonical_mods_path as _canonical_mods_path
+    from .mod_data import iter_resolved_stats as _iter_resolved_stats
+    from .mod_data import legacy_mods_path as _legacy_mods_path
+    from .mod_data import load_spawn_tags as _load_spawn_tags
+    from .mod_data import load_stat_lookup as _load_stat_lookup
+    from .mod_data import mod_value_range as _mod_value_range
+    from .mod_data import normalize_item_class as _normalize_item_class
 except ImportError:
-    from src.mod_data import (
-        iter_resolved_stats as _iter_resolved_stats,
-        load_stat_lookup as _load_stat_lookup,
-        mod_value_range as _mod_value_range,
-        canonical_mods_path as _canonical_mods_path,
-        legacy_mods_path as _legacy_mods_path,
-        load_spawn_tags as _load_spawn_tags,
-        available_spawn_tags as _available_spawn_tags,
-        normalize_item_class as _normalize_item_class,
-    )
+    from src.mod_data import available_spawn_tags as _available_spawn_tags
+    from src.mod_data import canonical_mods_path as _canonical_mods_path
+    from src.mod_data import iter_resolved_stats as _iter_resolved_stats
+    from src.mod_data import legacy_mods_path as _legacy_mods_path
+    from src.mod_data import load_spawn_tags as _load_spawn_tags
+    from src.mod_data import load_stat_lookup as _load_stat_lookup
+    from src.mod_data import mod_value_range as _mod_value_range
+    from src.mod_data import normalize_item_class as _normalize_item_class
 
 # Opt-in error reporting (`report_error` tool). Helper module keeps the capture
 # buffer + report/link builders unit-testable without full server init.
 try:
     from .error_reporter import (
-        ErrorRecorder,
         REPORT_EMAIL,
+        ErrorRecorder,
         build_report,
         github_issue_link,
         mailto_link,
@@ -185,8 +181,8 @@ try:
     )
 except ImportError:
     from src.error_reporter import (
-        ErrorRecorder,
         REPORT_EMAIL,
+        ErrorRecorder,
         build_report,
         github_issue_link,
         mailto_link,
@@ -1794,15 +1790,15 @@ Tracked at https://github.com/HivemindOverlord/poe2-mcp/issues/61.
                     # Import with fallback for both direct and module execution
                     try:
                         from .calculator.ehp_calculator import (
+                            DamageType,
                             DefensiveStats,
                             ThreatProfile,
-                            DamageType,
                         )
                     except ImportError:
                         from src.calculator.ehp_calculator import (
+                            DamageType,
                             DefensiveStats,
                             ThreatProfile,
-                            DamageType,
                         )
 
                     # Get stats from the nested stats object (poe.ninja format uses camelCase)
@@ -2852,9 +2848,9 @@ Consider:
 
             # Convert to DefensiveStats format
             try:
-                from .calculator.ehp_calculator import DefensiveStats, DamageType, ThreatProfile
+                from .calculator.ehp_calculator import DamageType, DefensiveStats, ThreatProfile
             except ImportError:
-                from src.calculator.ehp_calculator import DefensiveStats, DamageType, ThreatProfile
+                from src.calculator.ehp_calculator import DamageType, DefensiveStats, ThreatProfile
 
             stats = DefensiveStats(
                 life=character_data.get("life", 0),
@@ -3907,10 +3903,10 @@ Consider:
         # Local import to avoid circulars during module load + to keep the
         # handler's dependency on data helpers explicit
         from src.data.game_data import (
-            find_stat_description,
-            search_stat_descriptions,
             find_per_skill_stat_description,
+            find_stat_description,
             search_per_skill_stat_descriptions,
+            search_stat_descriptions,
         )
 
         try:
@@ -4204,19 +4200,19 @@ Consider:
         try:
             try:
                 from .calculator.spell_dps_calculator import (
-                    SpellDPSCalculator,
-                    SpellStats,
                     CharacterModifiers,
                     EnemyStats,
+                    SpellDPSCalculator,
+                    SpellStats,
                 )
                 from .calculator.v2_spell_db import resolve_spell_from_v2
                 from .data.game_data import get_version
             except ImportError:
                 from src.calculator.spell_dps_calculator import (
-                    SpellDPSCalculator,
-                    SpellStats,
                     CharacterModifiers,
                     EnemyStats,
+                    SpellDPSCalculator,
+                    SpellStats,
                 )
                 from src.calculator.v2_spell_db import resolve_spell_from_v2
                 from src.data.game_data import get_version
@@ -4340,15 +4336,15 @@ Consider:
             if dot_in:
                 try:
                     from .calculator.dot_calculator import (
-                        DoTCalculator,
                         AilmentInput,
+                        DoTCalculator,
                         SkillDoTInput,
                         split_expected_hit_by_type,
                     )
                 except ImportError:
                     from src.calculator.dot_calculator import (
-                        DoTCalculator,
                         AilmentInput,
+                        DoTCalculator,
                         SkillDoTInput,
                         split_expected_hit_by_type,
                     )
@@ -4515,8 +4511,8 @@ Consider:
         to run to rebuild a mechanic's system by hand.
         """
         from src.data.game_data import (
-            search_stat_descriptions,
             search_per_skill_stat_descriptions,
+            search_stat_descriptions,
         )
 
         try:
@@ -4730,9 +4726,9 @@ Consider:
         """Get a PoE2 calculation formula for Claude to use"""
         try:
             try:
-                from .knowledge.formulas import get_formula, get_all_formula_names, FORMULAS
+                from .knowledge.formulas import FORMULAS, get_all_formula_names, get_formula
             except ImportError:
-                from src.knowledge.formulas import get_formula, get_all_formula_names, FORMULAS
+                from src.knowledge.formulas import FORMULAS, get_all_formula_names, get_formula
 
             formula_type = args.get("formula_type", "").lower().strip()
 
@@ -4920,8 +4916,8 @@ Consider:
             logger.info("Starting trade authentication setup...")
 
             # Import necessary modules
-            from pathlib import Path
             from datetime import datetime
+            from pathlib import Path
 
             base_dir = Path(__file__).parent.parent
             env_file = base_dir / ".env"
@@ -5778,11 +5774,11 @@ Consider:
         """List all support gems with filtering, sorting, pagination, and output format options."""
         try:
             from src.utils.response_formatter import (
+                SUPPORT_GEM_FIELDS,
                 PaginationMeta,
+                compact_json,
                 filter_fields,
                 format_list_response,
-                SUPPORT_GEM_FIELDS,
-                compact_json,
             )
 
             filter_tags = args.get("filter_tags", [])
@@ -5901,11 +5897,11 @@ Consider:
         """
         try:
             from src.utils.response_formatter import (
+                SPELL_GEM_FIELDS,
                 PaginationMeta,
+                compact_json,
                 filter_fields,
                 format_list_response,
-                SPELL_GEM_FIELDS,
-                compact_json,
             )
 
             filter_element = args.get("filter_element")
@@ -6433,13 +6429,13 @@ Consider:
         try:
             try:
                 from .calculator.reconcile_poe_ninja import (
-                    reconcile_defensive_stats,
                     format_report,
+                    reconcile_defensive_stats,
                 )
             except ImportError:
                 from src.calculator.reconcile_poe_ninja import (
-                    reconcile_defensive_stats,
                     format_report,
+                    reconcile_defensive_stats,
                 )
 
             char_model = args.get("char_model")
@@ -6658,11 +6654,11 @@ Could not extract account and character from URL.
         """List all keystone passive nodes with pagination, detail levels, and format options."""
         try:
             from src.utils.response_formatter import (
+                KEYSTONE_FIELDS,
                 PaginationMeta,
+                compact_json,
                 filter_fields,
                 format_list_response,
-                KEYSTONE_FIELDS,
-                compact_json,
             )
 
             if not self.passive_tree_resolver:
@@ -7247,11 +7243,11 @@ Could not extract account and character from URL.
         """List all mods with filtering, pagination, detail levels, and format options."""
         try:
             from src.utils.response_formatter import (
+                MOD_FIELDS,
                 PaginationMeta,
+                compact_json,
                 filter_fields,
                 format_list_response,
-                MOD_FIELDS,
-                compact_json,
             )
 
             generation_type = args.get("generation_type")

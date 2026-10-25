@@ -12,16 +12,17 @@ Author: HivemindMinion
 Date: 2025-11-22
 """
 
-import pytest
 import asyncio
-import sys
 import json
+import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.optimizer.gem_synergy_calculator import GemSynergyCalculator, HARDCODED_INCOMPATIBILITIES
+from src.optimizer.gem_synergy_calculator import HARDCODED_INCOMPATIBILITIES, GemSynergyCalculator
 
 
 class TestValidationToolsIntegration:

@@ -31,9 +31,9 @@ fallback so a missing data file doesn't break callers.
 
 import json
 import logging
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

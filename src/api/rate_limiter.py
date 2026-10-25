@@ -4,8 +4,8 @@ Implements token bucket algorithm with adaptive rate limiting
 """
 
 import asyncio
-import time
 import logging
+import time
 from typing import Dict
 
 logger = logging.getLogger(__name__)

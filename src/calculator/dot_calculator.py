@@ -31,7 +31,7 @@ base DPS from the caller and the server does the modifier math.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 try:
     from .spell_dps_calculator import EnemyStats

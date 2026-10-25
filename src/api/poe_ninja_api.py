@@ -3,21 +3,22 @@ poe.ninja API Client with Web Scraping Fallback
 Fetches character data, build rankings, and economy data from poe.ninja
 """
 
-import httpx
 import json
 import logging
 import re
-from typing import Dict, List, Optional, Any
-from urllib.parse import unquote
-from bs4 import BeautifulSoup
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from urllib.parse import unquote
+
+import httpx
+from bs4 import BeautifulSoup
 
 try:
-    from ..api.rate_limiter import RateLimiter
     from ..api.cache_manager import CacheManager
+    from ..api.rate_limiter import RateLimiter
 except ImportError:
-    from src.api.rate_limiter import RateLimiter
     from src.api.cache_manager import CacheManager
+    from src.api.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 

@@ -10,10 +10,10 @@ Row Count: 14,269
 Field layout verified against PoB's Data/spec.lua on 2025-12-16.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Tuple
-from enum import IntEnum
 import struct
+from dataclasses import dataclass, field
+from enum import IntEnum
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class GenerationType(IntEnum):

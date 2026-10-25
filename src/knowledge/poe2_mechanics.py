@@ -8,12 +8,12 @@ VERIFIED FOR POE2 - December 2025
 Sources: poe2wiki.net, poewiki.net, maxroll.gg, official forums
 """
 
-from typing import Dict, List, Optional
-from dataclasses import dataclass
-from enum import Enum
 import json
 import logging
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

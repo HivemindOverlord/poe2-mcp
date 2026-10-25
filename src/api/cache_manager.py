@@ -6,14 +6,15 @@ Supports in-memory, Redis, and SQLite caching
 import json
 import logging
 import pickle
-from typing import Any, Optional, Dict
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
 import aiosqlite
 
 try:
-    from ..config import settings, CACHE_DIR
+    from ..config import CACHE_DIR, settings
 except ImportError:
-    from src.config import settings, CACHE_DIR
+    from src.config import CACHE_DIR, settings
 
 logger = logging.getLogger(__name__)
 

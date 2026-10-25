@@ -8,8 +8,8 @@ Provides:
 """
 
 import json
-from typing import Any, Dict, List, Optional, Literal
 from dataclasses import dataclass
+from typing import Any, Dict, List, Literal, Optional
 
 # Detail levels
 DetailLevel = Literal["summary", "standard", "full"]
