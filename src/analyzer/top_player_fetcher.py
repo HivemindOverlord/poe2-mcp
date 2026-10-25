@@ -5,20 +5,20 @@ Finds top ladder players using similar skills for comparison
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 try:
-    from ..api.poe_ninja_api import PoeNinjaAPI
-    from ..api.character_fetcher import CharacterFetcher
     from ..api.cache_manager import CacheManager
+    from ..api.character_fetcher import CharacterFetcher
+    from ..api.poe_ninja_api import PoeNinjaAPI
     from ..api.rate_limiter import RateLimiter
     from .character_comparator import CharacterComparator
 except ImportError:
-    from src.api.poe_ninja_api import PoeNinjaAPI
-    from src.api.character_fetcher import CharacterFetcher
-    from src.api.cache_manager import CacheManager
-    from src.api.rate_limiter import RateLimiter
     from src.analyzer.character_comparator import CharacterComparator
+    from src.api.cache_manager import CacheManager
+    from src.api.character_fetcher import CharacterFetcher
+    from src.api.poe_ninja_api import PoeNinjaAPI
+    from src.api.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 

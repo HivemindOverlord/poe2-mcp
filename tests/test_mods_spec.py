@@ -30,17 +30,19 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.parsers.specifications import mods_spec
 from src.parsers.specifications.mods_spec import (
-    DomainFlag,
     FIELD_OFFSETS,
-    GenerationType,
+    MAX_SPAWN_TAGS,
     MOD_ROW_COUNT,
     MOD_ROW_COUNT_0_5,
     MOD_ROW_SIZE,
     MOD_ROW_SIZE_0_5,
-    ModRecord,
     NULL_KEY_MARKER,
+    SPAWN_TAGS_LIST_OFFSET,
     STAT_KEY_OFFSETS,
     STAT_VALUE_OFFSETS,
+    DomainFlag,
+    GenerationType,
+    ModRecord,
     StatEntry,
     extract_mod_family,
     parse_mod_row,
@@ -48,13 +50,10 @@ from src.parsers.specifications.mods_spec import (
     read_interval,
     read_key,
     read_list_header,
-    SPAWN_TAGS_LIST_OFFSET,
-    MAX_SPAWN_TAGS,
     validate_generation_type,
     validate_mod_record,
     validate_stat_key,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

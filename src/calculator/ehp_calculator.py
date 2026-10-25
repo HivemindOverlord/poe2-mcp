@@ -34,8 +34,8 @@ Date: 2025-10-22
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Import existing calculators
 from .defense_calculator import DefenseCalculator, DefenseConstants

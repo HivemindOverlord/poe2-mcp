@@ -8,13 +8,14 @@ Run with: pytest tests/test_pob_integration.py -v
 Skip if offline: pytest tests/test_pob_integration.py -v -m "not pob_required"
 """
 
-import pytest
 import time
 from typing import Optional
 
+import pytest
+
 # Skip all tests if PoB client cannot be imported
 try:
-    from src.pob.client import PoBClient, PoBConnectionError, PoBCommandError
+    from src.pob.client import PoBClient, PoBCommandError, PoBConnectionError
 
     POB_CLIENT_AVAILABLE = True
 except ImportError:

@@ -308,11 +308,10 @@ Get-Content logs/poe2_optimizer.log -Wait
 ### Formatting
 
 ```bash
-# Format with black
-black src/ tests/
-
-# Sort imports
-isort src/ tests/
+# Format with black, then sort imports (both are CI gates; versions pinned in ci.yml)
+pip install "black==25.11.0" "isort==9.0.2"
+black src/ tests/ scripts/
+isort src/ tests/ scripts/
 
 # Lint
 flake8 src/ tests/

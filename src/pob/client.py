@@ -5,10 +5,10 @@ Communicates with the MCP Bridge addon installed in PoB.
 https://github.com/HivemindOverlord/poe2-mcp
 """
 
-import socket
 import json
 import logging
-from typing import Optional, Dict, Any, Union
+import socket
+from typing import Any, Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
 

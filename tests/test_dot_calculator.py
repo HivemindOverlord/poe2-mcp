@@ -28,7 +28,6 @@ from src.calculator.dot_calculator import (
 )
 from src.calculator.spell_dps_calculator import EnemyStats
 
-
 calc = DoTCalculator()
 
 

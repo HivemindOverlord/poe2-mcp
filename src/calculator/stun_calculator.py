@@ -14,8 +14,7 @@ Version: 1.0.0
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Dict, Tuple
-
+from typing import Dict, List, Optional, Tuple
 
 # Configure module logger
 logger = logging.getLogger(__name__)

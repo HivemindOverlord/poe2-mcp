@@ -24,7 +24,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src import mod_data
 
-
 # ---------------------------------------------------------------------------
 # mod_data loaders (synthetic data dir)
 # ---------------------------------------------------------------------------

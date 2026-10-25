@@ -22,7 +22,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.api.poe_ninja_api import PoeNinjaAPI
 
-
 CHAR_LIST = [
     {
         "name": "TomawarTheSeventh",

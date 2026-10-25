@@ -4,7 +4,7 @@ Evaluates build quality on a 0.0-1.0 scale
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 

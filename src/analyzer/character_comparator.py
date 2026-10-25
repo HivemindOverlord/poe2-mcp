@@ -5,8 +5,8 @@ Identifies optimization opportunities based on what top players do differently
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Set
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 

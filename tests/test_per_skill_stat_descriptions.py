@@ -22,13 +22,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.parsers.csd_parser import parse_csd  # noqa: E402
 from src.data.game_data import (  # noqa: E402
     find_per_skill_stat_description,
     load_per_skill_stat_descriptions,
     search_per_skill_stat_descriptions,
 )
-
+from src.parsers.csd_parser import parse_csd  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Parser tests against an embedded fixture

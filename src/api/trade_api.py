@@ -5,19 +5,20 @@ Searches the official trade market for items
 Enhanced with gear evaluation for intelligent upgrade recommendations.
 """
 
-import httpx
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 try:
     from ..config import settings
-    from .rate_limiter import RateLimiter
     from .cache_manager import CacheManager
+    from .rate_limiter import RateLimiter
 except ImportError:
-    from src.config import settings
-    from src.api.rate_limiter import RateLimiter
     from src.api.cache_manager import CacheManager
+    from src.api.rate_limiter import RateLimiter
+    from src.config import settings
 
 logger = logging.getLogger(__name__)
 

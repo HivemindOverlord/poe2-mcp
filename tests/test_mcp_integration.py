@@ -4,11 +4,12 @@ Integration tests for MCP server enhancements.
 Tests the integration of reverse-engineered extractors with MCP tools.
 """
 
-import pytest
-import pytest_asyncio
 import asyncio
 import sys
 from pathlib import Path
+
+import pytest
+import pytest_asyncio
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
