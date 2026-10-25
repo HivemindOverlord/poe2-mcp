@@ -18,12 +18,12 @@ Date: 2025-10-22
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Import all our calculator modules
 from ..calculator.defense_calculator import DefenseCalculator, DefenseConstants
-from ..calculator.ehp_calculator import EHPCalculator, DefensiveStats, ThreatProfile
+from ..calculator.ehp_calculator import DefensiveStats, EHPCalculator, ThreatProfile
 
 logger = logging.getLogger(__name__)
 

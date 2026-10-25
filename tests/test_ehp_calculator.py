@@ -10,18 +10,20 @@ Tests cover:
 6. Edge cases and validation
 """
 
-import pytest
 import logging
+
+import pytest
+
+from src.calculator.defense_calculator import DefenseConstants
 from src.calculator.ehp_calculator import (
-    EHPCalculator,
-    DefensiveStats,
-    ThreatProfile,
     DamageType,
     DefenseGap,
-    quick_physical_ehp,
+    DefensiveStats,
+    EHPCalculator,
+    ThreatProfile,
     quick_elemental_ehp,
+    quick_physical_ehp,
 )
-from src.calculator.defense_calculator import DefenseConstants
 
 
 class TestDefensiveStats:

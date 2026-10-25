@@ -15,10 +15,10 @@ Uses data from:
 
 import json
 import logging
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set, Tuple
 from collections import deque
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 

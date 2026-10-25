@@ -11,13 +11,13 @@ Author: Claude
 Date: 2025-10-24
 """
 
-import logging
 import json
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, field
-from pathlib import Path
-from itertools import combinations
+import logging
 import math
+from dataclasses import dataclass, field
+from itertools import combinations
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Import fresh data provider - Single Source of Truth
 try:
@@ -39,16 +39,16 @@ logger = logging.getLogger(__name__)
 try:
     from .support_validation import (
         SUPPORT_DAMAGE_REQUIREMENTS,
-        support_required_tags,
-        lookup_spell_tags,
         check_semantic_conflicts,
+        lookup_spell_tags,
+        support_required_tags,
     )
 except ImportError:
     from src.optimizer.support_validation import (
         SUPPORT_DAMAGE_REQUIREMENTS,
-        support_required_tags,
-        lookup_spell_tags,
         check_semantic_conflicts,
+        lookup_spell_tags,
+        support_required_tags,
     )
 
 

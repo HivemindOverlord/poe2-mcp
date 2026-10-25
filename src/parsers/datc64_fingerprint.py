@@ -23,10 +23,10 @@ hotfix) is the upstream half of this gate; this is the per-table half.
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import struct
-import datetime as dt
 from pathlib import Path
 from typing import Any, Dict
 

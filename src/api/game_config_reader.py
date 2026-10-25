@@ -25,8 +25,7 @@ from __future__ import annotations
 import configparser
 import os
 from pathlib import Path
-from typing import Dict, Optional, Any
-
+from typing import Any, Dict, Optional
 
 _CONFIG_FILENAME = "poe2_production_Config.ini"
 _MY_GAMES_SUFFIX = Path("My Games") / "Path of Exile 2" / _CONFIG_FILENAME

@@ -4,16 +4,18 @@ Handles character data retrieval with OAuth 2.0 support
 """
 
 import logging
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import httpx
 
 try:
     from ..config import settings
 except ImportError:
     from src.config import settings
-from .rate_limiter import RateLimiter
+
 from .cache_manager import CacheManager
+from .rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 

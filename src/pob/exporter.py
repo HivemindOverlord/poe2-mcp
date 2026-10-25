@@ -1,10 +1,10 @@
 """Path of Building export functionality"""
 
 import base64
-import zlib
 import logging
-from typing import Dict, Any
 import xml.etree.ElementTree as ET
+import zlib
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

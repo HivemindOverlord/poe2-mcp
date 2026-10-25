@@ -3,20 +3,21 @@ Web Scraper for PoE2 Game Data
 Scrapes item data, skill gems, and passive tree information from poe2db.tw and other sources
 """
 
-import httpx
 import json
-import re
 import logging
-from typing import Dict, List, Optional, Any
-from bs4 import BeautifulSoup
+import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import httpx
+from bs4 import BeautifulSoup
 
 try:
-    from ..config import settings
     from ..api.rate_limiter import RateLimiter
+    from ..config import settings
 except ImportError:
-    from src.config import settings
     from src.api.rate_limiter import RateLimiter
+    from src.config import settings
 
 logger = logging.getLogger(__name__)
 

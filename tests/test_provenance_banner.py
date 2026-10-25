@@ -27,11 +27,10 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.provenance import (  # noqa: E402
     CANONICAL,
     COMPUTED,
-    INTERPRETED,
     EXTERNAL,
+    INTERPRETED,
     format_banner,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper-direct mode — no MCP init

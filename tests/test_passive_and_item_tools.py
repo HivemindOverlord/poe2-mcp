@@ -3,16 +3,16 @@ Tests for new passive tree and base item MCP tools.
 Added to expose keystone, notable, and base item data that was previously idle.
 """
 
-import pytest
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.mcp_server import PoE2BuildOptimizerMCP
-
 
 # Check if PSG database exists
 PSG_DATABASE_PATH = Path(__file__).parent.parent / "data" / "psg_passive_nodes.json"

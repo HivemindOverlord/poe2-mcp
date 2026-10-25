@@ -1,9 +1,9 @@
 """Passive tree optimization"""
 
-import logging
 import json
-from typing import Dict, Any, List
+import logging
 from pathlib import Path
+from typing import Any, Dict, List
 
 try:
     from ..config import DATA_DIR

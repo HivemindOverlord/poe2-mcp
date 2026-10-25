@@ -2,14 +2,16 @@
 Test suite for .datc64 parser.
 """
 
-import pytest
 import struct
 from pathlib import Path
+
+import pytest
+
 from src.parsers import (
-    Datc64Parser,
+    DAT_MAGIC_NUMBER,
     ColumnSpec,
     DataType,
-    DAT_MAGIC_NUMBER,
+    Datc64Parser,
 )
 
 

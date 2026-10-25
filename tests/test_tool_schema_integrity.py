@@ -22,8 +22,8 @@ Ref: https://docs.anthropic.com/en/docs/build-with-claude/tool-use
 import sys
 from pathlib import Path
 
-import pytest
 import mcp.types as types
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 

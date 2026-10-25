@@ -1,9 +1,10 @@
 """Skill setup optimization with fresh game data integration"""
 
-import logging
 import json
-from typing import Dict, Any, List, Optional
+import logging
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import text
 
 try:

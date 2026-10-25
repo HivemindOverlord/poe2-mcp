@@ -10,19 +10,19 @@ Populates the database with game data from various sources:
 """
 
 import asyncio
-import sys
 import logging
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.database.manager import DatabaseManager
-from src.database.models import Item, UniqueItem, SkillGem, SupportGem, GameDataVersion
-from src.utils.scraper import PoE2DataScraper
 from src.api.poe_ninja_api import PoeNinjaAPI
 from src.api.rate_limiter import RateLimiter
+from src.database.manager import DatabaseManager
+from src.database.models import GameDataVersion, Item, SkillGem, SupportGem, UniqueItem
+from src.utils.scraper import PoE2DataScraper
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -97,7 +97,8 @@ class DatabasePopulator:
     async def _check_existing_data(self) -> bool:
         """Check if database already has data"""
         async with self.db_manager.async_session() as session:
-            from sqlalchemy import select, func
+            from sqlalchemy import func, select
+
             from src.database.models import Item
 
             result = await session.execute(select(func.count(Item.id)))
@@ -286,6 +287,7 @@ class DatabasePopulator:
                                 try:
                                     # Find matching unique item and update
                                     from sqlalchemy import select
+
                                     from src.database.models import UniqueItem
 
                                     result = await session.execute(

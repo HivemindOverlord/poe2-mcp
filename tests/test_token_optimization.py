@@ -4,25 +4,26 @@ Tests for token optimization features.
 Tests pagination, detail levels, and compact output format across MCP tools.
 """
 
-import pytest
-import pytest_asyncio
 import json
 import sys
 from pathlib import Path
+
+import pytest
+import pytest_asyncio
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.mcp_server import PoE2BuildOptimizerMCP
 from src.utils.response_formatter import (
+    BASE_ITEM_FIELDS,
+    KEYSTONE_FIELDS,
+    MOD_FIELDS,
+    SPELL_GEM_FIELDS,
+    SUPPORT_GEM_FIELDS,
     PaginationMeta,
+    abbreviate_keys,
     compact_json,
     filter_fields,
-    abbreviate_keys,
-    SUPPORT_GEM_FIELDS,
-    SPELL_GEM_FIELDS,
-    MOD_FIELDS,
-    KEYSTONE_FIELDS,
-    BASE_ITEM_FIELDS,
 )
 
 

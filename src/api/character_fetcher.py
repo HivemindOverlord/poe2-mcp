@@ -9,20 +9,22 @@ Fetches character data from multiple sources with intelligent fallback:
 
 import logging
 import re
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 import httpx
 from bs4 import BeautifulSoup
 
 try:
+    from ..api.poe_ninja_api import ASCENDANCY_TO_BASE_CLASS, PoeNinjaAPI
     from ..config import settings
-    from ..api.poe_ninja_api import PoeNinjaAPI, ASCENDANCY_TO_BASE_CLASS
     from ..pob.importer import PoBImporter
 except ImportError:
     from src.config import settings
     from src.api.poe_ninja_api import PoeNinjaAPI, ASCENDANCY_TO_BASE_CLASS
     from src.pob.importer import PoBImporter
-from .rate_limiter import RateLimiter
+
 from .cache_manager import CacheManager
+from .rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 

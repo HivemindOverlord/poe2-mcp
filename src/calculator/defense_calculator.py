@@ -12,8 +12,8 @@ All formulas are specific to Path of Exile 2 and differ from PoE1 in key areas.
 """
 
 import logging
-from typing import Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

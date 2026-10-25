@@ -8,21 +8,21 @@ Tests the advanced Spirit management system including:
 - Optimization suggestions
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 from calculator.spirit_calculator import (
     SpiritCalculator,
-    SpiritSource,
-    SpiritReservation,
-    SupportGem,
-    SpiritSourceType,
-    SpiritReservationType,
     SpiritOptimization,
+    SpiritReservation,
+    SpiritReservationType,
+    SpiritSource,
+    SpiritSourceType,
+    SupportGem,
     calculate_support_gem_cost,
     find_optimal_support_combinations,
 )

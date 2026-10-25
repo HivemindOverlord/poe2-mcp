@@ -28,8 +28,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.data.fresh_data_provider import (  # noqa: E402
-    FreshDataProvider,
     SUPPORT_GEMS_CANONICAL,
+    FreshDataProvider,
 )
 
 

@@ -6,10 +6,10 @@ Complete XML parser for PoB builds
 import base64
 import binascii
 import logging
+import xml.etree.ElementTree as ET
 import zlib
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-import xml.etree.ElementTree as ET
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
