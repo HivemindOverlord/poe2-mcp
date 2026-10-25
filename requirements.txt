@@ -5,11 +5,11 @@
 # Install: pip install -r requirements.txt
 #
 # For minimal installation (basic MCP server only):
-#   pip install mcp fastapi uvicorn pydantic sqlalchemy aiosqlite httpx anthropic python-dotenv
+#   pip install "mcp<2" fastapi uvicorn pydantic sqlalchemy aiosqlite httpx anthropic python-dotenv
 # ===============================================================================
 
 # MCP Protocol (REQUIRED)
-mcp>=0.9.0
+mcp>=0.9.0,<2.0.0
 
 # Web Framework (REQUIRED)
 fastapi>=0.104.0
